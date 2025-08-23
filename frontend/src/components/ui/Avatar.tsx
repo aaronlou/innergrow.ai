@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import type { ComponentProps } from '@/types';
 
@@ -47,10 +48,12 @@ export function Avatar({
       {...props}
     >
       {src && !imageError ? (
-        <img
+        <Image
           className="aspect-square h-full w-full object-cover"
           src={src}
-          alt={alt}
+          alt={alt || 'Avatar'}
+          width={64}
+          height={64}
           onError={handleImageError}
         />
       ) : (

@@ -2,19 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import type { ComponentProps } from '@/types';
 
-interface CardProps extends ComponentProps {}
-
-interface CardHeaderProps extends ComponentProps {}
-
-interface CardTitleProps extends ComponentProps {}
-
-interface CardDescriptionProps extends ComponentProps {}
-
-interface CardContentProps extends ComponentProps {}
-
-interface CardFooterProps extends ComponentProps {}
-
-export function Card({ className, children, ...props }: CardProps) {
+export function Card({ className, children, ...props }: ComponentProps) {
   return (
     <div
       className={cn(
@@ -28,7 +16,7 @@ export function Card({ className, children, ...props }: CardProps) {
   );
 }
 
-export function CardHeader({ className, children, ...props }: CardHeaderProps) {
+export function CardHeader({ className, children, ...props }: ComponentProps) {
   return (
     <div className={cn('flex flex-col space-y-1.5 p-6', className)} {...props}>
       {children}
@@ -36,7 +24,7 @@ export function CardHeader({ className, children, ...props }: CardHeaderProps) {
   );
 }
 
-export function CardTitle({ className, children, ...props }: CardTitleProps) {
+export function CardTitle({ className, children, ...props }: ComponentProps) {
   return (
     <h3
       className={cn(
@@ -50,7 +38,7 @@ export function CardTitle({ className, children, ...props }: CardTitleProps) {
   );
 }
 
-export function CardDescription({ className, children, ...props }: CardDescriptionProps) {
+export function CardDescription({ className, children, ...props }: ComponentProps) {
   return (
     <p className={cn('text-sm text-muted-foreground', className)} {...props}>
       {children}
@@ -58,7 +46,7 @@ export function CardDescription({ className, children, ...props }: CardDescripti
   );
 }
 
-export function CardContent({ className, children, ...props }: CardContentProps) {
+export function CardContent({ className, children, ...props }: ComponentProps) {
   return (
     <div className={cn('p-6 pt-0', className)} {...props}>
       {children}
@@ -66,7 +54,7 @@ export function CardContent({ className, children, ...props }: CardContentProps)
   );
 }
 
-export function CardFooter({ className, children, ...props }: CardFooterProps) {
+export function CardFooter({ className, children, ...props }: ComponentProps) {
   return (
     <div className={cn('flex items-center p-6 pt-0', className)} {...props}>
       {children}
