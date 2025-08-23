@@ -1,3 +1,9 @@
 export { Button } from './Button';
 export { Input } from './Input';
 export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './Card';
+export { Avatar } from './Avatar';
+export { Modal, ModalHeader, ModalContent, ModalFooter } from './Modal';
+export { Badge } from './Badge';
+export { Progress } from './Progress';
+export { Toast } from './Toast';
+export { Dropdown, DropdownItem, DropdownSeparator } from './Dropdown';
