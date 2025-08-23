@@ -1,2 +1,2 @@
-export { ChatMessage as ChatMessageComponent } from './ChatMessage';
+export { ChatMessageComponent } from './ChatMessage';
 export { ChatInput } from './ChatInput';
