@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
 import { ChatMessageComponent, ChatInput } from '@/components/features';
 import { useChat } from '@/contexts';

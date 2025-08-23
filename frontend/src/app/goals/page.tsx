@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge, Progr
 import { Button, Input } from '@/components/ui';
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
 import { useState } from 'react';
-import Link from 'next/link';
 
 interface Goal {
   id: string;
@@ -18,7 +17,7 @@ interface Goal {
 }
 
 export default function GoalsPage() {
-  const [goals, setGoals] = useState<Goal[]>([
+  const [goals] = useState<Goal[]>([
     {
       id: '1',
       title: '每日阅读30分钟',
@@ -184,7 +183,7 @@ export default function GoalsPage() {
                     <div>
                       <CardTitle className="flex items-center gap-2">
                         {goal.title}
-                        <Badge variant={getStatusColor(goal.status) as any} size="sm">
+                        <Badge variant={getStatusColor(goal.status) as 'success' | 'info' | 'warning' | 'default'} size="sm">
                           {getStatusText(goal.status)}
                         </Badge>
                       </CardTitle>

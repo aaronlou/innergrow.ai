@@ -2,9 +2,9 @@
 
 import React, { useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import type { ComponentProps } from '@/types';
+import type { ComponentProps } from 'react';
 
-interface ModalProps extends ComponentProps {
+interface ModalProps extends ComponentProps<'div'> {
   open: boolean;
   onClose: () => void;
   title?: string;
@@ -12,15 +12,15 @@ interface ModalProps extends ComponentProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-interface ModalHeaderProps extends ComponentProps {
+interface ModalHeaderProps extends ComponentProps<'div'> {
   title?: string;
   description?: string;
   onClose?: () => void;
 }
 
-interface ModalContentProps extends ComponentProps {}
+type ModalContentProps = ComponentProps<'div'>;
 
-interface ModalFooterProps extends ComponentProps {}
+type ModalFooterProps = ComponentProps<'div'>;
 
 const modalSizes = {
   sm: 'max-w-sm',

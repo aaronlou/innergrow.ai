@@ -1,6 +1,5 @@
 'use client';
 
-import { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge, Progress } from '@/components/ui';
 import { Button } from '@/components/ui';
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';

@@ -1,23 +1,23 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import type { ComponentProps } from '@/types';
+import type { ComponentProps } from 'react';
 
-interface DropdownProps extends ComponentProps {
+interface DropdownProps extends ComponentProps<'div'> {
   trigger: React.ReactNode;
   align?: 'left' | 'right';
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-interface DropdownItemProps extends ComponentProps {
+interface DropdownItemProps extends ComponentProps<'div'> {
   onClick?: () => void;
   disabled?: boolean;
   danger?: boolean;
 }
 
-interface DropdownSeparatorProps extends ComponentProps {}
+type DropdownSeparatorProps = ComponentProps<'div'>;
 
 export function Dropdown({
   trigger,
@@ -33,12 +33,12 @@ export function Dropdown({
   
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
   
-  const setOpen = (open: boolean) => {
+  const setOpen = useCallback((open: boolean) => {
     if (controlledOpen === undefined) {
       setInternalOpen(open);
     }
     onOpenChange?.(open);
-  };
+  }, [controlledOpen, onOpenChange]);
 
   // 点击外部关闭
   useEffect(() => {
@@ -55,7 +55,7 @@ export function Dropdown({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, setOpen]);
 
   // ESC键关闭
   useEffect(() => {
@@ -72,7 +72,7 @@ export function Dropdown({
     return () => {
       document.removeEventListener('keydown', handleEsc);
     };
-  }, [isOpen]);
+  }, [isOpen, setOpen]);
 
   return (
     <div className="relative inline-block" ref={dropdownRef} {...props}>
