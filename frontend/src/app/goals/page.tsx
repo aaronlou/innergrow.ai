@@ -165,7 +165,7 @@ export default function GoalsPage() {
             {categories.map((category) => (
               <Button 
                 key={category}
-                variant={activeFilter === category ? "default" : "outline"} 
+                variant={activeFilter === category ? "primary" : "outline"} 
                 size="sm"
                 onClick={() => setActiveFilter(category)}
               >

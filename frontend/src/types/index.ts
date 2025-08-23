@@ -96,4 +96,4 @@ export interface ComponentProps {
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
-export type InputType = 'text' | 'email' | 'password' | 'number' | 'textarea';
+export type InputType = 'text' | 'email' | 'password' | 'number' | 'textarea' | 'date';
