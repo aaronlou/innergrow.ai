@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Button, Avatar, Dropdown, DropdownItem, DropdownSeparator } from '@/components/ui';
+import { Button, Avatar, Dropdown, DropdownItem, DropdownSeparator, LanguageSwitcher } from '@/components/ui';
 import { useAuth } from '@/contexts';
+import { useI18n } from '@/contexts';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -17,23 +18,25 @@ interface NavItem {
   icon: string;
 }
 
-const navigationItems: NavItem[] = [
-  { label: '仪表板', href: '/dashboard', icon: '🏠' },
-  { label: 'AI 对话', href: '/chat', icon: '🤖' },
-  { label: '目标管理', href: '/goals', icon: '🎯' },
-  { label: '习惯追踪', href: '/habits', icon: '✅' },
-  { label: '成长报告', href: '/reports', icon: '📊' },
-  { label: '二手书市场', href: '/books', icon: '📚' },
-  { label: '我的书架', href: '/books/my-books', icon: '📖' },
-  { label: '订单管理', href: '/books/orders', icon: '📋' },
-  { label: '个人档案', href: '/profile', icon: '👤' },
-];
-
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, logout } = useAuth();
+  const { language, setLanguage, t } = useI18n();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // 使用翻译的导航项
+  const navigationItems: NavItem[] = [
+    { label: t('nav.dashboard'), href: '/dashboard', icon: '🏠' },
+    { label: t('nav.chat'), href: '/chat', icon: '🤖' },
+    { label: t('nav.goals'), href: '/goals', icon: '🎯' },
+    { label: t('nav.habits'), href: '/habits', icon: '✅' },
+    { label: t('nav.reports'), href: '/reports', icon: '📊' },
+    { label: t('nav.books'), href: '/books', icon: '📚' },
+    { label: t('nav.myBooks'), href: '/books/my-books', icon: '📖' },
+    { label: t('nav.orders'), href: '/books/orders', icon: '📋' },
+    { label: t('nav.profile'), href: '/profile', icon: '👤' },
+  ];
 
   const handleLogout = () => {
     logout();
@@ -134,7 +137,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               className="w-full"
               onClick={handleLogout}
             >
-              退出登录
+              {t('common.logout')}
             </Button>
           </div>
         </div>
@@ -161,7 +164,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <span>InnerGrow.ai</span>
                 <span>/</span>
                 <span className="text-foreground font-medium">
-                  {navigationItems.find(item => isActivePath(item.href))?.label || '仪表板'}
+                  {navigationItems.find(item => isActivePath(item.href))?.label || t('nav.dashboard')}
                 </span>
               </div>
             </div>
@@ -172,10 +175,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="hidden md:flex">
                 <input
                   type="text"
-                  placeholder="搜索..."
+                  placeholder={t('common.search') + '...'}
                   className="w-64 px-3 py-2 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
+
+              {/* 语言切换 */}
+              <LanguageSwitcher 
+                currentLanguage={language}
+                onLanguageChange={setLanguage}
+                variant="dropdown"
+              />
 
               {/* 通知按钮 */}
               <Button variant="ghost" size="sm" className="relative">
@@ -204,14 +214,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 align="right"
               >
                 <DropdownItem onClick={() => router.push('/profile')}>
-                  👤 个人档案
+                  👤 {t('common.profile')}
                 </DropdownItem>
                 <DropdownItem onClick={() => router.push('/settings')}>
-                  ⚙️ 设置
+                  ⚙️ {t('common.settings')}
                 </DropdownItem>
                 <DropdownSeparator />
                 <DropdownItem onClick={handleLogout} danger>
-                  🚪 退出登录
+                  🚪 {t('common.logout')}
                 </DropdownItem>
               </Dropdown>
             </div>

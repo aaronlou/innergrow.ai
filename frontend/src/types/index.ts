@@ -65,9 +65,11 @@ export interface ChatSession {
 }
 
 // 用户偏好设置
+export type Language = 'en' | 'zh';
+
 export interface UserPreferences {
   theme: 'light' | 'dark' | 'system';
-  language: 'zh' | 'en';
+  language: Language;
   notifications: {
     email: boolean;
     push: boolean;
@@ -77,6 +79,20 @@ export interface UserPreferences {
     showProfile: boolean;
     shareProgress: boolean;
   };
+}
+
+// 国际化相关类型
+export interface I18nConfig {
+  language: Language;
+  messages: Record<string, string>;
+}
+
+export interface I18nContextType {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
+  formatDate: (date: Date, options?: Intl.DateTimeFormatOptions) => string;
+  formatNumber: (number: number, options?: Intl.NumberFormatOptions) => string;
 }
 
 // API响应类型

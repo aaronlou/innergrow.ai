@@ -7,3 +7,4 @@ export { Badge } from './Badge';
 export { Progress } from './Progress';
 export { Toast } from './Toast';
 export { Dropdown, DropdownItem, DropdownSeparator } from './Dropdown';
+export { LanguageSwitcher, LanguageToggle } from './LanguageSwitcher';
