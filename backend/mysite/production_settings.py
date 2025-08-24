@@ -79,12 +79,17 @@ else:
     }
 
 # 静态文件设置
+# 确保使用绝对路径
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# 媒体文件设置
+# 媒体文件设置  
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# 确保静态文件目录存在
+os.makedirs(STATIC_ROOT, exist_ok=True)
+os.makedirs(MEDIA_ROOT, exist_ok=True)
 
 # 使用WhiteNoise处理静态文件
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
@@ -107,6 +112,10 @@ if config('USE_HTTPS', default='False', cast=bool):
     SECURE_HSTS_PRELOAD = True
 
 # 日志配置
+# 确保日志目录存在
+log_dir = os.path.join(BASE_DIR, 'logs')
+os.makedirs(log_dir, exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -124,7 +133,7 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),
+            'filename': os.path.join(log_dir, 'django.log'),
             'formatter': 'verbose',
         },
         'console': {
