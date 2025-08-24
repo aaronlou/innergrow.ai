@@ -91,9 +91,109 @@ export interface ApiResponse<T = unknown> {
 export interface ComponentProps {
   className?: string;
   children?: React.ReactNode;
+  onClick?: () => void;
 }
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'default';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export type InputType = 'text' | 'email' | 'password' | 'number' | 'textarea' | 'date';
+
+// 二手书交易相关类型
+export interface Book {
+  id: string;
+  title: string;
+  author: string;
+  isbn?: string;
+  publisher?: string;
+  publishYear?: number;
+  category: BookCategory;
+  condition: BookCondition;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  images: string[];
+  sellerId: string;
+  sellerName: string;
+  sellerAvatar?: string;
+  status: BookStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  location?: string;
+  tags?: string[];
+}
+
+export type BookCategory = 
+  | 'literature'
+  | 'science'
+  | 'technology'
+  | 'history'
+  | 'philosophy'
+  | 'art'
+  | 'education'
+  | 'children'
+  | 'other';
+
+export type BookCondition = 
+  | 'new'
+  | 'like-new'
+  | 'good'
+  | 'fair'
+  | 'poor';
+
+export type BookStatus = 
+  | 'available'
+  | 'sold'
+  | 'reserved'
+  | 'removed';
+
+export interface BookOrder {
+  id: string;
+  bookId: string;
+  book: Book;
+  buyerId: string;
+  buyerName: string;
+  buyerContact: string;
+  sellerId: string;
+  amount: number;
+  status: OrderStatus;
+  message?: string;
+  shippingAddress?: ShippingAddress;
+  paymentMethod?: PaymentMethod;
+  createdAt: Date;
+  updatedAt: Date;
+  completedAt?: Date;
+}
+
+export type OrderStatus = 
+  | 'pending'
+  | 'confirmed'
+  | 'paid'
+  | 'shipped'
+  | 'completed'
+  | 'cancelled';
+
+export interface ShippingAddress {
+  name: string;
+  phone: string;
+  province: string;
+  city: string;
+  district: string;
+  address: string;
+  zipCode?: string;
+}
+
+export type PaymentMethod = 
+  | 'wechat'
+  | 'alipay'
+  | 'cash'
+  | 'bank-transfer';
+
+export interface BookSearchFilter {
+  keyword?: string;
+  category?: BookCategory;
+  condition?: BookCondition;
+  priceRange?: [number, number];
+  location?: string;
+  sortBy?: 'newest' | 'price-low' | 'price-high' | 'condition';
+}

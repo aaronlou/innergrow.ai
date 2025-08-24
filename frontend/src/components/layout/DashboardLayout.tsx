@@ -23,6 +23,9 @@ const navigationItems: NavItem[] = [
   { label: '目标管理', href: '/goals', icon: '🎯' },
   { label: '习惯追踪', href: '/habits', icon: '✅' },
   { label: '成长报告', href: '/reports', icon: '📊' },
+  { label: '二手书市场', href: '/books', icon: '📚' },
+  { label: '我的书架', href: '/books/my-books', icon: '📖' },
+  { label: '订单管理', href: '/books/orders', icon: '📋' },
   { label: '个人档案', href: '/profile', icon: '👤' },
 ];
 
@@ -38,7 +41,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const isActivePath = (href: string) => {
-    return pathname === href;
+    // 精确匹配主页面
+    if (href === '/books' && pathname === '/books') return true;
+    if (href === '/books/my-books' && pathname === '/books/my-books') return true;
+    if (href === '/books/orders' && pathname === '/books/orders') return true;
+    
+    // 其他页面的精确匹配
+    if (href !== '/books' && href !== '/books/my-books' && href !== '/books/orders') {
+      return pathname === href;
+    }
+    
+    return false;
   };
 
   return (

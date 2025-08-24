@@ -157,6 +157,20 @@ export default function HomePage() {
                 </p>
               </CardContent>
             </Card>
+
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardHeader className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">📚</span>
+                </div>
+                <CardTitle>二手书交易</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-muted-foreground">
+                  分享闲置书籍，发现好书资源。安全便捷的个人二手书交易平台，让知识传递更有价值。
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
