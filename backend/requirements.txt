@@ -1,5 +1,29 @@
+# Django核心框架
 Django==5.2.5
+
+# API框架
 djangorestframework==3.15.2
+
+# CORS支持
 django-cors-headers==4.4.0
+
+# 图像处理
 Pillow==10.4.0
+
+# 环境变量管理
 python-decouple==3.8
+
+# 生产环境依赖
+gunicorn==21.2.0
+whitenoise==6.6.0
+
+# 数据库支持
+psycopg2-binary==2.9.9  # PostgreSQL
+dj-database-url==2.1.0  # 数据库URL解析
+
+# 缓存支持
+redis==5.0.1
+django-redis==5.4.0
+
+# 开发和测试工具
+requests==2.31.0  # API测试

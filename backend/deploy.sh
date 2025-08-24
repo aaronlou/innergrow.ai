@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # 项目配置
 PROJECT_NAME="InnerGrow.ai Backend"
-PROJECT_DIR="/Users/lousiyuan/innergrow.ai/backend"
+PROJECT_DIR="/home/siyuanlou/innergrow.ai/backend"
 VENV_DIR="$PROJECT_DIR/venv"
 REQUIREMENTS_FILE="$PROJECT_DIR/requirements.txt"
 MANAGE_PY="$PROJECT_DIR/manage.py"
@@ -173,6 +173,16 @@ run_tests() {
 start_service() {
     log_info "启动Django开发服务器..."
     
+    # 生产环境警告
+    echo -e "${YELLOW}========================================${NC}"
+    echo -e "${YELLOW}⚠️  开发服务器警告${NC}"
+    echo -e "${YELLOW}========================================${NC}"
+    echo -e "${YELLOW}当前使用的是Django开发服务器${NC}"
+    echo -e "${YELLOW}仅适用于开发和测试环境${NC}"
+    echo -e "${YELLOW}生产环境请使用: ./deploy.sh --production${NC}"
+    echo -e "${YELLOW}========================================${NC}"
+    echo ""
+    
     # 检查端口是否被占用
     if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null; then
         log_warning "端口8000已被占用，尝试停止现有进程..."
@@ -187,6 +197,7 @@ start_service() {
     echo -e "${BLUE}访问地址:${NC}"
     echo -e "  API根目录: http://localhost:8000/api/"
     echo -e "  管理后台: http://localhost:8000/admin/"
+    echo -e "  前端应用: http://localhost:3000/"
     echo -e "${YELLOW}按 Ctrl+C 停止服务${NC}"
     echo ""
     
@@ -197,8 +208,10 @@ start_service() {
 deploy_production() {
     log_info "配置生产环境部署..."
     
-    # 安装gunicorn
+    # 安装生产环境依赖
     pip install gunicorn
+    pip install whitenoise  # 静态文件服务
+    pip install psycopg2-binary  # PostgreSQL驱动（可选）
     
     # 创建gunicorn配置文件
     cat > "$PROJECT_DIR/gunicorn.conf.py" << EOF
