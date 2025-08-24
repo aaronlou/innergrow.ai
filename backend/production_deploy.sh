@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 # 项目配置
-PROJECT_DIR="/Users/lousiyuan/innergrow.ai/backend"
+PROJECT_DIR="/home/siyuanlou/innergrow.ai/backend"
 VENV_DIR="$PROJECT_DIR/venv"
 GUNICORN_PID="$PROJECT_DIR/gunicorn.pid"
 LOG_DIR="$PROJECT_DIR/logs"
