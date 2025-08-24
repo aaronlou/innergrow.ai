@@ -13,9 +13,18 @@ try:
     env_file = BASE_DIR / '.env.production'
     
     if env_file.exists():
-        # 从 .env.production 文件读取配置
-        config = Config(RepositoryEnv(str(env_file)))
-        print(f"已加载配置文件: {env_file}")
+        try:
+            # 从 .env.production 文件读取配置
+            config = Config(RepositoryEnv(str(env_file)))
+            print(f"已加载配置文件: {env_file}")
+        except PermissionError:
+            # 处理权限错误，回退到系统环境变量
+            from decouple import config
+            print(f"警告: {env_file} 权限不足，使用系统环境变量")
+        except Exception as e:
+            # 其他错误也回退到系统环境变量
+            from decouple import config
+            print(f"警告: 加载 {env_file} 失败 ({e})，使用系统环境变量")
     else:
         # 如果文件不存在，使用默认配置
         from decouple import config
@@ -54,16 +63,11 @@ if config('DATABASE_URL', default='') and dj_database_url is not None:
     DATABASES = {
         'default': dj_database_url.parse(config('DATABASE_URL'))
     }
-    # PostgreSQL特定优化
-    DATABASES['default']['OPTIONS'] = {
-        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        'charset': 'utf8mb4',
-    }
-    # 如果是PostgreSQL，添加额外配置
+    # 如果是PostgreSQL，添加专用配置
     if 'postgresql' in DATABASES['default']['ENGINE']:
         DATABASES['default']['OPTIONS'] = {
             'connect_timeout': 60,
-            'options': '-c default_transaction_isolation=read_committed'
+            'options': '-c default_transaction_isolation="read committed"'
         }
 else:
     # 保持SQLite作为后备选项

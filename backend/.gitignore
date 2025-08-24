@@ -1,0 +1,116 @@
+# InnerGrow.ai 项目 .gitignore
+
+# ==================== 环境配置文件 ====================
+# 生产环境配置（包含敏感信息，绝不提交）
+.env
+.env.local
+.env.production
+.env.staging
+
+# 开发环境配置（可能包含本地密钥）
+.env.development.local
+
+# ==================== Python ====================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# ==================== Django ====================
+# Database
+db.sqlite3
+db.sqlite3-journal
+
+# Django local settings
+local_settings.py
+
+# Django migrations (如果需要忽略)
+# */migrations/*.py
+# */migrations/*.pyc
+
+# Static files (collected by Django)
+staticfiles/
+static/
+
+# Media files
+media/
+
+# Log files
+*.log
+logs/
+
+# ==================== IDE ====================
+# PyCharm
+.idea/
+
+# VSCode
+.vscode/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ==================== macOS ====================
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ==================== Linux ====================
+*~
+
+# ==================== Windows ====================
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ==================== 临时文件 ====================
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# ==================== 备份文件 ====================
+*.bak
+*.backup
+
+# ==================== 证书和密钥 ====================
+*.pem
+*.key
+*.crt
+*.csr
+
+# ==================== 部署相关 ====================
+# Gunicorn PID 文件
+*.pid
+
+# 部署脚本中的临时文件
+deployment_*.log
