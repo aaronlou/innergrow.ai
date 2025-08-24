@@ -51,6 +51,7 @@ def api_root(request):
 
 
 urlpatterns = [
+    # Django Admin (生产环境重要：确保此路径有效)
     path('admin/', admin.site.urls),
     
     # API根端点
