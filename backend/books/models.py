@@ -104,6 +104,15 @@ class Book(models.Model):
         verbose_name = '书籍'
         verbose_name_plural = '书籍'
         ordering = ['-created_at']
+        # PostgreSQL优化索引
+        indexes = [
+            models.Index(fields=['category', 'condition']),  # 分类和品相索引
+            models.Index(fields=['price']),  # 价格索引
+            models.Index(fields=['status']),  # 状态索引
+            models.Index(fields=['seller', 'status']),  # 卖家状态组合索引
+            models.Index(fields=['created_at']),  # 创建时间索引
+            models.Index(fields=['location']),  # 地区索引
+        ]
     
     def __str__(self):
         return f'{self.title} - {self.author}'
@@ -220,6 +229,14 @@ class BookOrder(models.Model):
         verbose_name = '书籍订单'
         verbose_name_plural = '书籍订单'
         ordering = ['-created_at']
+        # PostgreSQL优化索引
+        indexes = [
+            models.Index(fields=['status']),  # 订单状态索引
+            models.Index(fields=['buyer', 'status']),  # 买家状态组合索引
+            models.Index(fields=['seller', 'status']),  # 卖家状态组合索引
+            models.Index(fields=['created_at']),  # 创建时间索引
+            models.Index(fields=['book', 'status']),  # 书籍状态组合索引
+        ]
     
     def __str__(self):
         return f'订单 {self.id} - {self.book.title}'

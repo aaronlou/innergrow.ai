@@ -53,6 +53,44 @@ chmod +x quick_deploy.sh
 ./quick_deploy.sh
 ```
 
+### 3. `production_deploy.sh` - 生产环境专用部署脚本
+使用Gunicorn WSGI服务器，适用于生产环境部署。
+
+**使用方法：**
+```bash
+# 给脚本添加执行权限
+chmod +x production_deploy.sh
+
+# 完整生产环境部署（默认）
+./production_deploy.sh deploy
+
+# 启动服务
+./production_deploy.sh start
+
+# 停止服务
+./production_deploy.sh stop
+
+# 重启服务
+./production_deploy.sh restart
+
+# 查看状态
+./production_deploy.sh status
+
+# 查看日志
+./production_deploy.sh logs
+```
+
+**域名配置：**
+```bash
+# 设置环境变量来配置域名
+export DOMAIN_NAME="innergrow.ai"
+export PROTOCOL="https"
+
+# 或者在.env.production文件中配置
+DOMAIN_NAME=innergrow.ai
+PROTOCOL=https
+```
+
 ## 🔧 首次部署步骤
 
 ### 1. 环境准备
@@ -97,13 +135,32 @@ python manage.py createsuperuser
 ./deploy.sh
 ```
 
-## 🌐 服务访问地址
+## 🌍 访问地址配置
 
+### 开发环境
 部署成功后，可以通过以下地址访问：
 
 - **API根目录**: http://localhost:8000/api/
 - **管理后台**: http://localhost:8000/admin/
 - **前端应用**: http://localhost:3000/
+
+### 生产环境
+使用 `production_deploy.sh` 部署后，访问地址会根据配置显示：
+
+**默认配置（innergrow.ai）**：
+- **API服务**: https://innergrow.ai/api/
+- **管理后台**: https://innergrow.ai/admin/
+
+**本地测试配置**：
+```bash
+# 设置为本地环境
+export DOMAIN_NAME="localhost"
+export PROTOCOL="http"
+export PORT="8000"
+```
+显示结果：
+- **API服务**: http://localhost:8000/api/
+- **管理后台**: http://localhost:8000/admin/
 
 ## 🔍 故障排除
 
@@ -159,22 +216,25 @@ pip install -r requirements.txt
 
 ## 📊 脚本功能对比
 
-| 功能 | deploy.sh | quick_deploy.sh |
-|------|-----------|-----------------|
-| 虚拟环境管理 | ✅ | ⚠️ (如果存在) |
-| 依赖安装 | ✅ | ✅ |
-| 数据库迁移 | ✅ | ✅ |
-| 静态文件收集 | ✅ (生产环境) | ❌ |
-| 测试运行 | ✅ (可选) | ❌ |
-| 生产环境配置 | ✅ | ❌ |
-| 超级用户检查 | ✅ | ❌ |
-| 服务启动 | ✅ | ✅ |
+| 功能 | deploy.sh | quick_deploy.sh | production_deploy.sh |
+|------|-----------|-----------------|----------------------|
+| 虚拟环境管理 | ✅ | ⚠️ (如果存在) | ✅ |
+| 依赖安装 | ✅ | ✅ | ✅ |
+| 数据库迁移 | ✅ | ✅ | ✅ |
+| 静态文件收集 | ✅ (生产环境) | ❌ | ✅ |
+| 测试运行 | ✅ (可选) | ❌ | ❌ |
+| 生产环境配置 | ✅ | ❌ | ✅ |
+| 超级用户检查 | ✅ | ❌ | ❌ |
+| 服务启动 | ✅ | ✅ | ✅ (Gunicorn) |
+| WSGI服务器 | ❌ | ❌ | ✅ |
+| 服务管理 | ❌ | ❌ | ✅ (start/stop/restart) |
+| 域名配置 | ❌ | ❌ | ✅ |
 
 ## 🎯 推荐使用场景
 
 - **首次部署**: 使用 `deploy.sh`
 - **日常开发**: 使用 `quick_deploy.sh`
-- **生产部署**: 使用 `deploy.sh --production`
+- **生产部署**: 使用 `production_deploy.sh deploy`
 - **问题排查**: 使用 `deploy.sh --test`
 
 ## 📝 注意事项

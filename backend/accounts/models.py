@@ -30,6 +30,12 @@ class User(AbstractUser):
         db_table = 'accounts_user'
         verbose_name = '用户'
         verbose_name_plural = '用户'
+        # PostgreSQL优化索引
+        indexes = [
+            models.Index(fields=['email']),  # 邮箱索引（登录查询）
+            models.Index(fields=['date_joined']),  # 注册日期索引
+            models.Index(fields=['is_active']),  # 活跃状态索引
+        ]
     
     def __str__(self):
         return self.email

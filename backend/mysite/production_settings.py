@@ -2,6 +2,31 @@
 # 导入基础设置
 from .settings import *
 import os
+from pathlib import Path
+
+# 尝试导入 python-decouple 来读取 .env 文件
+try:
+    from decouple import Config, RepositoryEnv
+    # 获取项目根目录
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    # 指定 .env.production 文件路径
+    env_file = BASE_DIR / '.env.production'
+    
+    if env_file.exists():
+        # 从 .env.production 文件读取配置
+        config = Config(RepositoryEnv(str(env_file)))
+        print(f"已加载配置文件: {env_file}")
+    else:
+        # 如果文件不存在，使用默认配置
+        from decouple import config
+        print(f"警告: 未找到 {env_file}，使用系统环境变量")
+except ImportError:
+    # 如果没有安装 python-decouple，回退到 os.environ
+    print("Warning: python-decouple not installed. 只能读取系统环境变量")
+    class Config:
+        def __call__(self, key, default=None, cast=str):
+            return cast(os.environ.get(key, default))
+    config = Config()
 
 # 尝试导入dj_database_url，如果失败则设为 None
 try:
@@ -22,13 +47,24 @@ ALLOWED_HOSTS = [
 ]
 
 # 安全密钥（生产环境必须修改）
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'CHANGE-THIS-IN-PRODUCTION')
+SECRET_KEY = config('DJANGO_SECRET_KEY', default='CHANGE-THIS-IN-PRODUCTION')
 
 # 数据库配置（生产环境推荐使用PostgreSQL）
-if os.environ.get('DATABASE_URL') and dj_database_url is not None:
+if config('DATABASE_URL', default='') and dj_database_url is not None:
     DATABASES = {
-        'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
+        'default': dj_database_url.parse(config('DATABASE_URL'))
     }
+    # PostgreSQL特定优化
+    DATABASES['default']['OPTIONS'] = {
+        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        'charset': 'utf8mb4',
+    }
+    # 如果是PostgreSQL，添加额外配置
+    if 'postgresql' in DATABASES['default']['ENGINE']:
+        DATABASES['default']['OPTIONS'] = {
+            'connect_timeout': 60,
+            'options': '-c default_transaction_isolation=read_committed'
+        }
 else:
     # 保持SQLite作为后备选项
     DATABASES = {
@@ -58,7 +94,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
 # HTTPS设置（如果使用HTTPS）
-if os.environ.get('USE_HTTPS') == 'True':
+if config('USE_HTTPS', default='False', cast=bool):
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
@@ -107,11 +143,11 @@ LOGGING = {
 }
 
 # 缓存配置（可选，使用Redis）
-if os.environ.get('REDIS_URL'):
+if config('REDIS_URL', default=''):
     CACHES = {
         'default': {
             'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': os.environ.get('REDIS_URL'),
+            'LOCATION': config('REDIS_URL'),
             'OPTIONS': {
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
             }
@@ -120,11 +156,11 @@ if os.environ.get('REDIS_URL'):
 
 # 邮件配置
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_HOST = config('EMAIL_HOST', default='')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
 # 性能优化
 CONN_MAX_AGE = 60  # 数据库连接池

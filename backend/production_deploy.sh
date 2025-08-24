@@ -18,6 +18,11 @@ VENV_DIR="$PROJECT_DIR/venv"
 GUNICORN_PID="$PROJECT_DIR/gunicorn.pid"
 LOG_DIR="$PROJECT_DIR/logs"
 
+# 域名配置（可通过环境变量设置）
+DOMAIN_NAME=${DOMAIN_NAME:-"innergrow.ai"}
+PROTOCOL=${PROTOCOL:-"https"}
+PORT=${PORT:-""}
+
 # 日志函数
 log_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
@@ -192,7 +197,48 @@ show_logs() {
     fi
 }
 
-# 主函数
+# 获取访问地址函数
+get_access_url() {
+    # 检测当前环境
+    if [ "$DOMAIN_NAME" = "innergrow.ai" ] && [ "$PROTOCOL" = "https" ]; then
+        # 生产环境
+        BASE_URL="https://innergrow.ai"
+    elif [ "$DOMAIN_NAME" = "innergrow.ai" ] && [ "$PROTOCOL" = "http" ]; then
+        # 生产环境但未启用HTTPS
+        BASE_URL="http://innergrow.ai"
+    else
+        # 本地或测试环境
+        if [ -n "$PORT" ]; then
+            BASE_URL="http://localhost:$PORT"
+        else
+            BASE_URL="http://localhost:8000"
+        fi
+    fi
+    echo "$BASE_URL"
+}
+
+# 显示最终结果函数
+show_completion_message() {
+    BASE_URL=$(get_access_url)
+    
+    echo -e "${GREEN}========================================${NC}"
+    echo -e "${GREEN}🎉 生产环境操作完成${NC}"
+    echo -e "${GREEN}========================================${NC}"
+    echo -e "${BLUE}访问地址:${NC}"
+    echo -e "  API服务: $BASE_URL/api/"
+    echo -e "  管理后台: $BASE_URL/admin/"
+    
+    # 根据域名显示不同的提示信息
+    if [ "$DOMAIN_NAME" = "innergrow.ai" ]; then
+        echo -e "${YELLOW}注意: 这是生产环境WSGI服务器${NC}"
+        echo -e "${YELLOW}确保域名DNS解析指向此服务器${NC}"
+        if [ "$PROTOCOL" = "https" ]; then
+            echo -e "${YELLOW}确保SSL证书配置正确${NC}"
+        fi
+    else
+        echo -e "${YELLOW}注意: 这是生产环境WSGI服务器（本地/测试）${NC}"
+    fi
+}
 main() {
     echo -e "${BLUE}========================================${NC}"
     echo -e "${BLUE}   InnerGrow.ai 生产环境部署脚本${NC}"
@@ -243,13 +289,8 @@ main() {
             ;;
     esac
     
-    echo -e "${GREEN}========================================${NC}"
-    echo -e "${GREEN}🎉 生产环境操作完成${NC}"
-    echo -e "${GREEN}========================================${NC}"
-    echo -e "${BLUE}访问地址:${NC}"
-    echo -e "  API服务: http://localhost:8000/api/"
-    echo -e "  管理后台: http://localhost:8000/admin/"
-    echo -e "${YELLOW}注意: 这是生产环境WSGI服务器${NC}"
+    # 显示完成消息
+    show_completion_message
 }
 
 # 运行主函数
