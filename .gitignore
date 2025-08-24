@@ -14,3 +14,4 @@ backend/**/__pycache__/
 backend/**/*.pyc
 backend/**/migrations/__pycache__/
 backend/.env
+backend/.env.production
