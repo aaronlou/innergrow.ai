@@ -67,7 +67,7 @@ if config('DATABASE_URL', default='') and dj_database_url is not None:
     if 'postgresql' in DATABASES['default']['ENGINE']:
         DATABASES['default']['OPTIONS'] = {
             'connect_timeout': 60,
-            'options': "-c default_transaction_isolation='read committed'"
+            # 注意：事务隔离级别通过PostgreSQL默认配置即可，无需显式设置
         }
 else:
     # 保持SQLite作为后备选项

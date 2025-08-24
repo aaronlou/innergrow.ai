@@ -47,6 +47,13 @@ def test_database_connection():
         print(f"🗃️  数据库名称: {db_settings.get('NAME', 'N/A')}")
         print(f"👤 数据库用户: {db_settings.get('USER', 'N/A')}")
         
+        # 测试创建一个简单的查询
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1 as test_query;")
+            result = cursor.fetchone()
+            if result[0] == 1:
+                print("✅ 数据库查询测试成功")
+        
         return True
         
     except Exception as e:
@@ -58,6 +65,8 @@ def test_database_connection():
         print("2. 检查.env.production文件中的DATABASE_URL配置")
         print("3. 确保数据库和用户已创建")
         print("4. 检查防火墙和网络连接")
+        print("5. 验证PostgreSQL监听地址: sudo netstat -tuln | grep 5432")
+        print("6. 检查数据库认证: psql -U innergrow_user -d innergrow_db -h localhost")
         
         return False
 
