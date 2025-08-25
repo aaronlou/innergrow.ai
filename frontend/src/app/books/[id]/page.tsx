@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, Badge, Button, Modal, ModalHeader, ModalContent, ModalFooter, Input } from '@/components/ui';
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
 import { Book, BookCondition, ShippingAddress, PaymentMethod } from '@/types';
@@ -12,7 +12,6 @@ import Link from 'next/link';
 
 export default function BookDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const { user } = useAuth();
   const { t } = useI18n();
   const [book, setBook] = useState<Book | null>(null);

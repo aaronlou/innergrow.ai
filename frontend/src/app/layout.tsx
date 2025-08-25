@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider, ChatProvider, I18nProvider } from "@/contexts";
 import "./globals.css";

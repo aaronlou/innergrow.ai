@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Language, I18nContextType } from '@/types';
 import { getMessages } from '@/locales';
-import { interpolate, formatDate as formatDateUtil, formatNumber as formatNumberUtil, detectBrowserLanguage, DEFAULT_LANGUAGE } from '@/lib/i18n';
+import { interpolate, formatDate as formatDateUtil, formatNumber as formatNumberUtil, detectBrowserLanguage } from '@/lib/i18n';
 import { useLocalStorage } from '@/hooks';
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);

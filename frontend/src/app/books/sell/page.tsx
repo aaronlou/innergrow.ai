@@ -151,24 +151,9 @@ export default function SellBookPage() {
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // 这里应该调用实际的API
-      const newBook = {
-        ...form,
-        id: Date.now().toString(),
-        price: parseFloat(form.price),
-        originalPrice: form.originalPrice ? parseFloat(form.originalPrice) : undefined,
-        publishYear: form.publishYear ? parseInt(form.publishYear) : undefined,
-        sellerId: user?.id,
-        sellerName: user?.name,
-        status: 'available',
-        images: imagePreview, // 实际中这里应该是上传后的图片URL
-        tags: form.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
       alert(t('books.sell.success'));
       router.push('/books/my-books');
-    } catch (error) {
+    } catch {
       alert(t('books.sell.error'));
     } finally {
       setLoading(false);

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, Button, Input, Badge } from '@/components/ui';
+import { Card, CardContent, Button, Input, Badge } from '@/components/ui';
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
 import { Book, BookCategory, BookCondition, BookSearchFilter } from '@/types';
-import { cn, formatDate, truncateText } from '@/lib/utils';
+import { formatDate, truncateText } from '@/lib/utils';
 import { useI18n } from '@/contexts';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -12,7 +12,6 @@ import Image from 'next/image';
 export default function BooksPage() {
   const { t } = useI18n();
   const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<BookSearchFilter>({
     sortBy: 'newest'
   });

@@ -45,8 +45,8 @@ export function formatDate(date: Date, language: Language, options?: Intl.DateTi
 }
 
 // 格式化数字
-export function formatNumber(number: number, language: Language, options?: Intl.NumberFormatOptions): string {
-  const locale = language === 'zh' ? 'zh-CN' : 'en-US';
+export function formatNumber(number: number, lang: Language, options?: Intl.NumberFormatOptions): string {
+  const locale = lang === 'zh' ? 'zh-CN' : 'en-US';
   
   return new Intl.NumberFormat(locale, options).format(number);
 }

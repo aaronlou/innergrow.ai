@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Badge, Button, Modal, ModalHeader, ModalContent, ModalFooter } from '@/components/ui';
+import { Card, CardContent, Badge, Button, Modal, ModalHeader, ModalContent, ModalFooter } from '@/components/ui';
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
 import { Book, BookStatus } from '@/types';
 import { cn, formatDate, truncateText } from '@/lib/utils';
@@ -365,7 +365,7 @@ export default function MyBooksPage() {
             <ModalContent>
               <div className="space-y-4">
                 <p className="text-muted-foreground">
-                  {t('books.myBooks.deleteDescription', { title: selectedBook?.title })}
+                  {t('books.myBooks.deleteDescription', { title: selectedBook?.title || '' })}
                 </p>
                 {selectedBook?.status === 'reserved' && (
                   <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
