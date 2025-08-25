@@ -63,6 +63,6 @@ export function formatCurrency(amount: number, language: Language): string {
 }
 
 // 获取语言方向（为将来支持RTL语言预留）
-export function getLanguageDirection(language: Language): 'ltr' | 'rtl' {
+export function getLanguageDirection(_language: Language): 'ltr' | 'rtl' {
   return 'ltr'; // 目前中英文都是从左到右
 }

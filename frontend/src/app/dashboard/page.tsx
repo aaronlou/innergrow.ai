@@ -69,7 +69,7 @@ export default function DashboardPage() {
           {/* 欢迎信息 */}
           <div className="mb-8">
             <h1 className="text-2xl font-bold mb-2">
-              {t('dashboard.welcome', { name: user?.name })} 😊
+              {t('dashboard.welcome', { name: user?.name || 'User' })} 😊
             </h1>
             <p className="text-muted-foreground">
               {t('dashboard.subtitle', { days: mockStats.streakDays })}

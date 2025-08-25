@@ -28,7 +28,6 @@ interface BookForm {
 
 export default function SellBookPage() {
   const router = useRouter();
-  const { user } = useAuth();
   const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string[]>([]);
