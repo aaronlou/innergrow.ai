@@ -42,9 +42,9 @@ export default function ExamsPage() {
         <div className="p-6">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl font-bold mb-2">Exam Preparation</h1>
+            <h1 className="text-2xl font-bold mb-2">{t('exams.title')}</h1>
             <p className="text-muted-foreground">
-              Prepare for your exams with AI-powered study tools and personalized plans
+              {t('exams.subtitle')}
             </p>
           </div>
 
@@ -58,7 +58,7 @@ export default function ExamsPage() {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Discover Exams
+              {t('exams.discoverTab')}
             </button>
             <button
               onClick={() => setActiveTab('plans')}
@@ -68,7 +68,7 @@ export default function ExamsPage() {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Study Plans
+              {t('exams.plansTab')}
             </button>
             <button
               onClick={() => setActiveTab('practice')}
@@ -78,7 +78,7 @@ export default function ExamsPage() {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Practice Online
+              {t('exams.practiceTab')}
             </button>
           </div>
 
@@ -89,7 +89,7 @@ export default function ExamsPage() {
               <div className="flex gap-4">
                 <Input
                   type="text"
-                  placeholder="Search for exams..."
+                  placeholder={t('exams.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="flex-1"
@@ -109,16 +109,16 @@ export default function ExamsPage() {
                     <CardContent>
                       <p className="text-sm text-muted-foreground mb-4">{exam.description}</p>
                       <div className="space-y-2 text-xs text-muted-foreground mb-4">
-                        <div>⏱️ Duration: {exam.duration}</div>
-                        <div>📅 Study Time: {exam.studyTime}</div>
-                        <div>📚 Category: {exam.category}</div>
+                        <div>⏱️ {t('exams.duration')}: {exam.duration}</div>
+                        <div>📅 {t('exams.studyTime')}: {exam.studyTime}</div>
+                        <div>📚 {t('exams.category')}: {exam.category}</div>
                       </div>
                       <div className="flex gap-2">
                         <Button size="sm" className="flex-1">
-                          View Requirements
+                          {t('exams.viewRequirements')}
                         </Button>
                         <Button size="sm" variant="outline" className="flex-1">
-                          Start Preparation
+                          {t('exams.startPreparation')}
                         </Button>
                       </div>
                     </CardContent>
@@ -131,22 +131,22 @@ export default function ExamsPage() {
           {activeTab === 'plans' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">My Study Plans</h3>
-                <Button>Create Study Plan</Button>
+                <h3 className="text-lg font-semibold">{t('exams.myStudyPlans')}</h3>
+                <Button>{t('exams.createStudyPlan')}</Button>
               </div>
               
               <div className="text-center py-12">
                 <div className="text-4xl mb-4">📋</div>
-                <h3 className="text-lg font-semibold mb-2">No study plans yet</h3>
-                <p className="text-muted-foreground mb-4">Create your first study plan to start preparing</p>
-                <Button>Create Study Plan</Button>
+                <h3 className="text-lg font-semibold mb-2">{t('exams.noPlansYet')}</h3>
+                <p className="text-muted-foreground mb-4">{t('exams.createFirstPlan')}</p>
+                <Button>{t('exams.createStudyPlan')}</Button>
               </div>
             </div>
           )}
 
           {activeTab === 'practice' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold mb-4">Practice Tools</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('exams.practiceTools')}</h3>
               
               {/* Practice Categories */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -154,14 +154,14 @@ export default function ExamsPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <span className="text-2xl">📝</span>
-                      Mock Exams
+                      {t('exams.mockExams')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Full-length practice exams with real exam conditions
+                      {t('exams.mockExamsDesc')}
                     </p>
-                    <Button className="w-full">Start Mock Exam</Button>
+                    <Button className="w-full">{t('exams.startMockExam')}</Button>
                   </CardContent>
                 </Card>
 
@@ -169,14 +169,14 @@ export default function ExamsPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <span className="text-2xl">🃏</span>
-                      Flashcards
+                      {t('exams.flashcards')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Study key concepts with interactive flashcards
+                      {t('exams.flashcardsDesc')}
                     </p>
-                    <Button className="w-full">Study Flashcards</Button>
+                    <Button className="w-full">{t('exams.studyFlashcards')}</Button>
                   </CardContent>
                 </Card>
 
@@ -184,14 +184,14 @@ export default function ExamsPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <span className="text-2xl">⚡</span>
-                      Quick Quizzes
+                      {t('exams.quickQuizzes')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Quick quizzes to test your knowledge
+                      {t('exams.quickQuizzesDesc')}
                     </p>
-                    <Button className="w-full">Take Quiz</Button>
+                    <Button className="w-full">{t('exams.takeQuiz')}</Button>
                   </CardContent>
                 </Card>
               </div>
