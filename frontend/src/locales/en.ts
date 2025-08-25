@@ -35,6 +35,7 @@ export const en = {
   'nav.dashboard': 'Dashboard',
   'nav.chat': 'AI Chat',
   'nav.goals': 'Goals',
+  'nav.exams': 'Exam Prep',
   'nav.habits': 'Habits',
   'nav.reports': 'Reports',
   'nav.books': 'Book Market',

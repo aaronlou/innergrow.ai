@@ -35,6 +35,7 @@ export const zh = {
   'nav.dashboard': '仪表板',
   'nav.chat': 'AI 对话',
   'nav.goals': '目标管理',
+  'nav.exams': '考试准备',
   'nav.habits': '习惯追踪',
   'nav.reports': '成长报告',
   'nav.books': '二手书市场',

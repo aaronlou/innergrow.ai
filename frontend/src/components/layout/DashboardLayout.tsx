@@ -28,8 +28,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // 使用翻译的导航项
   const navigationItems: NavItem[] = [
     { label: t('nav.dashboard'), href: '/dashboard', icon: '🏠' },
-    { label: t('nav.chat'), href: '/chat', icon: '🤖' },
+    { label: t('nav.chat'), href: '/chat', icon: '💬' },
     { label: t('nav.goals'), href: '/goals', icon: '🎯' },
+    { label: t('nav.exams'), href: '/exams', icon: '📝' },
+    { label: t('nav.books'), href: '/books', icon: '📚' },
+    { label: t('nav.myBooks'), href: '/books/my-books', icon: '📖' },
+    { label: t('nav.orders'), href: '/books/orders', icon: '📋' },
     { label: t('nav.profile'), href: '/profile', icon: '👤' },
   ];
 
