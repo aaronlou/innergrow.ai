@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle, Badge, Button, Modal, ModalHe
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
 import { Book, BookStatus } from '@/types';
 import { cn, formatDate, truncateText } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, useI18n } from '@/contexts';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function MyBooksPage() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
@@ -96,10 +97,10 @@ export default function MyBooksPage() {
   }, [user]);
 
   const statusLabels: Record<BookStatus, { label: string; color: string }> = {
-    available: { label: '在售', color: 'success' },
-    sold: { label: '已售出', color: 'info' },
-    reserved: { label: '已预定', color: 'warning' },
-    removed: { label: '已下架', color: 'destructive' }
+    available: { label: t('books.myBooks.available'), color: 'success' },
+    sold: { label: t('books.myBooks.sold'), color: 'info' },
+    reserved: { label: t('books.myBooks.reserved'), color: 'warning' },
+    removed: { label: t('books.myBooks.removed'), color: 'destructive' }
   };
 
   const filteredBooks = activeFilter === 'all' 
@@ -145,17 +146,17 @@ export default function MyBooksPage() {
           {/* 头部 */}
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-2xl font-bold mb-2">📚 我的书架</h1>
+              <h1 className="text-2xl font-bold mb-2">{t('books.myBooks.title')}</h1>
               <p className="text-muted-foreground">
-                管理您发布的所有书籍
+                {t('books.myBooks.subtitle')}
               </p>
             </div>
             <div className="flex gap-3">
               <Link href="/books/sell">
-                <Button>📖 发布新书</Button>
+                <Button>{t('books.myBooks.publishNew')}</Button>
               </Link>
               <Link href="/books">
-                <Button variant="outline">🛍️ 去逛逛</Button>
+                <Button variant="outline">{t('books.myBooks.browse')}</Button>
               </Link>
             </div>
           </div>
@@ -166,7 +167,7 @@ export default function MyBooksPage() {
               <CardContent className="pt-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-brand-primary">{stats.total}</div>
-                  <div className="text-sm text-muted-foreground">全部</div>
+                  <div className="text-sm text-muted-foreground">{t('common.all')}</div>
                 </div>
               </CardContent>
             </Card>
@@ -175,7 +176,7 @@ export default function MyBooksPage() {
               <CardContent className="pt-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">{stats.available}</div>
-                  <div className="text-sm text-muted-foreground">在售</div>
+                  <div className="text-sm text-muted-foreground">{t('books.myBooks.available')}</div>
                 </div>
               </CardContent>
             </Card>
@@ -184,7 +185,7 @@ export default function MyBooksPage() {
               <CardContent className="pt-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-orange-600">{stats.reserved}</div>
-                  <div className="text-sm text-muted-foreground">预定</div>
+                  <div className="text-sm text-muted-foreground">{t('books.myBooks.reserved')}</div>
                 </div>
               </CardContent>
             </Card>
@@ -193,7 +194,7 @@ export default function MyBooksPage() {
               <CardContent className="pt-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">{stats.sold}</div>
-                  <div className="text-sm text-muted-foreground">已售</div>
+                  <div className="text-sm text-muted-foreground">{t('books.myBooks.sold')}</div>
                 </div>
               </CardContent>
             </Card>
@@ -202,7 +203,7 @@ export default function MyBooksPage() {
               <CardContent className="pt-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-gray-600">{stats.removed}</div>
-                  <div className="text-sm text-muted-foreground">下架</div>
+                  <div className="text-sm text-muted-foreground">{t('books.myBooks.removed')}</div>
                 </div>
               </CardContent>
             </Card>
@@ -212,19 +213,19 @@ export default function MyBooksPage() {
           {loading ? (
             <div className="text-center py-12">
               <div className="text-4xl mb-4">📚</div>
-              <div>正在加载...</div>
+              <div>{t('common.loading')}</div>
             </div>
           ) : filteredBooks.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📚</div>
               <h3 className="text-lg font-semibold mb-2">
-                {activeFilter === 'all' ? '还没有发布任何书籍' : `没有${statusLabels[activeFilter as BookStatus]?.label}的书籍`}
+                {activeFilter === 'all' ? t('books.myBooks.empty') : `${t('common.none')}${statusLabels[activeFilter as BookStatus]?.label}${t('books.empty')}`}
               </h3>
               <p className="text-muted-foreground mb-4">
-                分享您的闲置书籍，让知识传递给更多人
+                {t('books.myBooks.emptyDescription')}
               </p>
               <Link href="/books/sell">
-                <Button>发布第一本书</Button>
+                <Button>{t('books.publishFirst')}</Button>
               </Link>
             </div>
           ) : (
@@ -251,7 +252,7 @@ export default function MyBooksPage() {
                               {book.title}
                             </h3>
                             <p className="text-sm text-muted-foreground mb-2">
-                              作者：{book.author}
+                              {t('books.detail.author')}：{book.author}
                             </p>
                             <div className="flex items-center gap-2 mb-2">
                               <Badge 
@@ -275,7 +276,7 @@ export default function MyBooksPage() {
                           <div className="flex gap-2 flex-shrink-0">
                             <Link href={`/books/${book.id}`}>
                               <Button variant="outline" size="sm">
-                                查看
+                                {t('common.view')}
                               </Button>
                             </Link>
                             
@@ -286,7 +287,7 @@ export default function MyBooksPage() {
                                   size="sm"
                                   onClick={() => handleStatusChange(book.id, 'removed')}
                                 >
-                                  下架
+                                  {t('books.myBooks.remove')}
                                 </Button>
                               </>
                             )}
@@ -297,7 +298,7 @@ export default function MyBooksPage() {
                                 size="sm"
                                 onClick={() => handleStatusChange(book.id, 'available')}
                               >
-                                重新上架
+                                {t('books.myBooks.relist')}
                               </Button>
                             )}
                             
@@ -307,7 +308,7 @@ export default function MyBooksPage() {
                                 size="sm"
                                 onClick={() => handleStatusChange(book.id, 'sold')}
                               >
-                                标记已售
+                                {t('books.myBooks.markSold')}
                               </Button>
                             )}
                             
@@ -320,7 +321,7 @@ export default function MyBooksPage() {
                               }}
                               className="text-red-500 hover:text-red-600"
                             >
-                              删除
+                              {t('common.delete')}
                             </Button>
                           </div>
                         </div>
@@ -332,8 +333,8 @@ export default function MyBooksPage() {
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
                           <div className="flex items-center gap-4">
                             <span>📍 {book.location}</span>
-                            <span>发布时间：{formatDate(book.createdAt)}</span>
-                            <span>更新时间：{formatDate(book.updatedAt)}</span>
+                            <span>{t('books.myBooks.publishTime')}：{formatDate(book.createdAt)}</span>
+                            <span>{t('books.myBooks.updateTime')}：{formatDate(book.updatedAt)}</span>
                           </div>
                           
                           {book.tags && book.tags.length > 0 && (
@@ -357,19 +358,19 @@ export default function MyBooksPage() {
           {/* 删除确认弹窗 */}
           <Modal open={showDeleteModal} onClose={() => setShowDeleteModal(false)}>
             <ModalHeader 
-              title="确认删除" 
-              description="此操作无法撤销"
+              title={t('books.myBooks.deleteConfirm')} 
+              description={t('common.confirmDelete')}
               onClose={() => setShowDeleteModal(false)}
             />
             <ModalContent>
               <div className="space-y-4">
                 <p className="text-muted-foreground">
-                  您确定要删除《{selectedBook?.title}》吗？删除后将无法恢复。
+                  {t('books.myBooks.deleteDescription', { title: selectedBook?.title })}
                 </p>
                 {selectedBook?.status === 'reserved' && (
                   <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                     <p className="text-sm text-orange-800">
-                      ⚠️ 此书籍已被预定，删除前请确保已与买家协商处理。
+                      {t('books.myBooks.deleteWarning')}
                     </p>
                   </div>
                 )}
@@ -377,14 +378,14 @@ export default function MyBooksPage() {
             </ModalContent>
             <ModalFooter>
               <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
-                取消
+                {t('common.cancel')}
               </Button>
               <Button 
                 onClick={handleDeleteBook} 
                 loading={loading}
                 className="bg-red-500 hover:bg-red-600 text-white"
               >
-                确认删除
+                {t('books.myBooks.confirmDelete')}
               </Button>
             </ModalFooter>
           </Modal>

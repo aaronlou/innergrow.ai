@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/compo
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
 import { BookCategory, BookCondition } from '@/types';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, useI18n } from '@/contexts';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -29,6 +29,7 @@ interface BookForm {
 export default function SellBookPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string[]>([]);
   
@@ -51,23 +52,23 @@ export default function SellBookPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const categories: { value: BookCategory; label: string }[] = [
-    { value: 'literature', label: '文学' },
-    { value: 'science', label: '科学' },
-    { value: 'technology', label: '技术' },
-    { value: 'history', label: '历史' },
-    { value: 'philosophy', label: '哲学' },
-    { value: 'art', label: '艺术' },
-    { value: 'education', label: '教育' },
-    { value: 'children', label: '儿童' },
-    { value: 'other', label: '其他' }
+    { value: 'literature', label: t('books.category.literature') },
+    { value: 'science', label: t('books.category.science') },
+    { value: 'technology', label: t('books.category.technology') },
+    { value: 'history', label: t('books.category.history') },
+    { value: 'philosophy', label: t('books.category.philosophy') },
+    { value: 'art', label: t('books.category.art') },
+    { value: 'education', label: t('books.category.education') },
+    { value: 'children', label: t('books.category.children') },
+    { value: 'other', label: t('books.category.other') }
   ];
 
   const conditions: { value: BookCondition; label: string; description: string }[] = [
-    { value: 'new', label: '全新', description: '未拆封或刚拆封' },
-    { value: 'like-new', label: '几乎全新', description: '轻微使用痕迹' },
-    { value: 'good', label: '良好', description: '正常使用痕迹' },
-    { value: 'fair', label: '一般', description: '明显使用痕迹' },
-    { value: 'poor', label: '较差', description: '重度使用痕迹' }
+    { value: 'new', label: t('books.condition.new'), description: t('books.condition.new.desc') },
+    { value: 'like-new', label: t('books.condition.likeNew'), description: t('books.condition.likeNew.desc') },
+    { value: 'good', label: t('books.condition.good'), description: t('books.condition.good.desc') },
+    { value: 'fair', label: t('books.condition.fair'), description: t('books.condition.fair.desc') },
+    { value: 'poor', label: t('books.condition.poor'), description: t('books.condition.poor.desc') }
   ];
 
   const handleInputChange = (field: keyof BookForm, value: string) => {
@@ -112,26 +113,26 @@ export default function SellBookPage() {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!form.title.trim()) newErrors.title = '请输入书名';
-    if (!form.author.trim()) newErrors.author = '请输入作者';
-    if (!form.description.trim()) newErrors.description = '请输入商品描述';
-    if (!form.price.trim()) newErrors.price = '请输入价格';
-    if (!form.location.trim()) newErrors.location = '请输入所在地区';
+    if (!form.title.trim()) newErrors.title = t('validation.required');
+    if (!form.author.trim()) newErrors.author = t('validation.required');
+    if (!form.description.trim()) newErrors.description = t('validation.required');
+    if (!form.price.trim()) newErrors.price = t('validation.required');
+    if (!form.location.trim()) newErrors.location = t('validation.required');
 
     const price = parseFloat(form.price);
-    if (isNaN(price) || price <= 0) newErrors.price = '请输入有效的价格';
+    if (isNaN(price) || price <= 0) newErrors.price = t('validation.invalidPrice');
 
     const originalPrice = parseFloat(form.originalPrice);
     if (form.originalPrice && (isNaN(originalPrice) || originalPrice <= 0)) {
-      newErrors.originalPrice = '请输入有效的原价';
+      newErrors.originalPrice = t('validation.invalidPrice');
     }
 
     if (form.originalPrice && price >= originalPrice) {
-      newErrors.price = '售价应小于原价';
+      newErrors.price = t('validation.priceGreaterThanOriginal');
     }
 
     if (form.images.length === 0) {
-      newErrors.images = '请至少上传一张图片';
+      newErrors.images = t('validation.atLeastOneImage');
     }
 
     setErrors(newErrors);
@@ -165,10 +166,10 @@ export default function SellBookPage() {
         updatedAt: new Date()
       };
 
-      alert('发布成功！您的书籍已添加到市场中。');
+      alert(t('books.sell.success'));
       router.push('/books/my-books');
     } catch (error) {
-      alert('发布失败，请重试');
+      alert(t('books.sell.error'));
     } finally {
       setLoading(false);
     }
@@ -178,33 +179,33 @@ export default function SellBookPage() {
     <ProtectedRoute>
       <DashboardLayout>
         <div className="p-6 max-w-4xl mx-auto">
-          {/* 头部 */}
+          {/* Header */}
           <div className="mb-8">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
               <Link href="/books" className="hover:text-foreground">
-                二手书市场
+                {t('books.breadcrumb.market')}
               </Link>
               <span>/</span>
-              <span className="text-foreground">发布书籍</span>
+              <span className="text-foreground">{t('books.sell.title')}</span>
             </div>
-            <h1 className="text-2xl font-bold mb-2">📖 发布二手书</h1>
+            <h1 className="text-2xl font-bold mb-2">{t('books.sell.title')}</h1>
             <p className="text-muted-foreground">
-              分享您的闲置书籍，让知识传递给更多需要的人
+              {t('books.sell.subtitle')}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* 基本信息 */}
+            {/* Basic information */}
             <Card>
               <CardHeader>
-                <CardTitle>基本信息</CardTitle>
+                <CardTitle>{t('books.sell.basicInfo')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Input
-                      label="书名"
-                      placeholder="请输入书名"
+                      label={t('books.sell.bookTitle')}
+                      placeholder={t('books.sell.bookTitle')}
                       value={form.title}
                       onChange={(e) => handleInputChange('title', e.target.value)}
                       error={errors.title}
@@ -213,8 +214,8 @@ export default function SellBookPage() {
                   </div>
                   <div>
                     <Input
-                      label="作者"
-                      placeholder="请输入作者姓名"
+                      label={t('books.sell.author')}
+                      placeholder={t('books.sell.author')}
                       value={form.author}
                       onChange={(e) => handleInputChange('author', e.target.value)}
                       error={errors.author}
@@ -226,7 +227,7 @@ export default function SellBookPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Input
-                      label="ISBN（选填）"
+                      label={t('books.sell.isbn')}
                       placeholder="978-7-115-54538-1"
                       value={form.isbn}
                       onChange={(e) => handleInputChange('isbn', e.target.value)}
@@ -234,15 +235,15 @@ export default function SellBookPage() {
                   </div>
                   <div>
                     <Input
-                      label="出版社（选填）"
-                      placeholder="请输入出版社"
+                      label={t('books.sell.publisher')}
+                      placeholder={t('books.publisher')}
                       value={form.publisher}
                       onChange={(e) => handleInputChange('publisher', e.target.value)}
                     />
                   </div>
                   <div>
                     <Input
-                      label="出版年份（选填）"
+                      label={t('books.sell.publishYear')}
                       placeholder="2020"
                       value={form.publishYear}
                       onChange={(e) => handleInputChange('publishYear', e.target.value)}
@@ -252,7 +253,7 @@ export default function SellBookPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium">分类</label>
+                    <label className="text-sm font-medium">{t('books.sell.category')}</label>
                     <select 
                       className="w-full mt-1 p-2 border border-input rounded-md"
                       value={form.category}
@@ -265,8 +266,8 @@ export default function SellBookPage() {
                   </div>
                   <div>
                     <Input
-                      label="所在地区"
-                      placeholder="如：北京海淀区"
+                      label={t('books.sell.location')}
+                      placeholder="Beijing Haidian District"
                       value={form.location}
                       onChange={(e) => handleInputChange('location', e.target.value)}
                       error={errors.location}
@@ -277,8 +278,8 @@ export default function SellBookPage() {
 
                 <div>
                   <Input
-                    label="标签（选填）"
-                    placeholder="用逗号分隔，如：编程,前端,JavaScript"
+                    label={t('books.sell.tags')}
+                    placeholder={t('books.sell.tagsPlaceholder')}
                     value={form.tags}
                     onChange={(e) => handleInputChange('tags', e.target.value)}
                   />
@@ -286,14 +287,14 @@ export default function SellBookPage() {
               </CardContent>
             </Card>
 
-            {/* 品相和价格 */}
+            {/* Condition and price */}
             <Card>
               <CardHeader>
-                <CardTitle>品相和价格</CardTitle>
+                <CardTitle>{t('books.sell.conditionAndPrice')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium mb-3 block">书籍品相</label>
+                  <label className="text-sm font-medium mb-3 block">{t('books.sell.bookCondition')}</label>
                   <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
                     {conditions.map((condition) => (
                       <label
@@ -325,8 +326,8 @@ export default function SellBookPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Input
-                      label="售价"
-                      placeholder="请输入售价"
+                      label={t('books.sell.price')}
+                      placeholder={t('books.price')}
                       value={form.price}
                       onChange={(e) => handleInputChange('price', e.target.value)}
                       error={errors.price}
@@ -335,8 +336,8 @@ export default function SellBookPage() {
                   </div>
                   <div>
                     <Input
-                      label="原价（选填）"
-                      placeholder="请输入原价"
+                      label={t('books.sell.originalPrice')}
+                      placeholder={t('books.originalPrice')}
                       value={form.originalPrice}
                       onChange={(e) => handleInputChange('originalPrice', e.target.value)}
                       error={errors.originalPrice}
@@ -346,21 +347,21 @@ export default function SellBookPage() {
               </CardContent>
             </Card>
 
-            {/* 图片上传 */}
+            {/* Image upload */}
             <Card>
               <CardHeader>
-                <CardTitle>书籍图片</CardTitle>
+                <CardTitle>{t('books.sell.images')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* 图片预览 */}
+                  {/* Image preview */}
                   {imagePreview.length > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                       {imagePreview.map((src, index) => (
                         <div key={index} className="relative aspect-[3/4] rounded-lg overflow-hidden">
                           <Image
                             src={src}
-                            alt={`预览 ${index + 1}`}
+                            alt={`Preview ${index + 1}`}
                             fill
                             className="object-cover"
                           />
@@ -373,7 +374,7 @@ export default function SellBookPage() {
                           </button>
                           {index === 0 && (
                             <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                              封面
+                              Cover
                             </div>
                           )}
                         </div>
@@ -381,17 +382,17 @@ export default function SellBookPage() {
                     </div>
                   )}
 
-                  {/* 上传按钮 */}
+                  {/* Upload button */}
                   {form.images.length < 5 && (
                     <div>
                       <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <div className="text-2xl mb-2">📷</div>
                           <p className="text-sm text-muted-foreground">
-                            点击上传图片（最多5张）
+                            {t('books.sell.uploadImages')}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            支持 JPG、PNG 格式，建议尺寸 400x600
+                            {t('books.sell.imageFormat')}
                           </p>
                         </div>
                         <input
@@ -410,27 +411,27 @@ export default function SellBookPage() {
                   )}
 
                   <div className="text-xs text-muted-foreground">
-                    <p>📝 图片上传提示：</p>
+                    <p>{t('books.sell.imageHints')}</p>
                     <ul className="ml-4 mt-1 space-y-1">
-                      <li>• 第一张图片将作为封面显示</li>
-                      <li>• 建议上传书籍正面、背面、内页等多角度照片</li>
-                      <li>• 清晰的图片能提高成交几率</li>
+                      <li>{t('books.sell.imageHint1')}</li>
+                      <li>{t('books.sell.imageHint2')}</li>
+                      <li>{t('books.sell.imageHint3')}</li>
                     </ul>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* 商品描述 */}
+            {/* Product description */}
             <Card>
               <CardHeader>
-                <CardTitle>商品描述</CardTitle>
+                <CardTitle>{t('books.sell.description')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <Input
-                  label="详细描述"
+                  label={t('books.sell.descriptionLabel')}
                   type="textarea"
-                  placeholder="请详细描述书籍的状态、使用情况、购买原因等，诚信描述能提高买家信任度..."
+                  placeholder={t('books.sell.descriptionPlaceholder')}
                   value={form.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   error={errors.description}
@@ -438,24 +439,24 @@ export default function SellBookPage() {
                   required
                 />
                 <div className="mt-2 text-xs text-muted-foreground">
-                  <p>💡 描述建议包含：</p>
+                  <p>{t('books.sell.descriptionHints')}</p>
                   <ul className="ml-4 mt-1 space-y-1">
-                    <li>• 书籍的具体状态（是否有笔记、折页等）</li>
-                    <li>• 购买时间和使用频率</li>
-                    <li>• 出售原因</li>
-                    <li>• 适合的读者群体</li>
+                    <li>{t('books.sell.descriptionHint1')}</li>
+                    <li>{t('books.sell.descriptionHint2')}</li>
+                    <li>{t('books.sell.descriptionHint3')}</li>
+                    <li>{t('books.sell.descriptionHint4')}</li>
                   </ul>
                 </div>
               </CardContent>
             </Card>
 
-            {/* 提交按钮 */}
+            {/* Submit buttons */}
             <div className="flex gap-4 justify-end">
               <Link href="/books">
-                <Button variant="outline">取消</Button>
+                <Button variant="outline">{t('common.cancel')}</Button>
               </Link>
               <Button type="submit" loading={loading}>
-                {loading ? '发布中...' : '发布书籍'}
+                {loading ? t('books.sell.publishing') : t('books.sell.publish')}
               </Button>
             </div>
           </form>

@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle, Badge, Button } from '@/compo
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
 import { BookOrder, OrderStatus } from '@/types';
 import { cn, formatDate } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, useI18n } from '@/contexts';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function OrdersPage() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [orders, setOrders] = useState<BookOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'buy' | 'sell'>('buy');
@@ -135,19 +136,19 @@ export default function OrdersPage() {
   }, [user]);
 
   const statusLabels: Record<OrderStatus, { label: string; color: string; description: string }> = {
-    pending: { label: '待确认', color: 'warning', description: '等待卖家确认订单' },
-    confirmed: { label: '已确认', color: 'info', description: '卖家已确认，等待付款' },
-    paid: { label: '已付款', color: 'success', description: '买家已付款，等待发货' },
-    shipped: { label: '已发货', color: 'info', description: '卖家已发货，等待收货' },
-    completed: { label: '已完成', color: 'success', description: '交易已完成' },
-    cancelled: { label: '已取消', color: 'destructive', description: '订单已取消' }
+    pending: { label: t('orders.pending'), color: 'warning', description: t('orders.status.pending.desc') },
+    confirmed: { label: t('orders.confirmed'), color: 'info', description: t('orders.status.confirmed.desc') },
+    paid: { label: t('orders.paid'), color: 'success', description: t('orders.status.paid.desc') },
+    shipped: { label: t('orders.shipped'), color: 'info', description: t('orders.status.shipped.desc') },
+    completed: { label: t('orders.completed'), color: 'success', description: t('orders.status.completed.desc') },
+    cancelled: { label: t('orders.cancelled'), color: 'destructive', description: t('orders.status.cancelled.desc') }
   };
 
   const paymentLabels = {
-    wechat: '微信支付',
-    alipay: '支付宝',
-    cash: '现金交易',
-    'bank-transfer': '银行转账'
+    wechat: t('orders.paymentMethod.wechat'),
+    alipay: t('orders.paymentMethod.alipay'),
+    cash: t('orders.paymentMethod.cash'),
+    'bank-transfer': t('orders.paymentMethod.bankTransfer')
   };
 
   // 根据当前标签页和用户ID筛选订单
@@ -190,18 +191,18 @@ export default function OrdersPage() {
       switch (order.status) {
         case 'pending':
           actions.push(
-            { label: '确认订单', action: () => handleStatusChange(order.id, 'confirmed'), variant: 'default' },
-            { label: '拒绝订单', action: () => handleStatusChange(order.id, 'cancelled'), variant: 'outline' }
+            { label: t('orders.confirmOrder'), action: () => handleStatusChange(order.id, 'confirmed'), variant: 'default' },
+            { label: t('orders.rejectOrder'), action: () => handleStatusChange(order.id, 'cancelled'), variant: 'outline' }
           );
           break;
         case 'paid':
           actions.push(
-            { label: '确认发货', action: () => handleStatusChange(order.id, 'shipped'), variant: 'default' }
+            { label: t('orders.confirmShipping'), action: () => handleStatusChange(order.id, 'shipped'), variant: 'default' }
           );
           break;
         case 'shipped':
           actions.push(
-            { label: '确认完成', action: () => handleStatusChange(order.id, 'completed'), variant: 'default' }
+            { label: t('orders.confirmComplete'), action: () => handleStatusChange(order.id, 'completed'), variant: 'default' }
           );
           break;
       }
@@ -211,13 +212,13 @@ export default function OrdersPage() {
       switch (order.status) {
         case 'confirmed':
           actions.push(
-            { label: '立即付款', action: () => handleStatusChange(order.id, 'paid'), variant: 'default' },
-            { label: '取消订单', action: () => handleStatusChange(order.id, 'cancelled'), variant: 'outline' }
+            { label: t('orders.payNow'), action: () => handleStatusChange(order.id, 'paid'), variant: 'default' },
+            { label: t('orders.cancelOrder'), action: () => handleStatusChange(order.id, 'cancelled'), variant: 'outline' }
           );
           break;
         case 'shipped':
           actions.push(
-            { label: '确认收货', action: () => handleStatusChange(order.id, 'completed'), variant: 'default' }
+            { label: t('orders.confirmReceipt'), action: () => handleStatusChange(order.id, 'completed'), variant: 'default' }
           );
           break;
       }
@@ -254,9 +255,9 @@ export default function OrdersPage() {
         <div className="p-6">
           {/* 头部 */}
           <div className="mb-8">
-            <h1 className="text-2xl font-bold mb-2">📋 订单管理</h1>
+            <h1 className="text-2xl font-bold mb-2">{t('orders.title')}</h1>
             <p className="text-muted-foreground">
-              管理您的买卖订单，跟踪交易状态
+              {t('orders.subtitle')}
             </p>
           </div>
 
@@ -273,7 +274,7 @@ export default function OrdersPage() {
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                我的购买
+                {t('orders.myPurchases')}
               </button>
               <button
                 onClick={() => setActiveTab('sell')}
@@ -284,7 +285,7 @@ export default function OrdersPage() {
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                我的销售
+                {t('orders.mySales')}
               </button>
             </div>
 
@@ -297,7 +298,7 @@ export default function OrdersPage() {
                       <div className="text-lg font-bold text-brand-primary">
                         {activeTab === 'buy' ? stats.buy.total : stats.sell.total}
                       </div>
-                      <div className="text-sm text-muted-foreground">总订单</div>
+                      <div className="text-sm text-muted-foreground">{t('orders.totalOrders')}</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -308,7 +309,7 @@ export default function OrdersPage() {
                       <div className="text-lg font-bold text-orange-600">
                         {activeTab === 'buy' ? stats.buy.pending : stats.sell.pending}
                       </div>
-                      <div className="text-sm text-muted-foreground">进行中</div>
+                      <div className="text-sm text-muted-foreground">{t('orders.ongoing')}</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -319,7 +320,7 @@ export default function OrdersPage() {
                       <div className="text-lg font-bold text-green-600">
                         {activeTab === 'buy' ? stats.buy.completed : stats.sell.completed}
                       </div>
-                      <div className="text-sm text-muted-foreground">已完成</div>
+                      <div className="text-sm text-muted-foreground">{t('orders.completed')}</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -331,7 +332,7 @@ export default function OrdersPage() {
                         ¥{activeTab === 'buy' ? stats.buy.amount : stats.sell.amount}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {activeTab === 'buy' ? '总支出' : '总收入'}
+                        {activeTab === 'buy' ? t('orders.totalSpent') : t('orders.totalEarned')}
                       </div>
                     </div>
                   </CardContent>
@@ -347,7 +348,7 @@ export default function OrdersPage() {
               size="sm"
               onClick={() => setStatusFilter('all')}
             >
-              全部
+              {t('orders.all')}
             </Button>
             {Object.entries(statusLabels).map(([status, { label }]) => (
               <Button 
@@ -365,17 +366,17 @@ export default function OrdersPage() {
           {loading && filteredOrders.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-4xl mb-4">📋</div>
-              <div>正在加载订单...</div>
+              <div>{t('orders.loading')}</div>
             </div>
           ) : filteredOrders.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📋</div>
-              <h3 className="text-lg font-semibold mb-2">暂无订单</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('orders.empty')}</h3>
               <p className="text-muted-foreground mb-4">
-                {activeTab === 'buy' ? '您还没有购买过任何书籍' : '您还没有收到任何订单'}
+                {activeTab === 'buy' ? t('orders.emptyBuy') : t('orders.emptySell')}
               </p>
               <Link href="/books">
-                <Button>去书市看看</Button>
+                <Button>{t('orders.goShopping')}</Button>
               </Link>
             </div>
           ) : (
@@ -390,7 +391,7 @@ export default function OrdersPage() {
                       <div className="flex justify-between items-start">
                         <div>
                           <CardTitle className="text-lg">
-                            订单号：{order.id}
+                            {t('orders.orderNumber')}：{order.id}
                           </CardTitle>
                           <div className="flex items-center gap-2 mt-2">
                             <Badge 
@@ -432,7 +433,7 @@ export default function OrdersPage() {
                             {order.book.title}
                           </h4>
                           <p className="text-sm text-muted-foreground mb-2">
-                            作者：{order.book.author}
+                            {t('books.detail.author')}：{order.book.author}
                           </p>
                           <div className="text-xs text-muted-foreground">
                             <p>📍 {order.book.location}</p>
@@ -444,22 +445,22 @@ export default function OrdersPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm">
                         <div>
                           <span className="text-muted-foreground">
-                            {activeTab === 'buy' ? '卖家：' : '买家：'}
+                            {activeTab === 'buy' ? t('orders.seller') : t('orders.buyer')}：
                           </span>
                           <span>
                             {activeTab === 'buy' ? order.book.sellerName : order.buyerName}
                           </span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">联系方式：</span>
+                          <span className="text-muted-foreground">{t('orders.contactInfo')}：</span>
                           <span>{order.buyerContact}</span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">下单时间：</span>
+                          <span className="text-muted-foreground">{t('orders.orderTime')}：</span>
                           <span>{formatDate(order.createdAt)}</span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">更新时间：</span>
+                          <span className="text-muted-foreground">{t('orders.updateTime')}：</span>
                           <span>{formatDate(order.updatedAt)}</span>
                         </div>
                       </div>
@@ -467,7 +468,7 @@ export default function OrdersPage() {
                       {/* 买家留言 */}
                       {order.message && (
                         <div className="mb-4 p-3 bg-muted rounded-lg">
-                          <div className="text-sm font-medium mb-1">买家留言：</div>
+                          <div className="text-sm font-medium mb-1">{t('orders.buyerMessage')}：</div>
                           <div className="text-sm text-muted-foreground">{order.message}</div>
                         </div>
                       )}

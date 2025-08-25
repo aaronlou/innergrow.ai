@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge, Progress } from '@/components/ui';
 import { Button } from '@/components/ui';
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
-import { useAuth } from '@/contexts';
+import { useAuth, useI18n } from '@/contexts';
 import Link from 'next/link';
 
 // export const metadata: Metadata = {
@@ -13,6 +13,7 @@ import Link from 'next/link';
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { t } = useI18n();
   
   // 模拟数据
   const mockStats = {
@@ -68,10 +69,10 @@ export default function DashboardPage() {
           {/* 欢迎信息 */}
           <div className="mb-8">
             <h1 className="text-2xl font-bold mb-2">
-              你好，{user?.name}! 😊
+              {t('dashboard.welcome', { name: user?.name })} 😊
             </h1>
             <p className="text-muted-foreground">
-              今天是您成长之旅的第 {mockStats.streakDays} 天，继续保持动力！
+              {t('dashboard.subtitle', { days: mockStats.streakDays })}
             </p>
           </div>
 
@@ -81,7 +82,7 @@ export default function DashboardPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">活跃目标</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('dashboard.activeGoals')}</p>
                     <p className="text-2xl font-bold text-brand-primary">{mockStats.activeGoals}</p>
                   </div>
                   <div className="w-12 h-12 bg-brand-primary/10 rounded-full flex items-center justify-center">
@@ -95,7 +96,7 @@ export default function DashboardPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">完成率</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('dashboard.completionRate')}</p>
                     <p className="text-2xl font-bold text-green-600">{mockStats.completionRate}%</p>
                   </div>
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -109,7 +110,7 @@ export default function DashboardPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">本周任务</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('dashboard.weeklyTasks')}</p>
                     <p className="text-2xl font-bold text-blue-600">{mockStats.weeklyTasks}</p>
                   </div>
                   <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -123,7 +124,7 @@ export default function DashboardPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">连续天数</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('dashboard.streakDays')}</p>
                     <p className="text-2xl font-bold text-orange-600">{mockStats.streakDays}</p>
                   </div>
                   <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
@@ -140,14 +141,14 @@ export default function DashboardPage() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>最近的目标</CardTitle>
+                    <CardTitle>{t('dashboard.recentGoals')}</CardTitle>
                     <Link href="/goals">
                       <Button variant="outline" size="sm">
-                        查看全部
+                        {t('dashboard.viewAll')}
                       </Button>
                     </Link>
                   </div>
-                  <CardDescription>查看和管理您的成长目标</CardDescription>
+                  <CardDescription>{t('dashboard.manageGoals')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -178,8 +179,8 @@ export default function DashboardPage() {
               {/* 成长见解 */}
               <Card>
                 <CardHeader>
-                  <CardTitle>成长见解</CardTitle>
-                  <CardDescription>基于您数据的个性化建议</CardDescription>
+                  <CardTitle>{t('dashboard.insights')}</CardTitle>
+                  <CardDescription>{t('dashboard.personalizedAdvice')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -203,27 +204,27 @@ export default function DashboardPage() {
               {/* 快捷操作 */}
               <Card>
                 <CardHeader>
-                  <CardTitle>快捷操作</CardTitle>
-                  <CardDescription>常用功能快速访问</CardDescription>
+                  <CardTitle>{t('dashboard.quickActions')}</CardTitle>
+                  <CardDescription>{t('dashboard.commonFeatures')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     <Link href="/chat">
                       <Button variant="outline" className="w-full justify-start">
                         <span className="mr-2">🤖</span>
-                        与 AI 助手对话
+                        {t('dashboard.chatWithAI')}
                       </Button>
                     </Link>
                     <Link href="/goals">
                       <Button variant="outline" className="w-full justify-start">
                         <span className="mr-2">➕</span>
-                        添加新目标
+                        {t('dashboard.addNewGoal')}
                       </Button>
                     </Link>
                     <Link href="/reports">
                       <Button variant="outline" className="w-full justify-start">
                         <span className="mr-2">📈</span>
-                        查看成长报告
+                        {t('dashboard.viewReports')}
                       </Button>
                     </Link>
                   </div>

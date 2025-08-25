@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Toast } from '@/components/ui';
 import { Button, Input } from '@/components/ui';
-import { useAuth } from '@/contexts';
+import { useAuth, useI18n } from '@/contexts';
 import { useForm } from '@/hooks';
 import { useState, useEffect } from 'react';
 
@@ -20,6 +20,7 @@ interface LoginFormData extends Record<string, string> {
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useAuth();
+  const { t } = useI18n();
   const router = useRouter();
   const [toast, setToast] = useState<{
     show: boolean;
@@ -49,7 +50,7 @@ export default function LoginPage() {
         setToast({
           show: true,
           type: 'success',
-          message: '登录成功！正在跳转...',
+          message: t('auth.loginSuccess'),
         });
         
         setTimeout(() => {
@@ -59,7 +60,7 @@ export default function LoginPage() {
         setToast({
           show: true,
           type: 'error',
-          message: result.error || '登录失败，请重试',
+          message: result.error || t('auth.loginError'),
         });
       }
     },
@@ -77,31 +78,31 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-brand-primary mb-2">InnerGrow.ai</h1>
-          <p className="text-muted-foreground">AI 驱动的个人成长助手</p>
+          <p className="text-muted-foreground">{t('home.hero.subtitle')}</p>
         </div>
         
         <Card>
           <CardHeader>
-            <CardTitle>欢迎回来</CardTitle>
+            <CardTitle>{t('auth.welcomeBack')}</CardTitle>
             <CardDescription>
-              登录您的账户以继续您的成长之旅
+              {t('auth.loginSubtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
-                label="邮箱地址"
+                label={t('auth.email')}
                 type="email"
-                placeholder="请输入您的邮箱"
+                placeholder={t('auth.emailPlaceholder')}
                 value={fields.email.value}
                 error={fields.email.touched ? fields.email.error : ''}
                 onChange={(e) => setValue('email', e.target.value)}
                 required
               />
               <Input
-                label="密码"
+                label={t('auth.password')}
                 type="password"
-                placeholder="请输入密码"
+                placeholder={t('auth.loginPasswordPlaceholder')}
                 value={fields.password.value}
                 error={fields.password.touched ? fields.password.error : ''}
                 onChange={(e) => setValue('password', e.target.value)}
@@ -110,10 +111,10 @@ export default function LoginPage() {
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center space-x-2">
                   <input type="checkbox" className="rounded" />
-                  <span>记住我</span>
+                  <span>{t('auth.rememberMe')}</span>
                 </label>
                 <a href="#" className="text-brand-primary hover:underline">
-                  忘记密码？
+                  {t('auth.forgotPassword')}
                 </a>
               </div>
               <Button 
@@ -122,15 +123,15 @@ export default function LoginPage() {
                 size="lg"
                 loading={isSubmitting}
               >
-                {isSubmitting ? '登录中...' : '登录'}
+                {isSubmitting ? t('auth.loggingIn') : t('common.login')}
               </Button>
             </form>
             
             <div className="text-center mt-4">
               <span className="text-sm text-muted-foreground">
-                还没有账户？{' '}
+                {t('auth.noAccount')}{' '}
                 <Link href="/auth/register" className="text-brand-primary hover:underline">
-                  立即注册
+                  {t('auth.registerNow')}
                 </Link>
               </span>
             </div>
@@ -138,9 +139,9 @@ export default function LoginPage() {
             {/* 演示提示 */}
             <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>演示账户：</strong><br />
-                邮箱: demo@innergrow.ai<br />
-                密码: password
+                <strong>{t('auth.demoAccount')}:</strong><br />
+                {t('auth.email')}: demo@innergrow.ai<br />
+                {t('auth.password')}: password
               </p>
             </div>
           </CardContent>
@@ -151,7 +152,7 @@ export default function LoginPage() {
       {toast.show && (
         <Toast
           type={toast.type}
-          title={toast.type === 'success' ? '成功' : '错误'}
+          title={toast.type === 'success' ? t('common.success') : t('common.error')}
           description={toast.message}
           onClose={() => setToast(prev => ({ ...prev, show: false }))}
         />

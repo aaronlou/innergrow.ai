@@ -194,7 +194,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         prev.map(s => s.id === finalSession.id ? finalSession : s)
       );
     } catch (error) {
-      console.error('AI回复生成失败:', error);
+      console.error('AI response generation failed:', error);
     } finally {
       setIsLoading(false);
     }

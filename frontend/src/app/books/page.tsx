@@ -5,10 +5,12 @@ import { Card, CardContent, CardHeader, Button, Input, Badge } from '@/component
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
 import { Book, BookCategory, BookCondition, BookSearchFilter } from '@/types';
 import { cn, formatDate, truncateText } from '@/lib/utils';
+import { useI18n } from '@/contexts';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function BooksPage() {
+  const { t } = useI18n();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<BookSearchFilter>({
@@ -83,23 +85,23 @@ export default function BooksPage() {
   }, []);
 
   const categories: { value: BookCategory; label: string }[] = [
-    { value: 'literature', label: '文学' },
-    { value: 'science', label: '科学' },
-    { value: 'technology', label: '技术' },
-    { value: 'history', label: '历史' },
-    { value: 'philosophy', label: '哲学' },
-    { value: 'art', label: '艺术' },
-    { value: 'education', label: '教育' },
-    { value: 'children', label: '儿童' },
-    { value: 'other', label: '其他' }
+    { value: 'literature', label: t('books.category.literature') },
+    { value: 'science', label: t('books.category.science') },
+    { value: 'technology', label: t('books.category.technology') },
+    { value: 'history', label: t('books.category.history') },
+    { value: 'philosophy', label: t('books.category.philosophy') },
+    { value: 'art', label: t('books.category.art') },
+    { value: 'education', label: t('books.category.education') },
+    { value: 'children', label: t('books.category.children') },
+    { value: 'other', label: t('books.category.other') }
   ];
 
   const conditions: { value: BookCondition; label: string; color: string }[] = [
-    { value: 'new', label: '全新', color: 'success' },
-    { value: 'like-new', label: '几乎全新', color: 'success' },
-    { value: 'good', label: '良好', color: 'info' },
-    { value: 'fair', label: '一般', color: 'warning' },
-    { value: 'poor', label: '较差', color: 'destructive' }
+    { value: 'new', label: t('books.condition.new'), color: 'success' },
+    { value: 'like-new', label: t('books.condition.likeNew'), color: 'success' },
+    { value: 'good', label: t('books.condition.good'), color: 'info' },
+    { value: 'fair', label: t('books.condition.fair'), color: 'warning' },
+    { value: 'poor', label: t('books.condition.poor'), color: 'destructive' }
   ];
 
   const getConditionInfo = (condition: BookCondition) => {
@@ -126,30 +128,30 @@ export default function BooksPage() {
     <ProtectedRoute>
       <DashboardLayout>
         <div className="p-6">
-          {/* 头部 */}
+          {/* Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-2xl font-bold mb-2">📚 二手书市场</h1>
+              <h1 className="text-2xl font-bold mb-2">{t('books.title')}</h1>
               <p className="text-muted-foreground">
-                发现好书，分享知识，让每本书都有新的归宿
+                {t('books.subtitle')}
               </p>
             </div>
             <div className="flex gap-3">
               <Link href="/books/sell">
-                <Button>📖 发布书籍</Button>
+                <Button>{t('books.publishBook')}</Button>
               </Link>
               <Link href="/books/my-books">
-                <Button variant="outline">📚 我的书架</Button>
+                <Button variant="outline">{t('books.myBooks')}</Button>
               </Link>
             </div>
           </div>
 
-          {/* 搜索和筛选 */}
+          {/* Search and filter */}
           <div className="bg-white rounded-lg border p-6 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="md:col-span-2">
                 <Input
-                  placeholder="搜索书名、作者或描述..."
+                  placeholder={t('books.searchPlaceholder')}
                   value={filter.keyword || ''}
                   onChange={(e) => setFilter(prev => ({ ...prev, keyword: e.target.value }))}
                 />
@@ -160,7 +162,7 @@ export default function BooksPage() {
                   value={filter.category || ''}
                   onChange={(e) => setFilter(prev => ({ ...prev, category: e.target.value as BookCategory || undefined }))}
                 >
-                  <option value="">所有分类</option>
+                  <option value="">{t('books.allCategories')}</option>
                   {categories.map(cat => (
                     <option key={cat.value} value={cat.value}>{cat.label}</option>
                   ))}
@@ -172,7 +174,7 @@ export default function BooksPage() {
                   value={filter.condition || ''}
                   onChange={(e) => setFilter(prev => ({ ...prev, condition: e.target.value as BookCondition || undefined }))}
                 >
-                  <option value="">所有品相</option>
+                  <option value="">{t('books.allConditions')}</option>
                   {conditions.map(cond => (
                     <option key={cond.value} value={cond.value}>{cond.label}</option>
                   ))}
@@ -181,7 +183,7 @@ export default function BooksPage() {
             </div>
           </div>
 
-          {/* 书籍网格 */}
+          {/* Books grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredBooks.map((book) => {
               const conditionInfo = getConditionInfo(book.condition);
@@ -248,12 +250,12 @@ export default function BooksPage() {
           {filteredBooks.length === 0 && (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📚</div>
-              <h3 className="text-lg font-semibold mb-2">暂无符合条件的书籍</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('books.empty')}</h3>
               <p className="text-muted-foreground mb-4">
-                试试调整搜索条件，或者
+                {t('books.emptyDescription')}
               </p>
               <Link href="/books/sell">
-                <Button>发布第一本书</Button>
+                <Button>{t('books.publishFirst')}</Button>
               </Link>
             </div>
           )}

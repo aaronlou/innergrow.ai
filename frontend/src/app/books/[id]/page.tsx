@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, Badge, Button, Modal, ModalHe
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
 import { Book, BookCondition, ShippingAddress, PaymentMethod } from '@/types';
 import { cn, formatDate } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, useI18n } from '@/contexts';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -14,6 +14,7 @@ export default function BookDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useI18n();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
@@ -102,11 +103,11 @@ export default function BookDetailPage() {
   }, [params.id]);
 
   const conditions: { value: BookCondition; label: string; color: string; description: string }[] = [
-    { value: 'new', label: '全新', color: 'success', description: '未拆封或刚拆封' },
-    { value: 'like-new', label: '几乎全新', color: 'success', description: '轻微使用痕迹' },
-    { value: 'good', label: '良好', color: 'info', description: '正常使用痕迹' },
-    { value: 'fair', label: '一般', color: 'warning', description: '明显使用痕迹' },
-    { value: 'poor', label: '较差', color: 'destructive', description: '重度使用痕迹' }
+    { value: 'new', label: t('books.condition.new'), color: 'success', description: t('books.condition.new.desc') },
+    { value: 'like-new', label: t('books.condition.likeNew'), color: 'success', description: t('books.condition.likeNew.desc') },
+    { value: 'good', label: t('books.condition.good'), color: 'info', description: t('books.condition.good.desc') },
+    { value: 'fair', label: t('books.condition.fair'), color: 'warning', description: t('books.condition.fair.desc') },
+    { value: 'poor', label: t('books.condition.poor'), color: 'destructive', description: t('books.condition.poor.desc') }
   ];
 
   const getConditionInfo = (condition: BookCondition) => {
@@ -121,7 +122,7 @@ export default function BookDetailPage() {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // 这里应该调用实际的API创建订单
-    alert('下单成功！卖家会尽快联系您确认订单详情。');
+    alert(t('purchase.success'));
     setShowPurchaseModal(false);
     setLoading(false);
   };
@@ -135,7 +136,7 @@ export default function BookDetailPage() {
           <div className="p-6 flex justify-center items-center min-h-96">
             <div className="text-center">
               <div className="text-4xl mb-4">📚</div>
-              <div>正在加载书籍信息...</div>
+              <div>{t('common.loading')}</div>
             </div>
           </div>
         </DashboardLayout>
@@ -150,10 +151,10 @@ export default function BookDetailPage() {
           <div className="p-6 flex justify-center items-center min-h-96">
             <div className="text-center">
               <div className="text-4xl mb-4">❌</div>
-              <h3 className="text-lg font-semibold mb-2">书籍不存在</h3>
-              <p className="text-muted-foreground mb-4">您访问的书籍可能已被删除或不存在</p>
+              <h3 className="text-lg font-semibold mb-2">{t('books.bookNotFound')}</h3>
+              <p className="text-muted-foreground mb-4">{t('books.bookNotFoundDesc')}</p>
               <Link href="/books">
-                <Button>返回书市</Button>
+                <Button>{t('books.backToMarket')}</Button>
               </Link>
             </div>
           </div>
@@ -171,7 +172,7 @@ export default function BookDetailPage() {
           {/* 面包屑 */}
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
             <Link href="/books" className="hover:text-foreground">
-              二手书市场
+              {t('books.breadcrumb.market')}
             </Link>
             <span>/</span>
             <span className="text-foreground">{book.title}</span>
@@ -228,7 +229,7 @@ export default function BookDetailPage() {
               <div className="space-y-6">
                 <div>
                   <h1 className="text-2xl font-bold mb-2">{book.title}</h1>
-                  <p className="text-muted-foreground mb-4">作者：{book.author}</p>
+                  <p className="text-muted-foreground mb-4">{t('books.detail.author')}：{book.author}</p>
                   
                   <div className="flex items-center gap-4 mb-4">
                     <div className="flex items-center gap-2">
@@ -243,34 +244,34 @@ export default function BookDetailPage() {
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-muted-foreground">ISBN：</span>
-                    <span>{book.isbn || '暂无'}</span>
+                    <span className="text-muted-foreground">{t('books.detail.isbn')}：</span>
+                    <span>{book.isbn || t('books.detail.isbnNotAvailable')}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">出版社：</span>
-                    <span>{book.publisher || '暂无'}</span>
+                    <span className="text-muted-foreground">{t('books.detail.publisher')}：</span>
+                    <span>{book.publisher || t('books.detail.publisherNotAvailable')}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">出版年份：</span>
-                    <span>{book.publishYear || '暂无'}</span>
+                    <span className="text-muted-foreground">{t('books.detail.publishYear')}：</span>
+                    <span>{book.publishYear || t('books.detail.publishYearNotAvailable')}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">品相：</span>
+                    <span className="text-muted-foreground">{t('books.detail.condition')}：</span>
                     <span>{conditionInfo.label}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">位置：</span>
+                    <span className="text-muted-foreground">{t('books.detail.location')}：</span>
                     <span>{book.location}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">发布时间：</span>
+                    <span className="text-muted-foreground">{t('books.detail.publishTime')}：</span>
                     <span>{formatDate(book.createdAt)}</span>
                   </div>
                 </div>
 
                 {book.tags && book.tags.length > 0 && (
                   <div>
-                    <div className="text-sm text-muted-foreground mb-2">标签：</div>
+                    <div className="text-sm text-muted-foreground mb-2">{t('books.sell.tags')}：</div>
                     <div className="flex flex-wrap gap-2">
                       {book.tags.map((tag, index) => (
                         <Badge key={index} variant="outline" size="sm">
@@ -282,7 +283,7 @@ export default function BookDetailPage() {
                 )}
 
                 <div>
-                  <h3 className="font-semibold mb-3">商品描述</h3>
+                  <h3 className="font-semibold mb-3">{t('books.sell.description')}</h3>
                   <div className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
                     {book.description}
                   </div>
@@ -295,7 +296,7 @@ export default function BookDetailPage() {
               <div className="sticky top-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>购买信息</CardTitle>
+                    <CardTitle>{t('books.purchaseInfo')}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* 卖家信息 */}
@@ -310,7 +311,7 @@ export default function BookDetailPage() {
                       </div>
                       <div className="flex-1">
                         <div className="font-medium">{book.sellerName}</div>
-                        <div className="text-sm text-muted-foreground">卖家</div>
+                        <div className="text-sm text-muted-foreground">{t('books.seller')}</div>
                       </div>
                     </div>
 
@@ -320,7 +321,7 @@ export default function BookDetailPage() {
                         <Badge variant={conditionInfo.color as 'success' | 'info' | 'warning' | 'destructive'} size="sm">
                           {conditionInfo.label}
                         </Badge>
-                        <span className="text-sm font-medium">品相说明</span>
+                        <span className="text-sm font-medium">{t('books.conditionDescription')}</span>
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {conditionInfo.description}
@@ -331,10 +332,10 @@ export default function BookDetailPage() {
                     <div className="space-y-3">
                       {isOwnBook ? (
                         <div className="text-center p-4 bg-muted rounded-lg">
-                          <p className="text-sm text-muted-foreground">这是您发布的书籍</p>
+                          <p className="text-sm text-muted-foreground">{t('books.detail.ownBook')}</p>
                           <Link href="/books/my-books">
                             <Button variant="outline" className="mt-2">
-                              管理我的书籍
+                              {t('books.myBooks.title')}
                             </Button>
                           </Link>
                         </div>
@@ -345,26 +346,26 @@ export default function BookDetailPage() {
                             size="lg"
                             onClick={() => setShowPurchaseModal(true)}
                           >
-                            立即购买
+                            {t('books.buyNow')}
                           </Button>
                           <Button variant="outline" className="w-full">
-                            联系卖家
+                            {t('books.contactSeller')}
                           </Button>
                         </>
                       ) : (
                         <div className="text-center p-4 bg-muted rounded-lg">
-                          <p className="text-sm text-muted-foreground">此书籍已售出</p>
+                          <p className="text-sm text-muted-foreground">{t('books.soldOut')}</p>
                         </div>
                       )}
                     </div>
 
                     {/* 温馨提示 */}
                     <div className="text-xs text-muted-foreground bg-muted p-3 rounded-lg">
-                      <div className="font-medium mb-1">💡 购买提示</div>
+                      <div className="font-medium mb-1">{t('books.purchaseTips')}</div>
                       <ul className="space-y-1">
-                        <li>• 建议先联系卖家确认书籍状态</li>
-                        <li>• 支持当面交易和邮寄</li>
-                        <li>• 交易前请仔细查看商品描述</li>
+                        <li>{t('books.tip1')}</li>
+                        <li>{t('books.tip2')}</li>
+                        <li>{t('books.tip3')}</li>
                       </ul>
                     </div>
                   </CardContent>
@@ -376,59 +377,59 @@ export default function BookDetailPage() {
           {/* 购买弹窗 */}
           <Modal open={showPurchaseModal} onClose={() => setShowPurchaseModal(false)}>
             <ModalHeader 
-              title="确认购买" 
-              description={`购买《${book.title}》`}
+              title={t('purchase.title')} 
+              description={t('purchase.subtitle', { title: book.title })}
               onClose={() => setShowPurchaseModal(false)}
             />
             <ModalContent>
               <div className="space-y-4">
                 <div className="p-4 bg-muted rounded-lg">
                   <div className="flex justify-between items-center">
-                    <span>商品价格：</span>
+                    <span>{t('purchase.itemPrice')}</span>
                     <span className="text-lg font-bold text-brand-primary">¥{book.price}</span>
                   </div>
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium">联系方式</label>
+                  <label className="text-sm font-medium">{t('purchase.contact')}</label>
                   <Input
-                    placeholder="请输入您的手机号或微信号"
+                    placeholder={t('purchase.contactPlaceholder')}
                     value={buyerInfo.contact}
                     onChange={(e) => setBuyerInfo(prev => ({ ...prev, contact: e.target.value }))}
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium">留言（选填）</label>
+                  <label className="text-sm font-medium">{t('purchase.message')}</label>
                   <Input
                     type="textarea"
-                    placeholder="向卖家说明您的需求..."
+                    placeholder={t('purchase.messagePlaceholder')}
                     value={buyerInfo.message}
                     onChange={(e) => setBuyerInfo(prev => ({ ...prev, message: e.target.value }))}
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium">支付方式</label>
+                  <label className="text-sm font-medium">{t('purchase.paymentMethod')}</label>
                   <select 
                     className="w-full mt-1 p-2 border border-input rounded-md"
                     value={buyerInfo.paymentMethod}
                     onChange={(e) => setBuyerInfo(prev => ({ ...prev, paymentMethod: e.target.value as PaymentMethod }))}
                   >
-                    <option value="wechat">微信支付</option>
-                    <option value="alipay">支付宝</option>
-                    <option value="cash">现金交易</option>
-                    <option value="bank-transfer">银行转账</option>
+                    <option value="wechat">{t('purchase.wechat')}</option>
+                    <option value="alipay">{t('purchase.alipay')}</option>
+                    <option value="cash">{t('purchase.cash')}</option>
+                    <option value="bank-transfer">{t('purchase.bankTransfer')}</option>
                   </select>
                 </div>
               </div>
             </ModalContent>
             <ModalFooter>
               <Button variant="outline" onClick={() => setShowPurchaseModal(false)}>
-                取消
+                {t('purchase.cancel')}
               </Button>
               <Button onClick={handlePurchase} loading={loading}>
-                确认下单
+                {t('purchase.confirm')}
               </Button>
             </ModalFooter>
           </Modal>

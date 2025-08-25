@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge, Progress, Modal, ModalHeader, ModalContent, ModalFooter } from '@/components/ui';
 import { Button, Input } from '@/components/ui';
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
+import { useI18n } from '@/contexts';
 import { useState } from 'react';
 
 interface Goal {
@@ -17,12 +18,13 @@ interface Goal {
 }
 
 export default function GoalsPage() {
+  const { t } = useI18n();
   const [goals] = useState<Goal[]>([
     {
       id: '1',
       title: '每日阅读30分钟',
       description: '通过每天阅读来扩展知识面和提升思维能力',
-      category: '学习',
+      category: 'goals.filter.learning',
       status: 'active',
       progress: 75,
       targetDate: '2024-12-31',
@@ -32,7 +34,7 @@ export default function GoalsPage() {
       id: '2', 
       title: '坚持健身锻炼',
       description: '每周至少进行3次有氧运动，每次30分钟以上',
-      category: '健康',
+      category: 'goals.filter.health',
       status: 'active', 
       progress: 60,
       targetDate: '2024-12-31',
@@ -42,7 +44,7 @@ export default function GoalsPage() {
       id: '3',
       title: '学习新的编程技能',
       description: '掌握 React 和 TypeScript 的高级用法',
-      category: '职业',
+      category: 'goals.filter.career',
       status: 'completed',
       progress: 100,
       targetDate: '2024-01-15',
@@ -51,9 +53,16 @@ export default function GoalsPage() {
   ]);
   
   const [showAddModal, setShowAddModal] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<string>('全部');
+  const [activeFilter, setActiveFilter] = useState<string>(t('goals.filter.all'));
 
-  const categories = ['全部', '健康', '学习', '职业', '人际关系', '财务'];
+  const categories = [
+    t('goals.filter.all'),
+    t('goals.filter.health'),
+    t('goals.filter.learning'),
+    t('goals.filter.career'),
+    t('goals.filter.relationships'),
+    t('goals.filter.finance')
+  ];
   
   const getStatusColor = (status: string) => {
     switch(status) {
@@ -66,16 +75,16 @@ export default function GoalsPage() {
 
   const getStatusText = (status: string) => {
     switch(status) {
-      case 'active': return '进行中';
-      case 'completed': return '已完成';
-      case 'paused': return '暂停';
+      case 'active': return t('goals.status.active');
+      case 'completed': return t('goals.status.completed');
+      case 'paused': return t('goals.status.paused');
       default: return status;
     }
   };
 
-  const filteredGoals = activeFilter === '全部' 
+  const filteredGoals = activeFilter === t('goals.filter.all')
     ? goals 
-    : goals.filter(goal => goal.category === activeFilter);
+    : goals.filter(goal => t(goal.category) === activeFilter);
 
   const stats = {
     total: goals.length,
@@ -88,20 +97,20 @@ export default function GoalsPage() {
     <ProtectedRoute>
       <DashboardLayout>
         <div className="p-6">
-          {/* 头部 */}
+          {/* Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-2xl font-bold mb-2">目标管理</h1>
+              <h1 className="text-2xl font-bold mb-2">{t('goals.title')}</h1>
               <p className="text-muted-foreground">
-                设定、追踪和实现您的个人成长目标
+                {t('goals.subtitle')}
               </p>
             </div>
             <Button onClick={() => setShowAddModal(true)}>
-              + 添加新目标
+              + {t('goals.addNew')}
             </Button>
           </div>
 
-          {/* 统计卡片 */}
+          {/* Statistics cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <Card>
               <CardContent className="pt-6">
@@ -110,7 +119,7 @@ export default function GoalsPage() {
                     <span className="text-lg">🎯</span>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">总目标</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('goals.total')}</p>
                     <p className="text-2xl font-bold">{stats.total}</p>
                   </div>
                 </div>
@@ -124,7 +133,7 @@ export default function GoalsPage() {
                     <span className="text-lg">✅</span>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">进行中</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('goals.active')}</p>
                     <p className="text-2xl font-bold text-green-600">{stats.active}</p>
                   </div>
                 </div>
@@ -138,7 +147,7 @@ export default function GoalsPage() {
                     <span className="text-lg">🏆</span>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">已完成</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('goals.completed')}</p>
                     <p className="text-2xl font-bold text-blue-600">{stats.completed}</p>
                   </div>
                 </div>
@@ -152,7 +161,7 @@ export default function GoalsPage() {
                     <span className="text-lg">⏸️</span>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">暂停</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('goals.paused')}</p>
                     <p className="text-2xl font-bold text-orange-600">{stats.paused}</p>
                   </div>
                 </div>
@@ -160,7 +169,7 @@ export default function GoalsPage() {
             </Card>
           </div>
 
-          {/* 筛选器 */}
+          {/* Filter */}
           <div className="flex gap-2 mb-6">
             {categories.map((category) => (
               <Button 
@@ -174,7 +183,7 @@ export default function GoalsPage() {
             ))}
           </div>
 
-          {/* 目标列表 */}
+          {/* Goals list */}
           <div className="space-y-4">
             {filteredGoals.map((goal) => (
               <Card key={goal.id} className="hover:shadow-md transition-shadow">
@@ -192,7 +201,7 @@ export default function GoalsPage() {
                       </CardDescription>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm text-muted-foreground">进度</div>
+                      <div className="text-sm text-muted-foreground">{t('goals.progress')}</div>
                       <div className="text-2xl font-bold text-brand-primary">{goal.progress}%</div>
                     </div>
                   </div>
@@ -203,16 +212,16 @@ export default function GoalsPage() {
                     
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-muted-foreground">
-                        {goal.targetDate ? `目标日期: ${goal.targetDate}` : '无截止日期'}
+                        {goal.targetDate ? `${t('goals.targetDate')}: ${goal.targetDate}` : t('goals.noTargetDate')}
                       </span>
-                      <span className="text-muted-foreground">类别: {goal.category}</span>
+                      <span className="text-muted-foreground">{t('goals.category')}: {t(goal.category)}</span>
                     </div>
                     
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">查看详情</Button>
-                      <Button variant="outline" size="sm">编辑</Button>
+                      <Button variant="outline" size="sm">{t('goals.viewDetails')}</Button>
+                      <Button variant="outline" size="sm">{t('goals.edit')}</Button>
                       {goal.status === 'active' && (
-                        <Button variant="ghost" size="sm">标记完成</Button>
+                        <Button variant="ghost" size="sm">{t('goals.markComplete')}</Button>
                       )}
                     </div>
                   </div>
@@ -221,38 +230,38 @@ export default function GoalsPage() {
             ))}
           </div>
 
-          {/* 添加目标模态框 */}
+          {/* Add goal modal */}
           <Modal open={showAddModal} onClose={() => setShowAddModal(false)}>
             <ModalHeader 
-              title="添加新目标" 
-              description="设定一个新的个人成长目标" 
+              title={t('goals.create.title')} 
+              description={t('goals.create.subtitle')} 
               onClose={() => setShowAddModal(false)}
             />
             <ModalContent>
               <div className="space-y-4">
-                <Input label="目标标题" placeholder="请输入目标标题" />
-                <Input label="目标描述" type="textarea" placeholder="详细描述您的目标" />
+                <Input label={t('goals.create.goalTitle')} placeholder={t('goals.create.goalTitlePlaceholder')} />
+                <Input label={t('goals.create.goalDescription')} type="textarea" placeholder={t('goals.create.goalDescriptionPlaceholder')} />
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium">类别</label>
+                    <label className="text-sm font-medium">{t('goals.create.category')}</label>
                     <select className="w-full mt-1 p-2 border border-input rounded-md">
-                      <option>健康</option>
-                      <option>学习</option>
-                      <option>职业</option>
-                      <option>人际关系</option>
-                      <option>财务</option>
+                      <option>{t('goals.filter.health')}</option>
+                      <option>{t('goals.filter.learning')}</option>
+                      <option>{t('goals.filter.career')}</option>
+                      <option>{t('goals.filter.relationships')}</option>
+                      <option>{t('goals.filter.finance')}</option>
                     </select>
                   </div>
-                  <Input label="目标日期" type="date" />
+                  <Input label={t('goals.create.targetDate')} type="date" />
                 </div>
               </div>
             </ModalContent>
             <ModalFooter>
               <Button variant="outline" onClick={() => setShowAddModal(false)}>
-                取消
+                {t('goals.create.cancel')}
               </Button>
               <Button onClick={() => setShowAddModal(false)}>
-                创建目标
+                {t('goals.create.createGoal')}
               </Button>
             </ModalFooter>
           </Modal>
