@@ -30,11 +30,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { label: t('nav.dashboard'), href: '/dashboard', icon: '🏠' },
     { label: t('nav.chat'), href: '/chat', icon: '🤖' },
     { label: t('nav.goals'), href: '/goals', icon: '🎯' },
-    { label: t('nav.habits'), href: '/habits', icon: '✅' },
-    { label: t('nav.reports'), href: '/reports', icon: '📊' },
-    { label: t('nav.books'), href: '/books', icon: '📚' },
-    { label: t('nav.myBooks'), href: '/books/my-books', icon: '📖' },
-    { label: t('nav.orders'), href: '/books/orders', icon: '📋' },
     { label: t('nav.profile'), href: '/profile', icon: '👤' },
   ];
 
@@ -48,12 +43,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (href === '/books' && pathname === '/books') return true;
     if (href === '/books/my-books' && pathname === '/books/my-books') return true;
     if (href === '/books/orders' && pathname === '/books/orders') return true;
-    
+
     // 其他页面的精确匹配
     if (href !== '/books' && href !== '/books/my-books' && href !== '/books/orders') {
       return pathname === href;
     }
-    
+
     return false;
   };
 
@@ -61,14 +56,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen bg-background flex">
       {/* 移动端遮罩 */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* 侧边栏 */}
-      <aside 
+      <aside
         className={cn(
           'fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -83,8 +78,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
               <span className="font-semibold text-lg">InnerGrow.ai</span>
             </div>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               className="lg:hidden"
               onClick={() => setSidebarOpen(false)}
@@ -116,8 +111,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* 侧边栏底部 */}
           <div className="p-4 border-t border-border">
             <div className="flex items-center space-x-3 mb-4">
-              <Avatar 
-                src={user?.avatar} 
+              <Avatar
+                src={user?.avatar}
                 alt={user?.name}
                 size="md"
                 fallback={user?.name?.charAt(0)}
@@ -131,9 +126,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </p>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="w-full"
               onClick={handleLogout}
             >
@@ -158,7 +153,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               >
                 ☰
               </Button>
-              
+
               {/* 面包屑导航 */}
               <div className="hidden lg:flex items-center space-x-2 text-sm text-muted-foreground">
                 <span>InnerGrow.ai</span>
@@ -181,7 +176,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
 
               {/* 语言切换 */}
-              <LanguageSwitcher 
+              <LanguageSwitcher
                 currentLanguage={language}
                 onLanguageChange={setLanguage}
                 variant="dropdown"
@@ -199,8 +194,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Dropdown
                 trigger={
                   <button className="flex items-center space-x-2 hover:bg-accent rounded-lg p-2 transition-colors">
-                    <Avatar 
-                      src={user?.avatar} 
+                    <Avatar
+                      src={user?.avatar}
                       alt={user?.name}
                       size="sm"
                       fallback={user?.name?.charAt(0)}
