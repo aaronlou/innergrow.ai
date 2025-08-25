@@ -34,11 +34,11 @@ export function I18nProvider({ children, defaultLanguage }: I18nProviderProps) {
 
   // 翻译函数
   const t = (key: string, params?: Record<string, string | number>): string => {
-    const message = messages[key];
+    const message = (messages as Record<string, string>)[key];
     
     if (!message) {
       // 开发环境下显示缺失的翻译key
-      if (process.env.NODE_ENV === 'development') {
+      if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
         console.warn(`Missing translation key: ${key}`);
       }
       return key;
