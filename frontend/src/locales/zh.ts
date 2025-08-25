@@ -40,6 +40,9 @@ export const zh = {
   'nav.myBooks': '我的书架',
   'nav.orders': '订单管理',
   'nav.profile': '个人档案',
+  'nav.features': '功能特色',
+  'nav.pricing': '价格',
+  'nav.about': '关于我们',
 
   // 首页
   'home.title': 'InnerGrow.ai - AI 驱动的个人成长助手',
@@ -50,6 +53,7 @@ export const zh = {
   'home.hero.subtitle': '通过智能对话、目标追踪和个性化建议，让 InnerGrow.ai 成为您最贴心的成长伙伴。科学的方法论结合 AI 技术，助您实现人生目标。',
   'home.hero.startButton': '免费开始成长',
   'home.hero.tryButton': '体验 AI 对话',
+  'home.hero.getStarted': '开始使用',
   
   'home.features.title': '为什么选择 InnerGrow.ai？',
   'home.features.subtitle': '我们将先进的 AI 技术与成长心理学相结合，为您提供科学、个性化的成长方案。',

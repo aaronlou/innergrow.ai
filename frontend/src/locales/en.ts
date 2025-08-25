@@ -40,6 +40,9 @@ export const en = {
   'nav.myBooks': 'My Books',
   'nav.orders': 'Orders',
   'nav.profile': 'Profile',
+  'nav.features': 'Features',
+  'nav.pricing': 'Pricing',
+  'nav.about': 'About Us',
 
   // Homepage
   'home.title': 'InnerGrow.ai - AI-Powered Personal Growth Assistant',
@@ -50,6 +53,7 @@ export const en = {
   'home.hero.subtitle': 'Through intelligent conversations, goal tracking, and personalized recommendations, let InnerGrow.ai be your most caring growth companion. Scientific methodologies combined with AI technology help you achieve your life goals.',
   'home.hero.startButton': 'Start Growing Free',
   'home.hero.tryButton': 'Try AI Chat',
+  'home.hero.getStarted': 'Get Started',
   
   'home.features.title': 'Why Choose InnerGrow.ai?',
   'home.features.subtitle': 'We combine advanced AI technology with growth psychology to provide scientific, personalized growth solutions.',

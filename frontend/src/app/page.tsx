@@ -19,9 +19,9 @@ export default function HomePage() {
               <span className="text-xl font-bold text-brand-primary">InnerGrow.ai</span>
             </div>
             <div className="hidden md:flex items-center space-x-6">
-              <a href="#features" className="text-muted-foreground hover:text-foreground">{t('home.features.title').split('为')[0]}功能特色</a>
-              <a href="#pricing" className="text-muted-foreground hover:text-foreground">价格</a>
-              <a href="#about" className="text-muted-foreground hover:text-foreground">关于我们</a>
+              <a href="#features" className="text-muted-foreground hover:text-foreground">{t('nav.features')}</a>
+              <a href="#pricing" className="text-muted-foreground hover:text-foreground">{t('nav.pricing')}</a>
+              <a href="#about" className="text-muted-foreground hover:text-foreground">{t('nav.about')}</a>
             </div>
             <div className="flex items-center space-x-4">
               {/* 语言切换 */}
@@ -33,7 +33,7 @@ export default function HomePage() {
                 <Button variant="ghost">{t('common.login')}</Button>
               </Link>
               <Link href="/auth/register">
-                <Button>{language === 'zh' ? '开始使用' : 'Get Started'}</Button>
+                <Button>{t('home.hero.getStarted')}</Button>
               </Link>
             </div>
           </div>
