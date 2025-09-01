@@ -9,9 +9,8 @@ export default function ExamsPage() {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<'discover' | 'plans' | 'practice'>('discover');
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Mock exam data
-  const mockExams = [
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [exams, setExams] = useState([
     {
       id: '1',
       title: 'IELTS Academic',
@@ -30,11 +29,36 @@ export default function ExamsPage() {
       duration: '130 minutes',
       studyTime: '2-4 months'
     }
-  ];
+  ]);
+  const [newExam, setNewExam] = useState({
+    title: '',
+    category: 'Language',
+    difficulty: 'Beginner',
+    description: '',
+    duration: '',
+    studyTime: ''
+  });
 
-  const filteredExams = mockExams.filter(exam => 
+  const filteredExams = exams.filter(exam =>
     exam.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleCreateExam = () => {
+    const exam = {
+      id: Date.now().toString(),
+      ...newExam
+    };
+    setExams([...exams, exam]);
+    setNewExam({
+      title: '',
+      category: 'Language',
+      difficulty: 'Beginner',
+      description: '',
+      duration: '',
+      studyTime: ''
+    });
+    setShowCreateModal(false);
+  };
 
   return (
     <ProtectedRoute>
@@ -52,31 +76,28 @@ export default function ExamsPage() {
           <div className="flex space-x-1 mb-8 bg-muted p-1 rounded-lg w-fit">
             <button
               onClick={() => setActiveTab('discover')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'discover'
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'discover'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
-              }`}
+                }`}
             >
               {t('exams.discoverTab')}
             </button>
             <button
               onClick={() => setActiveTab('plans')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'plans'
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'plans'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
-              }`}
+                }`}
             >
               {t('exams.plansTab')}
             </button>
             <button
               onClick={() => setActiveTab('practice')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'practice'
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'practice'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
-              }`}
+                }`}
             >
               {t('exams.practiceTab')}
             </button>
@@ -86,7 +107,7 @@ export default function ExamsPage() {
           {activeTab === 'discover' && (
             <div className="space-y-6">
               {/* Search */}
-              <div className="flex gap-4">
+              <div className="flex gap-4 mb-4">
                 <Input
                   type="text"
                   placeholder={t('exams.searchPlaceholder')}
@@ -94,6 +115,9 @@ export default function ExamsPage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="flex-1"
                 />
+                <Button onClick={() => setShowCreateModal(true)}>
+                  {t('exams.createExam')}
+                </Button>
               </div>
 
               {/* Exam Cards */}
@@ -134,7 +158,7 @@ export default function ExamsPage() {
                 <h3 className="text-lg font-semibold">{t('exams.myStudyPlans')}</h3>
                 <Button>{t('exams.createStudyPlan')}</Button>
               </div>
-              
+
               <div className="text-center py-12">
                 <div className="text-4xl mb-4">📋</div>
                 <h3 className="text-lg font-semibold mb-2">{t('exams.noPlansYet')}</h3>
@@ -147,7 +171,7 @@ export default function ExamsPage() {
           {activeTab === 'practice' && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold mb-4">{t('exams.practiceTools')}</h3>
-              
+
               {/* Practice Categories */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="hover:shadow-md transition-shadow cursor-pointer">
@@ -198,6 +222,105 @@ export default function ExamsPage() {
             </div>
           )}
         </div>
+
+        {/* Create Exam Modal */}
+        {showCreateModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-background rounded-lg p-6 w-full max-w-md mx-4">
+              <h2 className="text-xl font-bold mb-4">{t('exams.createExamTitle')}</h2>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t('exams.examTitle')}</label>
+                  <Input
+                    type="text"
+                    placeholder={t('exams.examTitlePlaceholder')}
+                    value={newExam.title}
+                    onChange={(e) => setNewExam({ ...newExam, title: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t('exams.examDescription')}</label>
+                  <Input
+                    type="text"
+                    placeholder={t('exams.examDescriptionPlaceholder')}
+                    value={newExam.description}
+                    onChange={(e) => setNewExam({ ...newExam, description: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">{t('exams.examCategory')}</label>
+                    <select
+                      className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
+                      value={newExam.category}
+                      onChange={(e) => setNewExam({ ...newExam, category: e.target.value })}
+                    >
+                      <option value="Language">{t('exams.categoryLanguage')}</option>
+                      <option value="Technical">{t('exams.categoryTechnical')}</option>
+                      <option value="Business">{t('exams.categoryBusiness')}</option>
+                      <option value="Health">{t('exams.categoryHealth')}</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">{t('exams.examDifficulty')}</label>
+                    <select
+                      className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
+                      value={newExam.difficulty}
+                      onChange={(e) => setNewExam({ ...newExam, difficulty: e.target.value })}
+                    >
+                      <option value="Beginner">{t('exams.difficultyBeginner')}</option>
+                      <option value="Intermediate">{t('exams.difficultyIntermediate')}</option>
+                      <option value="Advanced">{t('exams.difficultyAdvanced')}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">{t('exams.examDuration')}</label>
+                    <Input
+                      type="text"
+                      placeholder={t('exams.examDurationPlaceholder')}
+                      value={newExam.duration}
+                      onChange={(e) => setNewExam({ ...newExam, duration: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">{t('exams.examStudyTime')}</label>
+                    <Input
+                      type="text"
+                      placeholder={t('exams.examStudyTimePlaceholder')}
+                      value={newExam.studyTime}
+                      onChange={(e) => setNewExam({ ...newExam, studyTime: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1"
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  onClick={handleCreateExam}
+                  className="flex-1"
+                  disabled={!newExam.title || !newExam.description}
+                >
+                  {t('common.create')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </DashboardLayout>
     </ProtectedRoute>
   );
