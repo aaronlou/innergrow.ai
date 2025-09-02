@@ -48,26 +48,15 @@ export function Avatar({
       {...props}
     >
       {src && !imageError ? (
-        src.startsWith('https://') ? (
-          // External image - use img tag instead of Next.js Image for external URLs
-          // eslint-disable-next-line @next/next/no-img-element
+        <div className="aspect-square h-full w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            className="aspect-square h-full w-full object-cover"
+            className="h-full w-full object-cover"
             src={src}
             alt={alt || 'Avatar'}
             onError={handleImageError}
           />
-        ) : (
-          // Internal image - use Next.js Image
-          <Image
-            className="aspect-square h-full w-full object-cover"
-            src={src}
-            alt={alt || 'Avatar'}
-            width={64}
-            height={64}
-            onError={handleImageError}
-          />
-        )
+        </div>
       ) : (
         <div className="flex h-full w-full items-center justify-center rounded-full bg-muted font-medium text-muted-foreground">
           {getFallbackText()}

@@ -182,7 +182,7 @@ const authService = {
       const idToken = authResponse.id_token;
       
       // Send the ID token to your backend
-      const response = await fetch(`${API_BASE_URL}/api/accounts/auth/google-login/`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/google-login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -285,13 +285,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 }
                 resolve(result);
               } catch (error: unknown) {
+                setIsLoading(false);
                 if (error instanceof Error) {
                   resolve({ success: false, error: error.message || 'Google Sign-In failed' });
                 } else {
                   resolve({ success: false, error: 'Google Sign-In failed' });
                 }
-              } finally {
-                setIsLoading(false);
               }
             } else {
               setIsLoading(false);
@@ -310,6 +309,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { success: false, error: error.message || 'Google Sign-In failed' };
       }
       return { success: false, error: 'Google Sign-In failed' };
+    } finally {
+      // Make sure loading state is reset
+      setTimeout(() => setIsLoading(false), 0);
     }
   };
 
