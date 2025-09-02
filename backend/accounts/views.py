@@ -1,5 +1,22 @@
 from django.conf import settings
+from rest_framework import status, generics, permissions
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import login, logout
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+
 from .google_auth import verify_google_token
+from .models import User, UserPreferences
+from .serializers import (
+    UserRegistrationSerializer,
+    UserLoginSerializer,
+    UserSerializer,
+    UserUpdateSerializer,
+    UserPreferencesSerializer
+)
+
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def google_login_view(request):
@@ -21,9 +38,6 @@ def google_login_view(request):
     name = idinfo.get('name', '')
     avatar = idinfo.get('picture', '')
 
-    from .models import User, UserPreferences
-    from rest_framework.authtoken.models import Token
-
     user, created = User.objects.get_or_create(email=email, defaults={
         'first_name': name,
         'username': email.split('@')[0],
@@ -34,7 +48,6 @@ def google_login_view(request):
         UserPreferences.objects.create(user=user)
 
     token, _ = Token.objects.get_or_create(user=user)
-    from .serializers import UserSerializer
     user_serializer = UserSerializer(user)
     return Response({
         'success': True,
@@ -44,22 +57,6 @@ def google_login_view(request):
         },
         'message': 'Google 登录成功'
     }, status=status.HTTP_200_OK)
-from rest_framework import status, generics, permissions
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
-from django.contrib.auth import login, logout
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-
-from .models import User, UserPreferences
-from .serializers import (
-    UserRegistrationSerializer,
-    UserLoginSerializer,
-    UserSerializer,
-    UserUpdateSerializer,
-    UserPreferencesSerializer
-)
 
 
 @api_view(['POST'])
