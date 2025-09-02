@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/compo
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
 import { BookCategory, BookCondition } from '@/types';
 import { cn } from '@/lib/utils';
-import { useAuth, useI18n } from '@/contexts';
+import { useI18n } from '@/contexts';
 import Image from 'next/image';
 import Link from 'next/link';
 

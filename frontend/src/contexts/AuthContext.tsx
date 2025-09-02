@@ -4,6 +4,16 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, ApiResponse } from '@/types';
 import { useLocalStorage } from '@/hooks';
 
+// Define Google User type
+interface GoogleUser {
+  getBasicProfile: () => {
+    getId: () => string;
+    getName: () => string;
+    getEmail: () => string;
+    getImageUrl: () => string;
+  };
+}
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
@@ -60,8 +70,11 @@ const authService = {
       } else {
         return { success: false, error: data.error || '登录失败' };
       }
-    } catch (error: any) {
-      return { success: false, error: error.message || '网络错误，请稍后重试' };
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return { success: false, error: error.message || '网络错误，请稍后重试' };
+      }
+      return { success: false, error: '网络错误，请稍后重试' };
     }
   },
 
@@ -86,8 +99,11 @@ const authService = {
       } else {
         return { success: false, error: data.error || '注册失败', message: data.details };
       }
-    } catch (error: any) {
-      return { success: false, error: error.message || '网络错误，请稍后重试' };
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return { success: false, error: error.message || '网络错误，请稍后重试' };
+      }
+      return { success: false, error: '网络错误，请稍后重试' };
     }
   },
 
@@ -111,12 +127,15 @@ const authService = {
       }
       
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Even if logout fails, we should clear the token
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_token');
       }
-      return { success: false, error: error.message || '登出失败' };
+      if (error instanceof Error) {
+        return { success: false, error: error.message || '登出失败' };
+      }
+      return { success: false, error: '登出失败' };
     }
   },
 
@@ -144,13 +163,16 @@ const authService = {
       } else {
         return { success: false, error: data.error || '更新失败', message: data.details };
       }
-    } catch (error: any) {
-      return { success: false, error: error.message || '网络错误，请稍后重试' };
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return { success: false, error: error.message || '网络错误，请稍后重试' };
+      }
+      return { success: false, error: '网络错误，请稍后重试' };
     }
   },
 
   // Google登录模拟（在真实实现中，这需要后端支持）
-  async googleLogin(googleUser: any): Promise<ApiResponse<User>> {
+  async googleLogin(_googleUser: GoogleUser): Promise<ApiResponse<User>> {
     // This is a placeholder for Google login
     // In a real implementation, you would send the Google ID token to your backend
     // and let the backend verify it with Google's servers
@@ -176,9 +198,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         script.async = true;
         script.defer = true;
         script.onload = () => {
-          // @ts-ignore
+          // @ts-expect-error: gapi is loaded externally
           window.gapi.load('auth2', () => {
-            // @ts-ignore
+            // @ts-expect-error: gapi is loaded externally
             window.gapi.auth2.init({
               client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
               cookiepolicy: 'single_host_origin',
@@ -222,21 +244,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const googleLogin = async (): Promise<ApiResponse<User>> => {
     setIsLoading(true);
     try {
-      // @ts-ignore
+      // @ts-expect-error: gapi is loaded externally
       const auth2 = window.gapi?.auth2?.getAuthInstance();
       if (!auth2) {
         return { success: false, error: 'Google Sign-In not initialized' };
       }
 
-      const googleUser = await auth2.signIn();
-      const result = await authService.googleLogin(googleUser);
+      const _googleUser = await auth2.signIn();
+      const result = await authService.googleLogin(_googleUser);
       
       if (result.success && result.data) {
         setUser(result.data);
       }
       return result;
-    } catch (error: any) {
-      return { success: false, error: error.message || 'Google Sign-In failed' };
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return { success: false, error: error.message || 'Google Sign-In failed' };
+      }
+      return { success: false, error: 'Google Sign-In failed' };
     } finally {
       setIsLoading(false);
     }
@@ -244,7 +269,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = () => {
     // Google登出
-    // @ts-ignore
+    // @ts-expect-error: gapi is loaded externally
     const auth2 = window.gapi?.auth2?.getAuthInstance();
     if (auth2) {
       auth2.signOut();
