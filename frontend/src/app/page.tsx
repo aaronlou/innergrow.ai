@@ -29,10 +29,10 @@ export default function HomePage() {
                 currentLanguage={language}
                 onLanguageChange={setLanguage}
               />
-              <Link href="/auth/login">
+              <Link href="accounts/auth/login">
                 <Button variant="ghost">{t('common.login')}</Button>
               </Link>
-              <Link href="/auth/register">
+              <Link href="accounts/auth/register">
                 <Button>{t('home.hero.getStarted')}</Button>
               </Link>
             </div>
@@ -54,7 +54,7 @@ export default function HomePage() {
               {t('home.hero.subtitle')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/auth/register">
+              <Link href="accounts/auth/register">
                 <Button size="lg" className="bg-gradient-to-r from-brand-primary to-brand-secondary hover:opacity-90">
                   {t('home.hero.startButton')}
                 </Button>
@@ -215,7 +215,7 @@ export default function HomePage() {
           <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
             {t('home.cta.subtitle')}
           </p>
-          <Link href="/auth/register">
+          <Link href="accounts/auth/register">
             <Button 
               size="lg" 
               className="bg-white text-brand-primary hover:bg-gray-100 font-semibold px-8"

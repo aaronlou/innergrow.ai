@@ -54,7 +54,7 @@ const API_BASE_URL = getApiBaseUrl();
 const authService = {
   async login(email: string, password: string): Promise<ApiResponse<User>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/login/`, {
+      const response = await fetch(`${API_BASE_URL}/api/accounts/auth/login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -83,7 +83,7 @@ const authService = {
 
   async register(name: string, email: string, password: string): Promise<ApiResponse<User>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/register/`, {
+      const response = await fetch(`${API_BASE_URL}/api/accounts/auth/register/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -115,7 +115,7 @@ const authService = {
       const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
       
       if (token) {
-        await fetch(`${API_BASE_URL}/api/auth/logout/`, {
+        await fetch(`${API_BASE_URL}/api/accounts/auth/logout/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -182,7 +182,7 @@ const authService = {
       const idToken = authResponse.id_token;
       
       // Send the ID token to your backend
-      const response = await fetch(`${API_BASE_URL}/api/auth/google-login/`, {
+      const response = await fetch(`${API_BASE_URL}/api/accounts/auth/google-login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

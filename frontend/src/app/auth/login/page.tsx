@@ -195,7 +195,7 @@ export default function LoginPage() {
             <div className="text-center mt-6">
               <span className="text-sm text-muted-foreground">
                 {t('auth.noAccount')}{' '}
-                <Link href="/auth/register" className="text-brand-primary hover:underline">
+                <Link href="accounts/auth/register" className="text-brand-primary hover:underline">
                   {t('auth.registerNow')}
                 </Link>
               </span>
