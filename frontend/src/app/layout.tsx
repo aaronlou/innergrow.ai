@@ -1,7 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider, ChatProvider, I18nProvider } from "@/contexts";
 import "./globals.css";
-import Head from 'next/head';
+import Script from 'next/script';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,9 +30,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh">
-      <Head>
-        <meta name="google-signin-client_id" content={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"} />
-      </Head>
+      <head>
+        <Script
+          src="https://accounts.google.com/gsi/client"
+          strategy="afterInteractive"
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

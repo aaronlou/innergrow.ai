@@ -222,19 +222,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (typeof window !== 'undefined' && !gapiLoaded) {
       const initializeGoogleSignIn = () => {
         const script = document.createElement('script');
-        script.src = 'https://apis.google.com/js/platform.js';
+        script.src = 'https://accounts.google.com/gsi/client';
         script.async = true;
         script.defer = true;
         script.onload = () => {
-          // @ts-expect-error: gapi is loaded externally
-          window.gapi.load('auth2', () => {
-            // @ts-expect-error: gapi is loaded externally
-            window.gapi.auth2.init({
-              client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
-              cookiepolicy: 'single_host_origin',
-            });
-            setGapiLoaded(true);
-          });
+          setGapiLoaded(true);
         };
         document.head.appendChild(script);
       };
@@ -272,37 +264,56 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const googleLogin = async (): Promise<ApiResponse<User>> => {
     setIsLoading(true);
     try {
-      // @ts-expect-error: gapi is loaded externally
-      const auth2 = window.gapi?.auth2?.getAuthInstance();
-      if (!auth2) {
+      // @ts-expect-error: google is loaded externally
+      if (!window.google || !window.google.accounts) {
         return { success: false, error: 'Google Sign-In not initialized' };
       }
 
-      const googleUser = await auth2.signIn();
-      const result = await authService.googleLogin(googleUser);
-      
-      if (result.success && result.data) {
-        setUser(result.data);
-      }
-      return result;
+      return new Promise<ApiResponse<User>>((resolve) => {
+        // @ts-expect-error: google is loaded externally
+        window.google.accounts.id.initialize({
+          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+          callback: async (response: { credential?: string }) => {
+            if (response.credential) {
+              try {
+                const result = await authService.googleLogin({
+                  getAuthResponse: () => ({ id_token: response.credential })
+                } as GoogleUser);
+                
+                if (result.success && result.data) {
+                  setUser(result.data);
+                }
+                resolve(result);
+              } catch (error: unknown) {
+                if (error instanceof Error) {
+                  resolve({ success: false, error: error.message || 'Google Sign-In failed' });
+                } else {
+                  resolve({ success: false, error: 'Google Sign-In failed' });
+                }
+              } finally {
+                setIsLoading(false);
+              }
+            } else {
+              setIsLoading(false);
+              resolve({ success: false, error: 'No credentials received from Google' });
+            }
+          },
+          cancel_on_tap_outside: true
+        });
+        
+        // @ts-expect-error: google is loaded externally
+        window.google.accounts.id.prompt();
+      });
     } catch (error: unknown) {
+      setIsLoading(false);
       if (error instanceof Error) {
         return { success: false, error: error.message || 'Google Sign-In failed' };
       }
       return { success: false, error: 'Google Sign-In failed' };
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const logout = () => {
-    // Google logout
-    // @ts-expect-error: gapi is loaded externally
-    const auth2 = window.gapi?.auth2?.getAuthInstance();
-    if (auth2) {
-      auth2.signOut();
-    }
-    
     // API logout
     authService.logout();
     
