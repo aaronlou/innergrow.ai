@@ -107,7 +107,12 @@ run_migrations() {
     log_info "执行数据库迁移..."
     
     export DJANGO_SETTINGS_MODULE="mysite.production_settings"
-    python manage.py makemigrations accounts books
+    
+    # 为所有应用创建迁移文件
+    log_info "为所有应用创建迁移文件..."
+    python manage.py makemigrations accounts books exams
+    
+    # 执行迁移
     python manage.py migrate
     
     log_success "数据库迁移完成"
