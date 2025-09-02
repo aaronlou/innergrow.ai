@@ -1,3 +1,5 @@
+# Google OAuth 配置
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com')
 """
 Django settings for mysite project.
 

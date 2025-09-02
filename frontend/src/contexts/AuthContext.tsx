@@ -12,6 +12,9 @@ interface GoogleUser {
     getEmail: () => string;
     getImageUrl: () => string;
   };
+  getAuthResponse: () => {
+    id_token: string;
+  };
 }
 
 interface AuthContextType {
@@ -22,7 +25,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<ApiResponse<User>>;
   logout: () => void;
   updateProfile: (updates: Partial<User>) => Promise<ApiResponse<User>>;
-  googleLogin: () => Promise<ApiResponse<User>>;
+  googleLogin: () => Promise<ApiResponse<User>>;  // This matches the actual implementation
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -68,13 +71,13 @@ const authService = {
         }
         return { success: true, data: data.data.user };
       } else {
-        return { success: false, error: data.error || '登录失败' };
+        return { success: false, error: data.error || 'Login failed' };
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return { success: false, error: error.message || '网络错误，请稍后重试' };
+        return { success: false, error: error.message || 'Network error, please try again later' };
       }
-      return { success: false, error: '网络错误，请稍后重试' };
+      return { success: false, error: 'Network error, please try again later' };
     }
   },
 
@@ -97,13 +100,13 @@ const authService = {
         }
         return { success: true, data: data.data.user };
       } else {
-        return { success: false, error: data.error || '注册失败', message: data.details };
+        return { success: false, error: data.error || 'Registration failed', message: data.details };
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return { success: false, error: error.message || '网络错误，请稍后重试' };
+        return { success: false, error: error.message || 'Network error, please try again later' };
       }
-      return { success: false, error: '网络错误，请稍后重试' };
+      return { success: false, error: 'Network error, please try again later' };
     }
   },
 
@@ -133,9 +136,9 @@ const authService = {
         localStorage.removeItem('auth_token');
       }
       if (error instanceof Error) {
-        return { success: false, error: error.message || '登出失败' };
+        return { success: false, error: error.message || 'Logout failed' };
       }
-      return { success: false, error: '登出失败' };
+      return { success: false, error: 'Logout failed' };
     }
   },
 
@@ -144,7 +147,7 @@ const authService = {
       const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
       
       if (!token) {
-        return { success: false, error: '用户未登录' };
+        return { success: false, error: 'User not logged in' };
       }
       
       const response = await fetch(`${API_BASE_URL}/api/auth/profile/`, {
@@ -161,24 +164,49 @@ const authService = {
       if (data.success) {
         return { success: true, data: data.data };
       } else {
-        return { success: false, error: data.error || '更新失败', message: data.details };
+        return { success: false, error: data.error || 'Update failed', message: data.details };
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return { success: false, error: error.message || '网络错误，请稍后重试' };
+        return { success: false, error: error.message || 'Network error, please try again later' };
       }
-      return { success: false, error: '网络错误，请稍后重试' };
+      return { success: false, error: 'Network error, please try again later' };
     }
   },
 
-  // Google登录模拟（在真实实现中，这需要后端支持）
-  async googleLogin(_googleUser: GoogleUser): Promise<ApiResponse<User>> {
-    // This is a placeholder for Google login
-    // In a real implementation, you would send the Google ID token to your backend
-    // and let the backend verify it with Google's servers
-    
-    // For now, we'll return an error indicating this needs backend implementation
-    return { success: false, error: 'Google登录需要后端支持' };
+  // Google Login Implementation
+  async googleLogin(googleUser: GoogleUser): Promise<ApiResponse<User>> {
+    try {
+      // Extract the ID token from the Google user
+      const authResponse = googleUser.getAuthResponse();
+      const idToken = authResponse.id_token;
+      
+      // Send the ID token to your backend
+      const response = await fetch(`${API_BASE_URL}/api/auth/google-login/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id_token: idToken }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Store token in localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('auth_token', data.data.token);
+        }
+        return { success: true, data: data.data.user };
+      } else {
+        return { success: false, error: data.error || 'Google login failed' };
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return { success: false, error: error.message || 'Network error, please try again later' };
+      }
+      return { success: false, error: 'Network error, please try again later' };
+    }
   }
 };
 
@@ -189,7 +217,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const isAuthenticated = !!user;
 
-  // 初始化Google API
+  // Initialize Google API
   useEffect(() => {
     if (typeof window !== 'undefined' && !gapiLoaded) {
       const initializeGoogleSignIn = () => {
@@ -250,8 +278,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { success: false, error: 'Google Sign-In not initialized' };
       }
 
-      const _googleUser = await auth2.signIn();
-      const result = await authService.googleLogin(_googleUser);
+      const googleUser = await auth2.signIn();
+      const result = await authService.googleLogin(googleUser);
       
       if (result.success && result.data) {
         setUser(result.data);
@@ -268,23 +296,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = () => {
-    // Google登出
+    // Google logout
     // @ts-expect-error: gapi is loaded externally
     const auth2 = window.gapi?.auth2?.getAuthInstance();
     if (auth2) {
       auth2.signOut();
     }
     
-    // API登出
+    // API logout
     authService.logout();
     
     setUser(null);
-    // 可以在这里添加其他清理逻辑，如清除其他本地存储数据
+    // Can add other cleanup logic here, such as clearing other local storage data
   };
 
   const updateProfile = async (updates: Partial<User>): Promise<ApiResponse<User>> => {
     if (!user) {
-      return { success: false, error: '用户未登录' };
+      return { success: false, error: 'User not logged in' };
     }
     
     setIsLoading(true);

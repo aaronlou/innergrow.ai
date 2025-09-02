@@ -1,3 +1,49 @@
+from django.conf import settings
+from .google_auth import verify_google_token
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def google_login_view(request):
+    """
+    Google 登录/注册 API
+    前端需传递 { id_token: ... }
+    """
+    id_token_str = request.data.get('id_token')
+    if not id_token_str:
+        return Response({'success': False, 'error': '缺少 id_token'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # 验证 Google Token
+    client_id = getattr(settings, 'GOOGLE_CLIENT_ID', None)
+    idinfo = verify_google_token(id_token_str, client_id)
+    if not idinfo or 'email' not in idinfo:
+        return Response({'success': False, 'error': 'Google token 验证失败'}, status=status.HTTP_400_BAD_REQUEST)
+
+    email = idinfo['email']
+    name = idinfo.get('name', '')
+    avatar = idinfo.get('picture', '')
+
+    from .models import User, UserPreferences
+    from rest_framework.authtoken.models import Token
+
+    user, created = User.objects.get_or_create(email=email, defaults={
+        'first_name': name,
+        'username': email.split('@')[0],
+        'avatar': avatar,
+        'is_active': True,
+    })
+    if created:
+        UserPreferences.objects.create(user=user)
+
+    token, _ = Token.objects.get_or_create(user=user)
+    from .serializers import UserSerializer
+    user_serializer = UserSerializer(user)
+    return Response({
+        'success': True,
+        'data': {
+            'user': user_serializer.data,
+            'token': token.key
+        },
+        'message': 'Google 登录成功'
+    }, status=status.HTTP_200_OK)
 from rest_framework import status, generics, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response

@@ -9,6 +9,7 @@ urlpatterns = [
     path('auth/login/', views.login_view, name='login'),
     path('auth/logout/', views.logout_view, name='logout'),
     path('auth/check-email/', views.check_email_view, name='check_email'),
+    path('auth/google-login/', views.google_login_view, name='google_login'),
     
     # 用户信息
     path('profile/', views.user_profile_view, name='user_profile'),
