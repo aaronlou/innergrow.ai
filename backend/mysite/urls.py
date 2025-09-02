@@ -60,6 +60,7 @@ urlpatterns = [
     # API路由
     path('api/accounts/', include('accounts.urls')),
     path('api/books/', include('books.urls')),
+    path('api/exams/', include('exams.urls')),
 ]
 
 # 开发环境下的媒体文件服务
