@@ -139,6 +139,9 @@ export const zh = {
   'auth.loggingIn': '登录中...',
   'auth.loginSuccess': '登录成功！正在跳转...',
   'auth.registerNow': '立即注册',
+  'auth.orContinueWith': '或继续使用',
+  'auth.googleLogin': 'Google 登录',
+
   // 仪表板
   'dashboard.welcome': '你好，{name}！',
   'dashboard.subtitle': '今天是您成长之旅的第 {days} 天，继续保持动力！',

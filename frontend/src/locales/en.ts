@@ -139,6 +139,9 @@ export const en = {
   'auth.loggingIn': 'Signing in...',
   'auth.loginSuccess': 'Login successful! Redirecting...',
   'auth.registerNow': 'Register Now',
+  'auth.orContinueWith': 'Or continue with',
+  'auth.googleLogin': 'Sign in with Google',
+
   // Dashboard
   'dashboard.welcome': 'Hello, {name}!',
   'dashboard.subtitle': 'Today is day {days} of your growth journey, keep up the momentum!',

@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# PM2 configuration (template is committed, actual config should not be)
+ecosystem.config.js
