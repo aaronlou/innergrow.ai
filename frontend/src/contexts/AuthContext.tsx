@@ -182,7 +182,7 @@ const authService = {
       const idToken = authResponse.id_token;
       
       // Send the ID token to your backend
-      const response = await fetch(`${API_BASE_URL}/api/auth/google-login/`, {
+      const response = await fetch(`${API_BASE_URL}/api/accounts/auth/google-login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
