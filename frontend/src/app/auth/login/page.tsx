@@ -98,6 +98,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      {/* Container for Google Sign-In prompt */}
+      <div id="google-signin-prompt"></div>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-brand-primary mb-2">InnerGrow.ai</h1>
@@ -195,7 +197,7 @@ export default function LoginPage() {
             <div className="text-center mt-6">
               <span className="text-sm text-muted-foreground">
                 {t('auth.noAccount')}{' '}
-                <Link href="accounts/auth/register" className="text-brand-primary hover:underline">
+                <Link href="/auth/register" className="text-brand-primary hover:underline">
                   {t('auth.registerNow')}
                 </Link>
               </span>

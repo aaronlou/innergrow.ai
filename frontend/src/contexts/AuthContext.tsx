@@ -150,7 +150,7 @@ const authService = {
         return { success: false, error: 'User not logged in' };
       }
       
-      const response = await fetch(`${API_BASE_URL}/api/auth/profile/`, {
+      const response = await fetch(`${API_BASE_URL}/api/accounts/profile/update/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -269,6 +269,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { success: false, error: 'Google Sign-In not initialized' };
       }
 
+      // Cancel any existing credential requests first
+      try {
+        // @ts-expect-error: google is loaded externally
+        window.google.accounts.id.cancel();
+      } catch (e) {
+        // Ignore errors from cancellation
+      }
+
       return new Promise<ApiResponse<User>>((resolve) => {
         // @ts-expect-error: google is loaded externally
         window.google.accounts.id.initialize({
@@ -297,7 +305,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
               resolve({ success: false, error: 'No credentials received from Google' });
             }
           },
-          cancel_on_tap_outside: true
+          cancel_on_tap_outside: true,
+          prompt_parent_id: 'google-signin-prompt'
         });
         
         // @ts-expect-error: google is loaded externally
