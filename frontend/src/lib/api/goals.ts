@@ -48,15 +48,15 @@ const createAbortController = (timeoutMs?: number, externalSignal?: AbortSignal)
 // Helper function for API requests with robust error handling and optional timeout/cancellation
 const apiRequest = async (endpoint: string, options: ApiRequestOptions = {}) => {
   const token = getAuthToken();
-  
+
   const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
   };
-  
+
   const authHeaders: Record<string, string> = token ? {
     'Authorization': `Token ${token}`,
   } : {};
-  
+
   // Ensure headers are always a plain object
   const mergedHeaders: Record<string, string> = {
     ...defaultHeaders,
@@ -74,9 +74,11 @@ const apiRequest = async (endpoint: string, options: ApiRequestOptions = {}) => 
     headers: mergedHeaders,
     signal,
   };
-  
+
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    // Resolve endpoint against base using URL to avoid duplicate segments
+    const url = new URL(endpoint, API_BASE_URL.endsWith('/') ? API_BASE_URL : `${API_BASE_URL}/`);
+    const response = await fetch(url.toString(), config);
 
     // Try to parse JSON, but fall back to text on failure
     const tryParseJson = async () => {
@@ -94,7 +96,7 @@ const apiRequest = async (endpoint: string, options: ApiRequestOptions = {}) => 
 
     const payload = await tryParseJson();
 
-  if (!response.ok) {
+    if (!response.ok) {
       // Normalize into ApiResponse shape
       const errorMsg =
         (payload && (payload.error || payload.detail || payload.message)) ||
@@ -178,7 +180,7 @@ export const goalsService = {
   async getGoals(params: Record<string, string> = {}): Promise<ApiResponse<Goal[]>> {
     const searchParams = new URLSearchParams(params);
     const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
-    
+
     try {
       const data = await apiRequest(`/api/goals/${queryString}`, {
         method: 'GET',

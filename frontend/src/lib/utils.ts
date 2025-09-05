@@ -2,16 +2,42 @@
 
 // Determine API base URL based on environment (same logic as in AuthContext)
 export function getApiBaseUrl(): string {
-  if (typeof window !== 'undefined') {
-    // Client-side
-    if (window.location.hostname === 'localhost') {
-      return 'http://localhost:8000'; // Default Django development server
+  // Prefer env var if set
+  const envBase = (process.env.NEXT_PUBLIC_API_BASE_URL || '').trim();
+
+  const normalize = (base: string): string => {
+    if (!base) return '';
+    // If relative like "/api" or "api", prefix with origin on client
+    if (!/^https?:\/\//i.test(base)) {
+      if (typeof window !== 'undefined') {
+        const origin = window.location.origin.replace(/\/$/, '');
+        const path = base.startsWith('/') ? base : `/${base}`;
+        return `${origin}${path}`.replace(/\/$/, '');
+      }
+      // On server we cannot resolve a relative base reliably; fall back below
+      return '';
     }
-    // Production: use environment variable if provided
-    return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+    // Absolute URL: trim trailing slash
+    return base.replace(/\/$/, '');
+  };
+
+  if (typeof window !== 'undefined') {
+    // Client-side: compute sensible default for localhost
+    const host = window.location.hostname;
+    const fromEnv = normalize(envBase);
+    if (fromEnv) return fromEnv;
+
+    // Dev default: localhost or 127.0.0.1
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://localhost:8000';
+    }
+    // Otherwise assume same-origin reverse proxy in production
+    return window.location.origin.replace(/\/$/, '');
   }
-  // Server-side (fallback)
-  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+
+  // Server-side fallback: use absolute env var if provided; else dev default
+  const fromEnv = normalize(envBase);
+  return fromEnv || 'http://localhost:8000';
 }
 
 import { type ClassValue, clsx } from 'clsx';
