@@ -41,7 +41,7 @@ const createAbortController = (timeoutMs?: number, externalSignal?: AbortSignal)
 const apiRequest = async (endpoint: string, options: ApiRequestOptions = {}) => {
   const token = getAuthToken();
 
-  // 调试信息
+  // Debug information
   if (typeof window !== 'undefined') {
     console.log('API Request Debug:', {
       endpoint,
@@ -196,6 +196,13 @@ export const goalsService = {
       const data = await apiRequest(`/api/goals/${queryString}`, {
         method: 'GET',
       });
+      
+      // Handle paginated response - extract results array
+      if (data.success && data.data && typeof data.data === 'object' && 'results' in data.data) {
+        const paginatedData = data.data as { results: Goal[] };
+        return { success: true, data: paginatedData.results };
+      }
+      
       return data;
     } catch (error: unknown) {
       if (error instanceof Error) {

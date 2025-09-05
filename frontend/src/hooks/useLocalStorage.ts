@@ -1,11 +1,11 @@
 import { useState } from 'react';
 
-// 本地存储 Hook
+// Local storage Hook
 export function useLocalStorage<T>(
   key: string,
   initialValue: T
 ): [T, (value: T | ((val: T) => T)) => void] {
-  // 获取存储的值
+  // Get stored value
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === 'undefined') {
       return initialValue;
@@ -20,15 +20,15 @@ export function useLocalStorage<T>(
     }
   });
 
-  // 设置值的函数
+  // Function to set value
   const setValue = (value: T | ((val: T) => T)) => {
     try {
-      // 允许值是一个函数，用于更新基于前一个值的状态
+      // Allow value to be a function to update state based on previous value
       const valueToStore = value instanceof Function ? value(storedValue) : value;
       
       setStoredValue(valueToStore);
       
-      // 保存到本地存储
+      // Save to local storage
       if (typeof window !== 'undefined') {
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
       }

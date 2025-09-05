@@ -14,7 +14,7 @@ interface I18nProviderProps {
 }
 
 export function I18nProvider({ children, defaultLanguage }: I18nProviderProps) {
-  // 从本地存储获取保存的语言设置，如果没有则检测浏览器语言
+  // Get saved language from local storage, or detect browser language if none saved
   const [language, setLanguage] = useLocalStorage<Language>(
     'preferred_language', 
     defaultLanguage || detectBrowserLanguage()
@@ -22,11 +22,11 @@ export function I18nProvider({ children, defaultLanguage }: I18nProviderProps) {
   
   const [messages, setMessages] = useState(() => getMessages(language));
 
-  // 当语言改变时更新消息
+  // Update messages when language changes
   useEffect(() => {
     setMessages(getMessages(language));
     
-    // 更新HTML语言属性
+    // Update HTML language attribute
     if (typeof document !== 'undefined') {
       document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en-US';
     }

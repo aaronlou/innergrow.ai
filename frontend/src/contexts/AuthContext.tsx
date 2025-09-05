@@ -204,16 +204,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [gapiLoaded, setGapiLoaded] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // 检查认证状态：需要同时有user和token
+  // Check authentication status: requires both user and token
   const isAuthenticated = isInitialized && !!user && !!getAuthToken();
 
-  // 初始化认证状态
+  // Initialize authentication state
   useEffect(() => {
     const token = getAuthToken();
     
-    // 检查状态一致性
+    // Check state consistency
     if ((token && !user) || (!token && user)) {
-      // 状态不一致，清理所有认证信息
+      // State inconsistent, clear all authentication info
       setUser(null);
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_token');
@@ -221,9 +221,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     }
     
-    // 标记为已初始化
+    // Mark as initialized
     setIsInitialized(true);
-  }, [user]);
+  }, [user, setUser]);
 
   // Initialize Google API
   useEffect(() => {
@@ -251,7 +251,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
     window.addEventListener('app:unauthorized', onUnauthorized as EventListener);
     return () => window.removeEventListener('app:unauthorized', onUnauthorized as EventListener);
-  }, [setUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const login = async (email: string, password: string): Promise<ApiResponse<User>> => {
     setIsLoading(true);
@@ -259,7 +260,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const result = await authService.login(email, password);
       if (result.success && result.data) {
         setUser(result.data);
-        // Debug: 检查 token 是否正确保存
+        // Debug: Check if token is saved correctly
         const token = localStorage.getItem('auth_token');
         console.log('Login success, token saved:', token ? `${token.substring(0, 10)}...` : 'NO TOKEN');
       }
@@ -381,7 +382,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // API logout
     authService.logout();
     
-    // 清理所有认证相关状态
+    // Clear all authentication related state
     setUser(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');

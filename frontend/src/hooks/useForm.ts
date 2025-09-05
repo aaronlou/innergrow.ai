@@ -47,12 +47,12 @@ export function useForm<T extends Record<string, string>>({
     const rules = validationRules[name];
     if (!rules) return '';
 
-    // 必填验证
+    // Required validation
     if (rules.required && !value.trim()) {
       return '此字段为必填项';
     }
 
-    // 长度验证
+    // Length validation
     if (rules.minLength && value.length < rules.minLength) {
       return `最少需要${rules.minLength}个字符`;
     }
@@ -61,17 +61,17 @@ export function useForm<T extends Record<string, string>>({
       return `最多允许${rules.maxLength}个字符`;
     }
 
-    // 邮箱验证
+    // Email validation
     if (rules.email && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       return '请输入有效的邮箱地址';
     }
 
-    // 正则验证
+    // Regex validation
     if (rules.pattern && value && !rules.pattern.test(value)) {
       return '格式不正确';
     }
 
-    // 自定义验证
+    // Custom validation
     if (rules.custom) {
       const customError = rules.custom(value);
       if (customError) return customError;

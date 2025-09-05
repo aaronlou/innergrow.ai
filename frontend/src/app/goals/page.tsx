@@ -20,7 +20,7 @@ type LocalGoal = Goal; // Alias keeps room for future UI-only additions via inte
 
 function GoalsPageContent() {
   const { t } = useI18n(); // i18n helpers
-  const { isAuthenticated } = useAuth(); // 认证状态
+  const { isAuthenticated } = useAuth(); // Authentication state
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -37,7 +37,7 @@ function GoalsPageContent() {
     public: 0,
     private: 0
   });
-  
+
   // Generic UI states
   const [loading, setLoading] = useState(true); // initial and refresh loading
   const [error, setError] = useState<string | null>(null); // global error banner
@@ -51,7 +51,7 @@ function GoalsPageContent() {
     setFilterCategoryId('');
     setFilterVisibility('all');
   };
-  
+
   // Controlled state for the create-goal form
   const [formState, setFormState] = useState({
     title: '',
@@ -95,17 +95,18 @@ function GoalsPageContent() {
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // Load goals
       const goalsResponse = await goalsService.getGoals();
       if (goalsResponse.success && goalsResponse.data) {
         setGoals(goalsResponse.data as LocalGoal[]);
-  } else {
+      } else {
+        setGoals([]); // Ensure goals is always an array
         setError(goalsResponse.error || 'Failed to load goals');
       }
-      
-  // Load categories
+
+      // Load categories
       const categoriesResponse = await goalsService.getCategories();
       if (categoriesResponse.success) {
         const categoryList = categoriesResponse.data ?? [];
@@ -117,8 +118,8 @@ function GoalsPageContent() {
           ));
         }
       }
-      
-  // Load statuses
+
+      // Load statuses
       const statusesResponse = await goalsService.getStatuses();
       if (statusesResponse.success) {
         const statusList = statusesResponse.data ?? [];
@@ -130,8 +131,8 @@ function GoalsPageContent() {
           ));
         }
       }
-      
-  // Load statistics
+
+      // Load statistics
       const statsResponse = await goalsService.getStatistics();
       if (statsResponse.success && statsResponse.data) {
         setStatistics(statsResponse.data);
@@ -197,7 +198,7 @@ function GoalsPageContent() {
         }
         const qs = params.toString();
         router.replace(qs ? `${pathname}?${qs}` : pathname);
-      } catch {}
+      } catch { }
     }, 150);
   }, [searchParams, router, pathname]);
 
@@ -215,7 +216,7 @@ function GoalsPageContent() {
       localStorage.setItem('goals_filter_category', filterCategoryId);
     }
     // Update URL query (category)
-  scheduleUrlUpdate({ category: filterCategoryId || undefined });
+    scheduleUrlUpdate({ category: filterCategoryId || undefined });
   }, [filterCategoryId, scheduleUrlUpdate]);
 
   useEffect(() => {
@@ -223,14 +224,14 @@ function GoalsPageContent() {
       localStorage.setItem('goals_filter_visibility', filterVisibility);
     }
     // Update URL query (visibility)
-  scheduleUrlUpdate({ visibility: filterVisibility !== 'all' ? filterVisibility : undefined });
+    scheduleUrlUpdate({ visibility: filterVisibility !== 'all' ? filterVisibility : undefined });
   }, [filterVisibility, scheduleUrlUpdate]);
 
   // loadData defined above
 
   // Map a language-agnostic status code to badge color
   const getStatusColor = (statusCode: string) => {
-    switch(statusCode) {
+    switch (statusCode) {
       case 'active':
         return 'success';
       case 'completed':
@@ -245,9 +246,9 @@ function GoalsPageContent() {
   // Pick status display text based on current language (backend provides name/name_en)
   const getStatusText = (status: GoalStatus) => {
     // Use the translated name based on current language
-    const currentLanguage = typeof window !== 'undefined' ? 
+    const currentLanguage = typeof window !== 'undefined' ?
       localStorage.getItem('language') || 'zh' : 'zh';
-    
+
     return currentLanguage === 'en' ? status.name_en : status.name;
   };
 
@@ -259,9 +260,9 @@ function GoalsPageContent() {
   // Pick category display text based on current language (backend provides name/name_en)
   const getCategoryText = (category: GoalCategory) => {
     // Use the translated name based on current language
-    const currentLanguage = typeof window !== 'undefined' ? 
+    const currentLanguage = typeof window !== 'undefined' ?
       localStorage.getItem('language') || 'zh' : 'zh';
-    
+
     return currentLanguage === 'en' ? category.name_en : category.name;
   };
 
@@ -284,13 +285,13 @@ function GoalsPageContent() {
         visibility: formState.visibility,
         target_date: formState.target_date
       };
-      
+
       const response = await goalsService.createGoal(goalData);
-      
+
       if (response.success && response.data) {
         // Add the new goal to the list
         setGoals(prev => [...prev, response.data as LocalGoal]);
-        
+
         // Reset form
         setFormState({
           title: '',
@@ -300,16 +301,16 @@ function GoalsPageContent() {
           visibility: 'private',
           target_date: ''
         });
-        
+
         // Close modal
         setShowAddModal(false);
-        
+
         // Reload statistics
         const statsResponse = await goalsService.getStatistics();
         if (statsResponse.success && statsResponse.data) {
           setStatistics(statsResponse.data);
         }
-  } else {
+      } else {
         setError(response.error || 'Failed to create goal');
       }
     } catch (err) {
@@ -331,7 +332,7 @@ function GoalsPageContent() {
       }
       // First try to get existing suggestions
       const suggestionsResponse = await goalsService.getSuggestions(goalId);
-      
+
       if (suggestionsResponse.success && suggestionsResponse.data) {
         // Use existing suggestions
         setAiSuggestions(prev => ({
@@ -341,7 +342,7 @@ function GoalsPageContent() {
       } else {
         // Generate new suggestions
         const analyzeResponse = await goalsService.analyzeGoal(goalId, { model, timeoutMs: 20000 });
-        
+
         if (analyzeResponse.success && analyzeResponse.data) {
           setAiSuggestions(prev => ({
             ...prev,
@@ -355,7 +356,7 @@ function GoalsPageContent() {
           return;
         }
       }
-      
+
       // Show suggestions
       setShowSuggestions(prev => ({
         ...prev,
@@ -374,14 +375,14 @@ function GoalsPageContent() {
   const handleAcceptSuggestion = async (goalId: string, suggestionId: string) => {
     try {
       const response = await goalsService.acceptSuggestion(goalId, suggestionId, true);
-      
+
       if (response.success && response.data) {
         // Update local state to mark suggestion as accepted
         setAiSuggestions(prev => ({
           ...prev,
-          [goalId]: prev[goalId].map(suggestion => 
-            suggestion.id === suggestionId 
-              ? { ...suggestion, accepted: true } 
+          [goalId]: prev[goalId].map(suggestion =>
+            suggestion.id === suggestionId
+              ? { ...suggestion, accepted: true }
               : suggestion
           )
         }));
@@ -402,15 +403,15 @@ function GoalsPageContent() {
   const handleMarkComplete = async (goalId: string) => {
     try {
       const response = await goalsService.markComplete(goalId);
-      
+
       if (response.success && response.data) {
         // Update the goal in the list
-        setGoals(prev => 
-          prev.map(goal => 
+        setGoals(prev =>
+          prev.map(goal =>
             goal.id === goalId ? response.data as LocalGoal : goal
           )
         );
-        
+
         // Reload statistics
         const statsResponse = await goalsService.getStatistics();
         if (statsResponse.success && statsResponse.data) {
@@ -434,7 +435,7 @@ function GoalsPageContent() {
     try {
       const res = await goalsService.deleteGoal(goalId);
       if (res.success) {
-        setGoals(prev => prev.filter(g => g.id !== goalId));
+        setGoals(prev => (prev || []).filter(g => g.id !== goalId));
         const statsResponse = await goalsService.getStatistics();
         if (statsResponse.success && statsResponse.data) {
           setStatistics(statsResponse.data);
@@ -453,7 +454,7 @@ function GoalsPageContent() {
   };
 
   // Compute filtered goal list based on activeFilter using language-agnostic status code
-  const filteredGoals = goals.filter(goal => {
+  const filteredGoals = (goals || []).filter(goal => {
     // status filter
     if (activeFilter !== 'all') {
       const code = getStatusCode(goal.status);
@@ -517,8 +518,8 @@ function GoalsPageContent() {
           <div className="p-6">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-red-800">{error}</p>
-              <Button 
-                onClick={loadData} 
+              <Button
+                onClick={loadData}
                 className="mt-2"
               >
                 {t('common.retry')}
@@ -546,8 +547,8 @@ function GoalsPageContent() {
               <Button onClick={() => setShowAddModal(true)} aria-label={t('goals.addNew')}>
                 + {t('goals.addNew')}
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={async () => {
                   try {
                     const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -579,7 +580,7 @@ function GoalsPageContent() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center">
@@ -593,7 +594,7 @@ function GoalsPageContent() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center">
@@ -607,7 +608,7 @@ function GoalsPageContent() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center">
@@ -625,8 +626,8 @@ function GoalsPageContent() {
 
           {/* Filters: status (buttons), category (select), visibility (buttons) */}
           <div className="flex flex-wrap items-center gap-2 mb-6">
-            <Button 
-              variant={activeFilter === 'all' ? "primary" : "outline"} 
+            <Button
+              variant={activeFilter === 'all' ? "primary" : "outline"}
               size="sm"
               aria-pressed={activeFilter === 'all'}
               aria-label={t('goals.filter.all')}
@@ -634,8 +635,8 @@ function GoalsPageContent() {
             >
               {t('goals.filter.all')}
             </Button>
-            <Button 
-              variant={activeFilter === 'active' ? "primary" : "outline"} 
+            <Button
+              variant={activeFilter === 'active' ? "primary" : "outline"}
               size="sm"
               aria-pressed={activeFilter === 'active'}
               aria-label={t('goals.status.active')}
@@ -643,8 +644,8 @@ function GoalsPageContent() {
             >
               {t('goals.status.active')}
             </Button>
-            <Button 
-              variant={activeFilter === 'completed' ? "primary" : "outline"} 
+            <Button
+              variant={activeFilter === 'completed' ? "primary" : "outline"}
               size="sm"
               aria-pressed={activeFilter === 'completed'}
               aria-label={t('goals.status.completed')}
@@ -652,8 +653,8 @@ function GoalsPageContent() {
             >
               {t('goals.status.completed')}
             </Button>
-            <Button 
-              variant={activeFilter === 'paused' ? "primary" : "outline"} 
+            <Button
+              variant={activeFilter === 'paused' ? "primary" : "outline"}
               size="sm"
               aria-pressed={activeFilter === 'paused'}
               aria-label={t('goals.status.paused')}
@@ -664,7 +665,7 @@ function GoalsPageContent() {
 
             <div className="ml-2 flex items-center gap-2">
               <label className="text-sm text-muted-foreground" htmlFor="goals-filter-category">{t('goals.category')}</label>
-              <select 
+              <select
                 className="p-2 border border-input rounded-md text-sm"
                 value={filterCategoryId}
                 onChange={(e) => setFilterCategoryId(e.target.value)}
@@ -680,22 +681,22 @@ function GoalsPageContent() {
 
             <div className="ml-auto flex items-center gap-2">
               <span className="text-sm text-muted-foreground">{t('goals.visibility')}</span>
-              <Button 
-                variant={filterVisibility === 'all' ? 'primary' : 'outline'} 
+              <Button
+                variant={filterVisibility === 'all' ? 'primary' : 'outline'}
                 size="sm"
                 aria-pressed={filterVisibility === 'all'}
                 aria-label={t('goals.filter.all')}
                 onClick={() => setFilterVisibility('all')}
               >{t('goals.filter.all')}</Button>
-              <Button 
-                variant={filterVisibility === 'public' ? 'primary' : 'outline'} 
+              <Button
+                variant={filterVisibility === 'public' ? 'primary' : 'outline'}
                 size="sm"
                 aria-pressed={filterVisibility === 'public'}
                 aria-label={t('goals.visibility.public')}
                 onClick={() => setFilterVisibility('public')}
               >{t('goals.visibility.public')}</Button>
-              <Button 
-                variant={filterVisibility === 'private' ? 'primary' : 'outline'} 
+              <Button
+                variant={filterVisibility === 'private' ? 'primary' : 'outline'}
                 size="sm"
                 aria-pressed={filterVisibility === 'private'}
                 aria-label={t('goals.visibility.private')}
@@ -703,8 +704,8 @@ function GoalsPageContent() {
               >{t('goals.visibility.private')}</Button>
 
               {/* Clear all filters */}
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={clearAllFilters}
                 aria-label={t('goals.resetFilters')}
@@ -721,8 +722,8 @@ function GoalsPageContent() {
               {activeFilter !== 'all' && (
                 <Badge variant="default" size="sm" className="flex items-center gap-1">
                   {t('goals.status.' + activeFilter)}
-                  <button 
-                    className="ml-1 text-xs text-muted-foreground hover:text-foreground" 
+                  <button
+                    className="ml-1 text-xs text-muted-foreground hover:text-foreground"
                     onClick={() => setActiveFilter('all')}
                     aria-label={t('common.close')}
                   >
@@ -736,8 +737,8 @@ function GoalsPageContent() {
                     const cat = categories.find(c => c.id === filterCategoryId);
                     return cat ? getCategoryText(cat) : t('goals.category');
                   })()}
-                  <button 
-                    className="ml-1 text-xs text-muted-foreground hover:text-foreground" 
+                  <button
+                    className="ml-1 text-xs text-muted-foreground hover:text-foreground"
                     onClick={() => setFilterCategoryId('')}
                     aria-label={t('common.close')}
                   >
@@ -748,8 +749,8 @@ function GoalsPageContent() {
               {filterVisibility !== 'all' && (
                 <Badge variant="default" size="sm" className="flex items-center gap-1">
                   {filterVisibility === 'public' ? t('goals.visibility.public') : t('goals.visibility.private')}
-                  <button 
-                    className="ml-1 text-xs text-muted-foreground hover:text-foreground" 
+                  <button
+                    className="ml-1 text-xs text-muted-foreground hover:text-foreground"
                     onClick={() => setFilterVisibility('all')}
                     aria-label={t('common.close')}
                   >
@@ -768,8 +769,8 @@ function GoalsPageContent() {
                   <>
                     <p className="text-muted-foreground">{t('goals.empty')}</p>
                     <p className="text-muted-foreground mt-2">{t('goals.emptyDescription')}</p>
-                    <Button 
-                      className="mt-4" 
+                    <Button
+                      className="mt-4"
                       onClick={() => setShowAddModal(true)}
                     >
                       {t('goals.addNew')}
@@ -815,17 +816,17 @@ function GoalsPageContent() {
                     <CardContent>
                       <div className="space-y-4">
                         <Progress value={goal.progress} className="h-2" />
-                        
+
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-muted-foreground">
                             {goal.target_date ? `${t('goals.targetDate')}: ${goal.target_date}` : t('goals.noTargetDate')}
                           </span>
                           <span className="text-muted-foreground">{t('goals.category')}: {getCategoryText(goal.category)}</span>
                         </div>
-                        
+
                         <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => {
                               setDetailsGoal(goal);
@@ -834,8 +835,8 @@ function GoalsPageContent() {
                           >
                             {t('goals.viewDetails')}
                           </Button>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => {
                               setEditingGoal(goal);
@@ -852,15 +853,15 @@ function GoalsPageContent() {
                           >
                             {t('goals.edit')}
                           </Button>
-          <Dropdown 
+                          <Dropdown
                             trigger={
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 disabled={!!analyzing[goal.id]}
                                 aria-label={t('goals.analyzeWithAI')}
                               >
-            {analyzing[goal.id] ? t('goals.analyzing') : `${t('goals.analyzeWithAI')}${preferredModel ? ` (${preferredModel})` : ''}`}
+                                {analyzing[goal.id] ? t('goals.analyzing') : `${t('goals.analyzeWithAI')}${preferredModel ? ` (${preferredModel})` : ''}`}
                               </Button>
                             }
                           >
@@ -878,17 +879,17 @@ function GoalsPageContent() {
                             </DropdownItem>
                           </Dropdown>
                           {getStatusCode(goal.status) !== 'completed' && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => handleMarkComplete(goal.id)}
                             >
                               {t('goals.markComplete')}
                             </Button>
                           )}
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => {
                               setDeleteGoalId(goal.id);
                               setShowDeleteModal(true);
@@ -900,7 +901,7 @@ function GoalsPageContent() {
                       </div>
                     </CardContent>
                   </Card>
-                  
+
                   {/* AI Suggestions */}
                   {showSuggestions[goal.id] && aiSuggestions[goal.id] && (
                     <Card className="mt-2 border-l-4 border-l-blue-500">
@@ -911,13 +912,12 @@ function GoalsPageContent() {
                       <CardContent>
                         <div className="space-y-3">
                           {aiSuggestions[goal.id].map((suggestion) => (
-                            <div 
-                              key={suggestion.id} 
-                              className={`flex items-start p-3 rounded-lg ${
-                                suggestion.completed 
-                                  ? 'bg-green-50 border border-green-200' 
+                            <div
+                              key={suggestion.id}
+                              className={`flex items-start p-3 rounded-lg ${suggestion.completed
+                                  ? 'bg-green-50 border border-green-200'
                                   : 'bg-blue-50 border border-blue-200'
-                              }`}
+                                }`}
                             >
                               <input
                                 type="checkbox"
@@ -931,9 +931,9 @@ function GoalsPageContent() {
                                 <div className="text-sm text-muted-foreground mt-1">
                                   {suggestion.description}
                                 </div>
-                                <Badge 
-                                  variant={suggestion.priority === 'high' ? 'success' : suggestion.priority === 'medium' ? 'warning' : 'default'} 
-                                  size="sm" 
+                                <Badge
+                                  variant={suggestion.priority === 'high' ? 'success' : suggestion.priority === 'medium' ? 'warning' : 'default'}
+                                  size="sm"
                                   className="mt-2"
                                 >
                                   {t(`goals.priority.${suggestion.priority}`)}
@@ -952,30 +952,30 @@ function GoalsPageContent() {
 
           {/* Add goal modal */}
           <Modal open={showAddModal} onClose={() => setShowAddModal(false)}>
-            <ModalHeader 
-              title={t('goals.create.title')} 
-              description={t('goals.create.subtitle')} 
+            <ModalHeader
+              title={t('goals.create.title')}
+              description={t('goals.create.subtitle')}
               onClose={() => setShowAddModal(false)}
             />
             <ModalContent>
               <div className="space-y-4">
-                <Input 
-                  label={t('goals.create.goalTitle')} 
-                  placeholder={t('goals.create.goalTitlePlaceholder')} 
+                <Input
+                  label={t('goals.create.goalTitle')}
+                  placeholder={t('goals.create.goalTitlePlaceholder')}
                   value={formState.title}
                   onChange={(e) => handleFormChange('title', e.target.value)}
                 />
-                <Input 
-                  label={t('goals.create.goalDescription')} 
-                  type="textarea" 
-                  placeholder={t('goals.create.goalDescriptionPlaceholder')} 
+                <Input
+                  label={t('goals.create.goalDescription')}
+                  type="textarea"
+                  placeholder={t('goals.create.goalDescriptionPlaceholder')}
                   value={formState.description}
                   onChange={(e) => handleFormChange('description', e.target.value)}
                 />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium">{t('goals.create.category')}</label>
-                    <select 
+                    <select
                       className="w-full mt-1 p-2 border border-input rounded-md"
                       value={formState.category_id}
                       onChange={(e) => handleFormChange('category_id', e.target.value)}
@@ -989,7 +989,7 @@ function GoalsPageContent() {
                   </div>
                   <div>
                     <label className="text-sm font-medium">{t('goals.create.status')}</label>
-                    <select 
+                    <select
                       className="w-full mt-1 p-2 border border-input rounded-md"
                       value={formState.status_id}
                       onChange={(e) => handleFormChange('status_id', e.target.value)}
@@ -1005,7 +1005,7 @@ function GoalsPageContent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium">{t('goals.visibility')}</label>
-                    <select 
+                    <select
                       className="w-full mt-1 p-2 border border-input rounded-md"
                       value={formState.visibility}
                       onChange={(e) => handleFormChange('visibility', e.target.value)}
@@ -1014,9 +1014,9 @@ function GoalsPageContent() {
                       <option value="private">{t('goals.visibility.private')}</option>
                     </select>
                   </div>
-                  <Input 
-                    label={t('goals.create.targetDate')} 
-                    type="date" 
+                  <Input
+                    label={t('goals.create.targetDate')}
+                    type="date"
                     value={formState.target_date}
                     onChange={(e) => handleFormChange('target_date', e.target.value)}
                   />
@@ -1027,7 +1027,7 @@ function GoalsPageContent() {
               <Button variant="outline" onClick={() => setShowAddModal(false)}>
                 {t('goals.create.cancel')}
               </Button>
-              <Button 
+              <Button
                 onClick={handleCreateGoal}
                 disabled={!formState.title.trim()}
               >
@@ -1038,8 +1038,8 @@ function GoalsPageContent() {
         </div>
         {/* Global toast */}
         {toast.visible && (
-          <Toast 
-            type={toast.type} 
+          <Toast
+            type={toast.type}
             title={toast.title}
             description={toast.description}
             onClose={() => setToast(prev => ({ ...prev, visible: false }))}
@@ -1048,8 +1048,8 @@ function GoalsPageContent() {
 
         {/* Delete confirmation modal */}
         <Modal open={showDeleteModal} onClose={() => setShowDeleteModal(false)}>
-          <ModalHeader 
-            title={t('goals.deleteConfirmTitle')} 
+          <ModalHeader
+            title={t('goals.deleteConfirmTitle')}
             description={t('goals.deleteConfirmDescription')}
             onClose={() => setShowDeleteModal(false)}
           />
@@ -1062,8 +1062,8 @@ function GoalsPageContent() {
             <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
               {t('common.cancel')}
             </Button>
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               onClick={() => {
                 if (deleteGoalId) {
                   handleDeleteGoal(deleteGoalId);
@@ -1079,30 +1079,30 @@ function GoalsPageContent() {
 
         {/* Edit goal modal */}
         <Modal open={showEditModal} onClose={() => setShowEditModal(false)}>
-          <ModalHeader 
-            title={t('goals.editGoal')} 
+          <ModalHeader
+            title={t('goals.editGoal')}
             description={t('goals.updateGoal')}
             onClose={() => setShowEditModal(false)}
           />
           <ModalContent>
             <div className="space-y-4">
-              <Input 
-                label={t('goals.create.goalTitle')} 
-                placeholder={t('goals.create.goalTitlePlaceholder')} 
+              <Input
+                label={t('goals.create.goalTitle')}
+                placeholder={t('goals.create.goalTitlePlaceholder')}
                 value={editForm.title}
                 onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
               />
-              <Input 
-                label={t('goals.create.goalDescription')} 
-                type="textarea" 
-                placeholder={t('goals.create.goalDescriptionPlaceholder')} 
+              <Input
+                label={t('goals.create.goalDescription')}
+                type="textarea"
+                placeholder={t('goals.create.goalDescriptionPlaceholder')}
                 value={editForm.description}
                 onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">{t('goals.create.category')}</label>
-                  <select 
+                  <select
                     className="w-full mt-1 p-2 border border-input rounded-md"
                     value={editForm.category_id}
                     onChange={(e) => setEditForm(prev => ({ ...prev, category_id: e.target.value }))}
@@ -1116,7 +1116,7 @@ function GoalsPageContent() {
                 </div>
                 <div>
                   <label className="text-sm font-medium">{t('goals.create.status')}</label>
-                  <select 
+                  <select
                     className="w-full mt-1 p-2 border border-input rounded-md"
                     value={editForm.status_id}
                     onChange={(e) => setEditForm(prev => ({ ...prev, status_id: e.target.value }))}
@@ -1132,7 +1132,7 @@ function GoalsPageContent() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">{t('goals.visibility')}</label>
-                  <select 
+                  <select
                     className="w-full mt-1 p-2 border border-input rounded-md"
                     value={editForm.visibility}
                     onChange={(e) => setEditForm(prev => ({ ...prev, visibility: e.target.value as 'public' | 'private' }))}
@@ -1141,9 +1141,9 @@ function GoalsPageContent() {
                     <option value="private">{t('goals.visibility.private')}</option>
                   </select>
                 </div>
-                <Input 
-                  label={t('goals.create.targetDate')} 
-                  type="date" 
+                <Input
+                  label={t('goals.create.targetDate')}
+                  type="date"
                   value={editForm.target_date}
                   onChange={(e) => setEditForm(prev => ({ ...prev, target_date: e.target.value }))}
                 />
@@ -1154,7 +1154,7 @@ function GoalsPageContent() {
             <Button variant="outline" onClick={() => setShowEditModal(false)}>
               {t('goals.create.cancel')}
             </Button>
-            <Button 
+            <Button
               onClick={async () => {
                 if (!editingGoal) return;
                 const res = await goalsService.updateGoal(editingGoal.id, editForm);
@@ -1175,8 +1175,8 @@ function GoalsPageContent() {
 
         {/* Details modal */}
         <Modal open={showDetailsModal} onClose={() => setShowDetailsModal(false)}>
-          <ModalHeader 
-            title={t('goals.details.title')} 
+          <ModalHeader
+            title={t('goals.details.title')}
             description={detailsGoal?.title || ''}
             onClose={() => setShowDetailsModal(false)}
           />
@@ -1207,7 +1207,7 @@ function GoalsPageContent() {
 export default function GoalsPage() {
   // Wrap content in Suspense to satisfy useSearchParams requirement
   return (
-    <Suspense fallback={<div />}> 
+    <Suspense fallback={<div />}>
       <GoalsPageContent />
     </Suspense>
   );

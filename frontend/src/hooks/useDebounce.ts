@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-// 防抖 Hook
+// Debounce Hook
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 

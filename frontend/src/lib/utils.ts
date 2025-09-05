@@ -62,12 +62,12 @@ export function getAuthToken(): string | null {
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-// 合并 Tailwind CSS 类名
+// Merge Tailwind CSS class names
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// 格式化日期
+// Format date
 export function formatDate(date: Date | string, locale: string = 'zh-CN'): string {
   const d = new Date(date);
   return new Intl.DateTimeFormat(locale, {
@@ -77,7 +77,7 @@ export function formatDate(date: Date | string, locale: string = 'zh-CN'): strin
   }).format(d);
 }
 
-// 格式化相对时间
+// Format relative time
 export function formatRelativeTime(date: Date | string, locale: string = 'zh-CN'): string {
   const d = new Date(date);
   const now = new Date();
@@ -101,18 +101,18 @@ export function formatRelativeTime(date: Date | string, locale: string = 'zh-CN'
   }
 }
 
-// 截断文本
+// Truncate text
 export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength) + '...';
 }
 
-// 生成随机ID
+// Generate random ID
 export function generateId(): string {
   return Math.random().toString(36).substr(2, 9);
 }
 
-// 防抖函数
+// Debounce function
 export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
@@ -124,7 +124,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
   };
 }
 
-// 节流函数
+// Throttle function
 export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number
@@ -139,19 +139,19 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
   };
 }
 
-// 验证邮箱格式
+// Validate email format
 export function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
 
-// 计算进度百分比
+// Calculate progress percentage
 export function calculateProgress(completed: number, total: number): number {
   if (total === 0) return 0;
   return Math.round((completed / total) * 100);
 }
 
-// 格式化文件大小
+// Format file size
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 B';
 
