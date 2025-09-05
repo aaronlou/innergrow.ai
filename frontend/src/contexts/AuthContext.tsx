@@ -292,6 +292,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { success: false, error: 'Missing Google Client ID. Set NEXT_PUBLIC_GOOGLE_CLIENT_ID.' };
       }
 
+      const decodeJwt = (token: string): Record<string, unknown> | null => {
+        try {
+          const parts = token.split('.');
+          if (parts.length !== 3) return null;
+          const payload = parts[1]
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          const decoded = JSON.parse(decodeURIComponent(escape(atob(payload))));
+          return decoded as Record<string, unknown>;
+        } catch {
+          return null;
+        }
+      };
+
       // Cancel any existing credential requests first
       try {
         // @ts-expect-error: google is loaded externally
@@ -307,6 +321,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
           callback: async (response: { credential?: string }) => {
             if (response.credential) {
               try {
+                // Client-side sanity checks for clearer diagnostics
+                const claims = decodeJwt(response.credential);
+                const aud = (claims?.aud ?? '') as string;
+                const iss = (claims?.iss ?? '') as string;
+                if (aud && aud !== clientId) {
+                  setIsLoading(false);
+                  return resolve({ success: false, error: `Google token audience mismatch. Expected ${clientId}, got ${aud}.` });
+                }
+                if (iss && iss !== 'accounts.google.com' && iss !== 'https://accounts.google.com') {
+                  setIsLoading(false);
+                  return resolve({ success: false, error: `Invalid Google issuer: ${iss}` });
+                }
+
                 const result = await authService.googleLogin({
                   getAuthResponse: () => ({ id_token: response.credential })
                 } as GoogleUser);
