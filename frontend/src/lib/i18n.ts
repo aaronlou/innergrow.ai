@@ -1,15 +1,15 @@
 import { Language } from '@/types';
 
-// 支持的语言列表
+// Supported languages
 export const SUPPORTED_LANGUAGES: { code: Language; name: string; nativeName: string }[] = [
   { code: 'en', name: 'English', nativeName: 'English' },
   { code: 'zh', name: 'Chinese', nativeName: '中文' }
 ];
 
-// 默认语言
+// Default language
 export const DEFAULT_LANGUAGE: Language = 'en';
 
-// 语言检测
+// Detect browser language
 export function detectBrowserLanguage(): Language {
   if (typeof window === 'undefined') return DEFAULT_LANGUAGE;
   
@@ -24,7 +24,7 @@ export function detectBrowserLanguage(): Language {
   return DEFAULT_LANGUAGE;
 }
 
-// 文本插值函数
+// Text interpolation helper
 export function interpolate(template: string, params: Record<string, string | number> = {}): string {
   return template.replace(/\{(\w+)\}/g, (match, key) => {
     const value = params[key];
@@ -32,7 +32,7 @@ export function interpolate(template: string, params: Record<string, string | nu
   });
 }
 
-// 格式化日期
+// Format date
 export function formatDate(date: Date, language: Language, options?: Intl.DateTimeFormatOptions): string {
   const locale = language === 'zh' ? 'zh-CN' : 'en-US';
   const defaultOptions: Intl.DateTimeFormatOptions = {
@@ -44,14 +44,14 @@ export function formatDate(date: Date, language: Language, options?: Intl.DateTi
   return new Intl.DateTimeFormat(locale, { ...defaultOptions, ...options }).format(date);
 }
 
-// 格式化数字
+// Format number
 export function formatNumber(number: number, lang: Language, options?: Intl.NumberFormatOptions): string {
   const locale = lang === 'zh' ? 'zh-CN' : 'en-US';
   
   return new Intl.NumberFormat(locale, options).format(number);
 }
 
-// 格式化货币
+// Format currency
 export function formatCurrency(amount: number, language: Language): string {
   const locale = language === 'zh' ? 'zh-CN' : 'en-US';
   const currency = language === 'zh' ? 'CNY' : 'USD';
@@ -62,8 +62,8 @@ export function formatCurrency(amount: number, language: Language): string {
   }).format(amount);
 }
 
-// 获取语言方向（为将来支持RTL语言预留）
-export function getLanguageDirection(_language: Language): 'ltr' | 'rtl' {
+// Get language direction (placeholder for future RTL support)
+export function getLanguageDirection(): 'ltr' | 'rtl' {
   // Parameter is intentionally unused but kept for future RTL language support
-  return 'ltr'; // 目前中英文都是从左到右
+  return 'ltr'; // English and Chinese are left-to-right for now
 }

@@ -27,3 +27,6 @@ django-redis==5.4.0
 
 # 开发和测试工具
 requests==2.31.0  # API测试
+
+# AI/ML libraries
+openai==1.54.0

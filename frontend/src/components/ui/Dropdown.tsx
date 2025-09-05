@@ -40,7 +40,7 @@ export function Dropdown({
     onOpenChange?.(open);
   }, [controlledOpen, onOpenChange]);
 
-  // 点击外部关闭
+  // Close when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -57,7 +57,7 @@ export function Dropdown({
     };
   }, [isOpen, setOpen]);
 
-  // ESC键关闭
+  // Close on ESC key
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {

@@ -5,6 +5,14 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.db.models import Count
 from .models import Goal, AISuggestion, GoalCategory, GoalStatus
+
+# Import the new AI service
+try:
+    from ai_services.goal_suggestions import GoalSuggestionService
+    AI_SERVICE_AVAILABLE = True
+except ImportError:
+    AI_SERVICE_AVAILABLE = False
+
 from .serializers import (
     GoalSerializer, 
     GoalCreateSerializer, 
@@ -186,47 +194,50 @@ def analyze_goal_with_ai(request, goal_id):
     """为特定目标生成AI建议"""
     goal = get_object_or_404(Goal, id=goal_id, user=request.user)
     
-    # 这里应该调用实际的AI服务来生成建议
-    # 目前我们创建一些模拟的建议
+    # Get language preference from request (default to Chinese for backward compatibility)
+    language = request.data.get('language', 'zh')
     
-    # 删除现有的AI建议（如果有的话）
-    AISuggestion.objects.filter(goal=goal).delete()
+    # Get model preference from request (default to None to use the AI client's default)
+    model = request.data.get('model', None)
     
-    # 创建模拟的AI建议
-    suggestions_data = [
-        {
-            'goal': goal,
-            'title': '制定详细计划',
-            'description': '将目标分解为每周具体任务',
-            'priority': 'high'
-        },
-        {
-            'goal': goal,
-            'title': '设置里程碑',
-            'description': '为长期目标设置阶段性检查点',
-            'priority': 'medium'
-        },
-        {
-            'goal': goal,
-            'title': '寻找学习资源',
-            'description': '查找相关书籍、课程或导师',
-            'priority': 'low'
-        }
-    ]
+    # Check if AI service is available
+    if not AI_SERVICE_AVAILABLE:
+        return Response({
+            'success': False,
+            'error': 'AI service not available',
+            'message': 'AI服务不可用'
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
     
-    # 批量创建建议
-    suggestions = []
-    for suggestion_data in suggestions_data:
-        suggestion = AISuggestion.objects.create(**suggestion_data)
-        suggestions.append(suggestion)
-    
-    serializer = AISuggestionSerializer(suggestions, many=True)
-    
-    return Response({
-        'success': True,
-        'data': serializer.data,
-        'message': 'AI建议已生成'
-    })
+    try:
+        # Initialize the AI service
+        ai_service = GoalSuggestionService()
+        
+        # Generate AI suggestions using OpenAI's ChatGPT
+        suggestions_data = ai_service.generate_suggestions(goal, language, model)
+        
+        # Delete existing AI suggestions (if any)
+        AISuggestion.objects.filter(goal=goal).delete()
+        
+        # Create new AI suggestions
+        suggestions = []
+        for suggestion_data in suggestions_data:
+            suggestion_data['goal'] = goal
+            suggestion = AISuggestion.objects.create(**suggestion_data)
+            suggestions.append(suggestion)
+        
+        serializer = AISuggestionSerializer(suggestions, many=True)
+        
+        return Response({
+            'success': True,
+            'data': serializer.data,
+            'message': 'AI suggestions generated successfully' if language != 'zh' else 'AI建议已生成'
+        })
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e),
+            'message': 'Failed to generate AI suggestions' if language != 'zh' else '生成AI建议失败'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class AISuggestionListView(generics.ListAPIView):

@@ -8,7 +8,7 @@ interface ToastProps extends ComponentProps {
   type?: 'success' | 'error' | 'warning' | 'info';
   title?: string;
   description?: string;
-  duration?: number; // 毫秒
+  duration?: number; // milliseconds
   onClose?: () => void;
   visible?: boolean;
 }

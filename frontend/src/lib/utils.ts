@@ -1,3 +1,19 @@
+// Utility helpers for frontend
+
+// Determine API base URL based on environment (same logic as in AuthContext)
+export function getApiBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    // Client-side
+    if (window.location.hostname === 'localhost') {
+      return 'http://localhost:8000'; // Default Django development server
+    }
+    // Production: use environment variable if provided
+    return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+  }
+  // Server-side (fallback)
+  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+}
+
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 

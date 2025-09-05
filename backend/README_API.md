@@ -1,39 +1,124 @@
-# InnerGrow.ai 后端API部署和测试指南
+# InnerGrow.ai Backend API
 
-## 🚀 部署步骤
+## 简介
 
-### 1. 安装依赖
-```bash
-# 确保你在backend目录下
-cd /Users/lousiyuan/innergrow.ai/backend
+InnerGrow.ai 是一个目标管理和个人成长平台的后端API。
 
-# 安装Python依赖
-pip install -r requirements.txt
+## 技术栈
+
+- Python 3.11+
+- Django 5.2
+- Django REST Framework
+- PostgreSQL (生产环境)
+- Redis (可选，用于缓存)
+
+## 环境变量配置
+
+在运行应用之前，需要设置以下环境变量：
+
+### 开发环境
+
+创建 `.env` 文件在项目根目录：
+
+```env
+# Django 设置
+DJANGO_SECRET_KEY=your-secret-key-here
+
+# 数据库设置 (可选，如果使用PostgreSQL)
+DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+
+# OpenAI API 设置
+OPENAI_API_KEY=your-openai-api-key-here
+OPENAI_MODEL=gpt-5-turbo  # 可选，指定要使用的模型
+
+# 邮件设置 (可选)
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@example.com
+EMAIL_HOST_PASSWORD=your-email-password
 ```
 
-### 2. 创建数据库迁移
-```bash
-# 创建迁移文件
-python manage.py makemigrations accounts
-python manage.py makemigrations books
+### 生产环境
 
-# 应用迁移
-python manage.py migrate
+在生产环境中，建议通过部署平台的环境变量设置功能来配置，而不是使用 `.env` 文件。
+
+## 安装和运行
+
+1. 克隆仓库：
+   ```bash
+   git clone <repository-url>
+   cd innergrow.ai/backend
+   ```
+
+2. 创建虚拟环境：
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Linux/Mac
+   # 或
+   venv\Scripts\activate  # Windows
+   ```
+
+3. 安装依赖：
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. 运行数据库迁移：
+   ```bash
+   python manage.py migrate
+   ```
+
+5. 创建超级用户（可选）：
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+6. 运行开发服务器：
+   ```bash
+   python manage.py runserver
+   ```
+
+## AI 服务
+
+本项目集成了 OpenAI 的 ChatGPT 服务，用于生成目标建议和学习计划等功能。
+
+### 当前实现的功能
+
+1. 目标建议生成 - 为用户的目标提供个性化建议
+2. 学习计划生成 - 为用户的考试生成学习计划（预留接口）
+
+### AI 服务架构
+
+AI 服务采用模块化设计，便于在项目的不同部分复用：
+
+- `ai_services/ai_client.py` - OpenAI 客户端封装
+- `ai_services/goal_suggestions.py` - 目标建议生成服务
+- `ai_services/exam_suggestions.py` - 考试学习计划生成服务（预留）
+
+### 国际化支持
+
+AI 服务支持多语言，可以根据用户的语言偏好生成相应语言的内容：
+- 中文 (zh, zh-cn, zh-hans, chinese)
+- 英文 (其他所有语言代码)
+
+### 模型选择
+
+可以通过环境变量 `OPENAI_MODEL` 或在 API 请求中指定 `model` 参数来选择使用的 OpenAI 模型。
+
+## API 端点
+
+所有API端点都以 `/api/` 为前缀。
+
+### 认证
+
+除了用户注册和登录接口外，所有API都需要认证。使用Token认证：
+
+```bash
+curl -H "Authorization: Token YOUR_TOKEN_HERE" http://localhost:8000/api/some-endpoint/
 ```
 
-### 3. 创建超级用户（可选）
-```bash
-python manage.py createsuperuser
-```
-
-### 4. 启动开发服务器
-```bash
-python manage.py runserver 8000
-```
-
-## 📋 API端点总览
-
-### 🔐 用户认证 (`/api/accounts/`)
+### 用户账户
 
 | 方法 | 端点 | 功能 | 认证要求 |
 |------|------|------|----------|
@@ -45,7 +130,7 @@ python manage.py runserver 8000
 | PUT/PATCH | `/profile/update/` | 更新用户信息 | 是 |
 | GET/PUT | `/preferences/` | 用户偏好设置 | 是 |
 
-### 📚 书籍管理 (`/api/books/`)
+### 书籍管理
 
 | 方法 | 端点 | 功能 | 认证要求 |
 |------|------|------|----------|
@@ -58,7 +143,7 @@ python manage.py runserver 8000
 | GET | `/categories/` | 获取书籍分类列表 | 否 |
 | GET | `/conditions/` | 获取书籍品相列表 | 否 |
 
-### 📦 订单管理 (`/api/books/orders/`)
+### 订单管理
 
 | 方法 | 端点 | 功能 | 认证要求 |
 |------|------|------|----------|
@@ -67,7 +152,7 @@ python manage.py runserver 8000
 | GET | `/<id>/` | 获取订单详情 | 是（买家或卖家） |
 | PUT/PATCH | `/<id>/` | 更新订单状态 | 是（仅卖家） |
 
-### 🎯 目标管理 (`/api/goals/`)
+### 目标管理
 
 | 方法 | 端点 | 功能 | 认证要求 |
 |------|------|------|----------|
@@ -88,7 +173,7 @@ python manage.py runserver 8000
 | GET | `/<goal_id>/suggestions/` | 获取目标的AI建议列表 | 是 |
 | POST | `/<goal_id>/suggestions/<suggestion_id>/accept/` | 接受AI建议 | 是 |
 
-## 🧪 API测试示例
+## API 测试示例
 
 ### 1. 用户注册
 ``bash
@@ -118,7 +203,7 @@ curl -X GET "http://localhost:8000/api/books/?keyword=python&category=technology
 ```
 
 ### 4. 发布书籍（需要认证）
-```bash
+``bash
 curl -X POST http://localhost:8000/api/books/ \
   -H "Content-Type: application/json" \
   -H "Authorization: Token YOUR_TOKEN_HERE" \
@@ -134,7 +219,7 @@ curl -X POST http://localhost:8000/api/books/ \
 ```
 
 ### 5. 创建订单（需要认证）
-```bash
+``bash
 curl -X POST http://localhost:8000/api/books/orders/ \
   -H "Content-Type: application/json" \
   -H "Authorization: Token YOUR_TOKEN_HERE" \
@@ -147,7 +232,7 @@ curl -X POST http://localhost:8000/api/books/orders/ \
 ```
 
 ### 6. 目标管理（需要认证）
-```bash
+``bash
 # 获取目标分类
 curl -X GET http://localhost:8000/api/goals/categories/ \
   -H "Authorization: Token YOUR_TOKEN_HERE"
@@ -229,9 +314,30 @@ curl -X GET http://localhost:8000/api/goals/statistics/ \
 curl -X POST http://localhost:8000/api/goals/1/complete/ \
   -H "Authorization: Token YOUR_TOKEN_HERE"
 
-# 生成AI建议
+# 生成AI建议 (中文)
 curl -X POST http://localhost:8000/api/goals/1/analyze/ \
-  -H "Authorization: Token YOUR_TOKEN_HERE"
+  -H "Content-Type: application/json" \
+  -H "Authorization: Token YOUR_TOKEN_HERE" \
+  -d '{
+    "language": "zh"
+  }'
+
+# 生成AI建议 (英文)
+curl -X POST http://localhost:8000/api/goals/1/analyze/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Token YOUR_TOKEN_HERE" \
+  -d '{
+    "language": "en"
+  }'
+
+# 生成AI建议 (使用特定模型)
+curl -X POST http://localhost:8000/api/goals/1/analyze/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Token YOUR_TOKEN_HERE" \
+  -d '{
+    "language": "en",
+    "model": "gpt-5-turbo"
+  }'
 
 # 获取AI建议列表
 curl -X GET http://localhost:8000/api/goals/1/suggestions/ \
@@ -244,6 +350,23 @@ curl -X POST http://localhost:8000/api/goals/1/suggestions/1/accept/ \
   -d '{
     "accepted": true
   }'
+
+# 生成学习计划 (中文)
+curl -X POST http://localhost:8000/api/exams/1/study-plan/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Token YOUR_TOKEN_HERE" \
+  -d '{
+    "language": "zh"
+  }'
+
+# 生成学习计划 (英文)
+curl -X POST http://localhost:8000/api/exams/1/study-plan/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Token YOUR_TOKEN_HERE" \
+  -d '{
+    "language": "en"
+  }'
+
 ```
 
 ### 7. 公开目标查看（无需认证）
@@ -255,7 +378,7 @@ curl -X GET http://localhost:8000/api/goals/public/
 curl -X GET http://localhost:8000/api/goals/public/1/
 ```
 
-## 🔧 前后端集成配置
+## 前后端集成配置
 
 ### 1. 前端环境变量配置
 在前端项目中创建 `.env.local` 文件：
@@ -302,7 +425,7 @@ export const api = {
 };
 ```
 
-## 🚨 注意事项
+## 注意事项
 
 ### 1. 认证方式
 - 后端使用 Token 认证
@@ -336,7 +459,7 @@ export const api = {
 }
 ```
 
-## 🏗️ 数据库结构
+## 数据库结构
 
 ### 核心模型
 - **User**: 扩展的用户模型（邮箱登录、头像、简介）
@@ -353,7 +476,7 @@ export const api = {
 - Book 1:N BookOrder
 - BookOrder 1:1 ShippingAddress
 
-## 🔍 调试和开发
+## 调试和开发
 
 ### 1. Django Admin
 访问 `http://localhost:8000/admin/` 查看和管理数据

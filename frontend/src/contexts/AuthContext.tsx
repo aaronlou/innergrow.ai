@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, ApiResponse } from '@/types';
 import { useLocalStorage } from '@/hooks';
+import { getApiBaseUrl } from '@/lib/utils';
 
 // Define Google User type
 interface GoogleUser {
@@ -34,20 +35,7 @@ interface AuthProviderProps {
   children: React.ReactNode;
 }
 
-// Determine API base URL based on environment
-const getApiBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    // Client-side
-    if (window.location.hostname === 'localhost') {
-      return 'http://localhost:8000'; // Default Django development server
-    }
-    // Add your production API URL here
-    return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
-  }
-  // Server-side (fallback)
-  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
-};
-
+// Use shared helper to determine API base URL
 const API_BASE_URL = getApiBaseUrl();
 
 // API service for authentication
@@ -273,7 +261,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         // @ts-expect-error: google is loaded externally
         window.google.accounts.id.cancel();
-      } catch (e) {
+  } catch {
         // Ignore errors from cancellation
       }
 

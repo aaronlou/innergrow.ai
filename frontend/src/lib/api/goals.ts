@@ -12,29 +12,115 @@ const getAuthToken = (): string | null => {
   return null;
 };
 
-// Helper function for API requests
-const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
+// Extend RequestInit with optional timeout support
+type ApiRequestOptions = RequestInit & { timeoutMs?: number };
+
+// Internal: create an AbortController that respects an optional timeout and an external signal
+const createAbortController = (timeoutMs?: number, externalSignal?: AbortSignal) => {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let timedOut = false;
+
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      controller.abort(externalSignal.reason ?? new Error('Aborted'));
+    } else {
+      externalSignal.addEventListener('abort', () => {
+        controller.abort(externalSignal.reason ?? new Error('Aborted'));
+      });
+    }
+  }
+
+  if (typeof timeoutMs === 'number' && timeoutMs > 0) {
+    timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort(new Error('Request timeout'));
+    }, timeoutMs);
+  }
+
+  const cleanup = () => {
+    if (timer) clearTimeout(timer);
+  };
+
+  return { signal: controller.signal, cleanup, isTimedOut: () => timedOut };
+};
+
+// Helper function for API requests with robust error handling and optional timeout/cancellation
+const apiRequest = async (endpoint: string, options: ApiRequestOptions = {}) => {
   const token = getAuthToken();
   
-  const defaultHeaders = {
+  const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
   };
   
-  const authHeaders = token ? {
+  const authHeaders: Record<string, string> = token ? {
     'Authorization': `Token ${token}`,
   } : {};
   
+  // Ensure headers are always a plain object
+  const mergedHeaders: Record<string, string> = {
+    ...defaultHeaders,
+    ...authHeaders,
+    ...(options.headers && typeof options.headers === 'object' && !Array.isArray(options.headers)
+      ? options.headers as Record<string, string>
+      : {}),
+  };
+
+  const { timeoutMs, signal: externalSignal, ...rest } = options as ApiRequestOptions;
+  const { signal, cleanup, isTimedOut } = createAbortController(timeoutMs, externalSignal as AbortSignal | undefined);
+
   const config: RequestInit = {
-    ...options,
-    headers: {
-      ...defaultHeaders,
-      ...authHeaders,
-      ...options.headers,
-    },
+    ...rest,
+    headers: mergedHeaders,
+    signal,
   };
   
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-  return response.json();
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+
+    // Try to parse JSON, but fall back to text on failure
+    const tryParseJson = async () => {
+      try {
+        return await response.json();
+      } catch {
+        try {
+          const text = await response.text();
+          return text ? { message: text } : {};
+        } catch {
+          return {};
+        }
+      }
+    };
+
+    const payload = await tryParseJson();
+
+  if (!response.ok) {
+      // Normalize into ApiResponse shape
+      const errorMsg =
+        (payload && (payload.error || payload.detail || payload.message)) ||
+        `${response.status} ${response.statusText}`;
+      return { success: false, error: String(errorMsg) } as ApiResponse<unknown>;
+    }
+
+    // If backend already returns ApiResponse, pass through; else wrap
+    if (payload && typeof payload === 'object' && 'success' in payload) {
+      return payload;
+    }
+    return { success: true, data: payload } as ApiResponse<unknown>;
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      if (err.name === 'AbortError' || err.message.includes('aborted')) {
+        return { success: false, error: isTimedOut() ? 'Request timeout' : 'Request aborted' } as ApiResponse<unknown>;
+      }
+      if (isTimedOut()) {
+        return { success: false, error: 'Request timeout' } as ApiResponse<unknown>;
+      }
+      return { success: false, error: err.message } as ApiResponse<unknown>;
+    }
+    return { success: false, error: 'Network error' } as ApiResponse<unknown>;
+  } finally {
+    cleanup();
+  }
 };
 
 // Goal related types based on Django serializers
@@ -183,6 +269,21 @@ export const goalsService = {
     }
   },
 
+  // Get a single public goal (not currently used, added for parity with backend)
+  async getPublicGoal(id: string): Promise<ApiResponse<Goal>> {
+    try {
+      const data = await apiRequest(`/api/goals/public/${id}/`, {
+        method: 'GET',
+      });
+      return data;
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+      return { success: false, error: 'Failed to fetch public goal' };
+    }
+  },
+
   // Get goal statistics
   async getStatistics(): Promise<ApiResponse<GoalStatistics>> {
     try {
@@ -260,11 +361,28 @@ export const goalsService = {
     }
   },
 
-  // Analyze goal with AI
-  async analyzeGoal(goalId: string): Promise<ApiResponse<AISuggestion[]>> {
+  // Analyze goal with AI (pass language/model to align with backend)
+  async analyzeGoal(
+    goalId: string,
+    opts?: { language?: string; model?: string; timeoutMs?: number }
+  ): Promise<ApiResponse<AISuggestion[]>> {
     try {
+      const getCurrentLanguage = (): string => {
+        if (typeof window !== 'undefined') {
+          return localStorage.getItem('language') || 'en';
+        }
+        return 'en';
+      };
+
+      const body = {
+        language: opts?.language ?? getCurrentLanguage(),
+        ...(opts?.model ? { model: opts.model } : {}),
+      };
+
       const data = await apiRequest(`/api/goals/${goalId}/analyze/`, {
         method: 'POST',
+        body: JSON.stringify(body),
+        timeoutMs: opts?.timeoutMs,
       });
       return data;
     } catch (error: unknown) {
