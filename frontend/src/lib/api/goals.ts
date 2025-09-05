@@ -318,6 +318,10 @@ export const goalsService = {
       const data = await apiRequest('/api/goals/categories/', {
         method: 'GET',
       });
+      // Handle empty response as success with empty array
+      if (data.success && !data.data) {
+        return { success: true, data: [] };
+      }
       return data;
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -333,6 +337,10 @@ export const goalsService = {
       const data = await apiRequest('/api/goals/statuses/', {
         method: 'GET',
       });
+      // Handle empty response as success with empty array
+      if (data.success && !data.data) {
+        return { success: true, data: [] };
+      }
       return data;
     } catch (error: unknown) {
       if (error instanceof Error) {
