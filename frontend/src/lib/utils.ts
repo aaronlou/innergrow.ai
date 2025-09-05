@@ -40,6 +40,17 @@ export function getApiBaseUrl(): string {
   return fromEnv || 'http://localhost:8000';
 }
 
+// Determine Authorization scheme (e.g., "Token" or "Bearer") with env override
+export function getAuthScheme(): string {
+  const raw = (process.env.NEXT_PUBLIC_AUTH_SCHEME || 'Token').trim();
+  // Normalize common values
+  const normalized = raw.toLowerCase();
+  if (normalized === 'bearer') return 'Bearer';
+  if (normalized === 'token') return 'Token';
+  // Fall back to provided value capitalized
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -63,14 +74,14 @@ export function formatRelativeTime(date: Date | string, locale: string = 'zh-CN'
   const d = new Date(date);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
-  
+
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
-  
+
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
-  
+
   if (days > 0) {
     return rtf.format(-days, 'day');
   } else if (hours > 0) {
@@ -135,10 +146,10 @@ export function calculateProgress(completed: number, total: number): number {
 // 格式化文件大小
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 B';
-  
+
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }

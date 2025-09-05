@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, ApiResponse } from '@/types';
 import { useLocalStorage } from '@/hooks';
-import { getApiBaseUrl } from '@/lib/utils';
+import { getApiBaseUrl, getAuthScheme } from '@/lib/utils';
 
 // Define Google User type
 interface GoogleUser {
@@ -103,11 +103,11 @@ const authService = {
       const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
       
       if (token) {
-        await fetch(`${API_BASE_URL}/api/accounts/auth/logout/`, {
+    await fetch(`${API_BASE_URL}/api/accounts/auth/logout/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Token ${token}`,
+      'Authorization': `${getAuthScheme()} ${token}`,
           },
         });
         
@@ -138,11 +138,11 @@ const authService = {
         return { success: false, error: 'User not logged in' };
       }
       
-      const response = await fetch(`${API_BASE_URL}/api/accounts/profile/update/`, {
+    const response = await fetch(`${API_BASE_URL}/api/accounts/profile/update/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Token ${token}`,
+      'Authorization': `${getAuthScheme()} ${token}`,
         },
         body: JSON.stringify(updates),
       });
@@ -222,6 +222,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       initializeGoogleSignIn();
     }
   }, [gapiLoaded]);
+
+  // Reset auth state on global unauthorized
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onUnauthorized = () => {
+      setUser(null);
+    };
+    window.addEventListener('app:unauthorized', onUnauthorized as EventListener);
+    return () => window.removeEventListener('app:unauthorized', onUnauthorized as EventListener);
+  }, [setUser]);
 
   const login = async (email: string, password: string): Promise<ApiResponse<User>> => {
     setIsLoading(true);

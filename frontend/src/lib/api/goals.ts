@@ -1,5 +1,5 @@
 import { ApiResponse } from '@/types';
-import { getApiBaseUrl } from '@/lib/utils';
+import { getApiBaseUrl, getAuthScheme } from '@/lib/utils';
 
 // Get API base URL from AuthContext pattern
 const API_BASE_URL = getApiBaseUrl();
@@ -54,7 +54,7 @@ const apiRequest = async (endpoint: string, options: ApiRequestOptions = {}) => 
   };
 
   const authHeaders: Record<string, string> = token ? {
-    'Authorization': `Token ${token}`,
+  'Authorization': `${getAuthScheme()} ${token}`,
   } : {};
 
   // Ensure headers are always a plain object
@@ -101,6 +101,15 @@ const apiRequest = async (endpoint: string, options: ApiRequestOptions = {}) => 
       const errorMsg =
         (payload && (payload.error || payload.detail || payload.message)) ||
         `${response.status} ${response.statusText}`;
+      // On unauthorized, clear token and notify app to redirect/login
+      if (response.status === 401 && typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('auth_token');
+          window.dispatchEvent(new CustomEvent('app:unauthorized'));
+        } catch {
+          // ignore storage issues
+        }
+      }
       return { success: false, error: String(errorMsg) } as ApiResponse<unknown>;
     }
 
