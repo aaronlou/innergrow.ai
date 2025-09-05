@@ -3,15 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, ApiResponse } from '@/types';
 import { useLocalStorage } from '@/hooks';
-import { getApiBaseUrl, getAuthScheme } from '@/lib/utils';
-
-// Helper function to get auth token
-const getAuthToken = (): string | null => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('auth_token');
-  }
-  return null;
-};
+import { getApiBaseUrl, getAuthScheme, getAuthToken } from '@/lib/utils';
 
 // Define Google User type
 interface GoogleUser {

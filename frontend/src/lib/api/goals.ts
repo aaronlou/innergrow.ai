@@ -1,16 +1,8 @@
 import { ApiResponse } from '@/types';
-import { getApiBaseUrl, getAuthScheme } from '@/lib/utils';
+import { getApiBaseUrl, getAuthScheme, getAuthToken } from '@/lib/utils';
 
 // Get API base URL from AuthContext pattern
 const API_BASE_URL = getApiBaseUrl();
-
-// Helper function to get auth token
-const getAuthToken = (): string | null => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('auth_token');
-  }
-  return null;
-};
 
 // Extend RequestInit with optional timeout support
 type ApiRequestOptions = RequestInit & { timeoutMs?: number };

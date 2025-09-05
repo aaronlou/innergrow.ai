@@ -51,6 +51,14 @@ export function getAuthScheme(): string {
   return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
 
+// Helper function to get auth token from localStorage
+export function getAuthToken(): string | null {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('auth_token');
+  }
+  return null;
+}
+
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
