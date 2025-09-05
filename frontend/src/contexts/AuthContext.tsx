@@ -202,20 +202,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useLocalStorage<User | null>('auth_user', null);
   const [isLoading, setIsLoading] = useState(false);
   const [gapiLoaded, setGapiLoaded] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // 检查认证状态：需要同时有user和token
-  const isAuthenticated = !!user && !!getAuthToken();
+  const isAuthenticated = isInitialized && !!user && !!getAuthToken();
 
-  // 初始化时检查认证状态
+  // 初始化认证状态
   useEffect(() => {
     const token = getAuthToken();
-    // 如果有token但没有user，或者有user但没有token，需要清理状态
+    
+    // 检查状态一致性
     if ((token && !user) || (!token && user)) {
+      // 状态不一致，清理所有认证信息
       setUser(null);
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
       }
     }
+    
+    // 标记为已初始化
+    setIsInitialized(true);
   }, [user]);
 
   // Initialize Google API

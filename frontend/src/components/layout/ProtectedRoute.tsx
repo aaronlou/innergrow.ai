@@ -17,7 +17,9 @@ export function ProtectedRoute({
   const router = useRouter();
 
   useEffect(() => {
+    // 只有在非加载状态且未认证时才跳转
     if (!isLoading && !isAuthenticated) {
+      console.log('用户未认证，跳转到登录页面');
       router.push(redirectTo);
     }
   }, [isAuthenticated, isLoading, router, redirectTo]);

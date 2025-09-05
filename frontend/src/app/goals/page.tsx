@@ -10,7 +10,7 @@ import { Button, Input } from '@/components/ui';
 import { Dropdown, DropdownItem } from '@/components/ui';
 import { Toast } from '@/components/ui';
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
-import { useI18n } from '@/contexts';
+import { useI18n, useAuth } from '@/contexts';
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { goalsService, Goal, AISuggestion, GoalCategory, GoalStatus, GoalStatistics } from '@/lib/api/goals';
@@ -20,6 +20,7 @@ type LocalGoal = Goal; // Alias keeps room for future UI-only additions via inte
 
 function GoalsPageContent() {
   const { t } = useI18n(); // i18n helpers
+  const { isAuthenticated } = useAuth(); // 认证状态
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -143,10 +144,12 @@ function GoalsPageContent() {
     }
   }, []);
 
-  // Load data on component mount
+  // Load data on component mount - 只有在用户已认证时才加载数据
   useEffect(() => {
-    // Fetch all required data on mount
-    loadData();
+    if (isAuthenticated) {
+      // Fetch all required data on mount
+      loadData();
+    }
     // Restore preferred AI model
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('ai_model');
@@ -174,7 +177,7 @@ function GoalsPageContent() {
         }
       }
     }
-  }, [loadData]);
+  }, [loadData, isAuthenticated]);
 
   // Debounced URL updater to reduce replace() calls
   const urlUpdateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
