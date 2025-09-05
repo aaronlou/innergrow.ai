@@ -14,7 +14,7 @@ import Link from 'next/link';
 export default function DashboardPage() {
   const { user } = useAuth();
   const { t } = useI18n();
-  
+
   // 模拟数据
   const mockStats = {
     activeGoals: 3,
@@ -32,7 +32,7 @@ export default function DashboardPage() {
       color: 'from-blue-500 to-purple-600',
     },
     {
-      id: '2', 
+      id: '2',
       title: '坚持运动',
       category: '健康',
       progress: 60,
@@ -91,7 +91,7 @@ export default function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="border-l-4 border-l-green-500">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -105,7 +105,7 @@ export default function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="border-l-4 border-l-blue-500">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -119,7 +119,7 @@ export default function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="border-l-4 border-l-orange-500">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -163,7 +163,7 @@ export default function DashboardPage() {
                             {goal.progress}%
                           </Badge>
                         </div>
-                        <Progress 
+                        <Progress
                           value={goal.progress}
                           className="h-2"
                         />
@@ -209,24 +209,14 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <Link href="/chat">
-                      <Button variant="outline" className="w-full justify-start">
-                        <span className="mr-2">🤖</span>
-                        {t('dashboard.chatWithAI')}
-                      </Button>
-                    </Link>
+               
                     <Link href="/goals">
                       <Button variant="outline" className="w-full justify-start">
                         <span className="mr-2">➕</span>
                         {t('dashboard.addNewGoal')}
                       </Button>
                     </Link>
-                    <Link href="/reports">
-                      <Button variant="outline" className="w-full justify-start">
-                        <span className="mr-2">📈</span>
-                        {t('dashboard.viewReports')}
-                      </Button>
-                    </Link>
+
                   </div>
                 </CardContent>
               </Card>

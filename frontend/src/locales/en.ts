@@ -196,6 +196,12 @@ export const en = {
   'goals.create.targetDate': 'Target Date',
   'goals.create.createGoal': 'Create Goal',
   'goals.create.cancel': 'Cancel',
+  'goals.analyzeWithAI': 'Analyze with AI',
+  'goals.aiSuggestions': 'AI Suggestions',
+  'goals.aiSuggestionsDescription': 'Below are the action suggestions provided by AI for your goal. Please select the suggestions you want to adopt:',
+  'goals.priority.high': 'High Priority',
+  'goals.priority.medium': 'Medium Priority',
+  'goals.priority.low': 'Low Priority',
 
   // Exams
   'exams.title': 'Exam Preparation',

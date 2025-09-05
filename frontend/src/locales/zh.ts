@@ -196,6 +196,12 @@ export const zh = {
   'goals.create.targetDate': '目标日期',
   'goals.create.createGoal': '创建目标',
   'goals.create.cancel': '取消',
+  'goals.analyzeWithAI': 'AI分析',
+  'goals.aiSuggestions': 'AI建议',
+  'goals.aiSuggestionsDescription': '以下是AI为您目标提供的行动建议，请选择您想要采纳的建议：',
+  'goals.priority.high': '高优先级',
+  'goals.priority.medium': '中优先级',
+  'goals.priority.low': '低优先级',
 
   // 考试准备
   'exams.title': '考试准备',

@@ -97,6 +97,7 @@ urlpatterns = [
     path('api/accounts/', include('accounts.urls')),
     path('api/books/', include('books.urls')),
     path('api/exams/', include('exams.urls')),
+    path('api/goals/', include('goals.urls')),
 ]
 
 # 开发环境下的媒体文件服务

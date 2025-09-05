@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'accounts',
     'books',
     'exams',
+    'goals',
 ]
 
 MIDDLEWARE = [

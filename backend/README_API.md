@@ -67,10 +67,31 @@ python manage.py runserver 8000
 | GET | `/<id>/` | 获取订单详情 | 是（买家或卖家） |
 | PUT/PATCH | `/<id>/` | 更新订单状态 | 是（仅卖家） |
 
+### 🎯 目标管理 (`/api/goals/`)
+
+| 方法 | 端点 | 功能 | 认证要求 |
+|------|------|------|----------|
+| GET | `/` | 获取目标列表（支持过滤） | 是 |
+| POST | `/` | 创建新目标 | 是 |
+| GET | `/<id>/` | 获取目标详情 | 是 |
+| PUT/PATCH | `/<id>/` | 更新目标信息 | 是 |
+| DELETE | `/<id>/` | 删除目标 | 是 |
+| GET | `/public/` | 获取所有公开目标 | 否 |
+| GET | `/public/<id>/` | 获取公开目标详情 | 否 |
+| GET | `/categories/` | 获取所有目标分类 | 是 |
+| GET | `/statuses/` | 获取所有目标状态 | 是 |
+| POST | `/categories/create/` | 创建新的目标分类 | 是 |
+| POST | `/statuses/create/` | 创建新的目标状态 | 是 |
+| GET | `/statistics/` | 获取目标统计信息 | 是 |
+| POST | `/<id>/complete/` | 标记目标为完成 | 是 |
+| POST | `/<id>/analyze/` | 为目标生成AI建议 | 是 |
+| GET | `/<goal_id>/suggestions/` | 获取目标的AI建议列表 | 是 |
+| POST | `/<goal_id>/suggestions/<suggestion_id>/accept/` | 接受AI建议 | 是 |
+
 ## 🧪 API测试示例
 
 ### 1. 用户注册
-```bash
+``bash
 curl -X POST http://localhost:8000/api/accounts/auth/register/ \
   -H "Content-Type: application/json" \
   -d '{
@@ -82,7 +103,7 @@ curl -X POST http://localhost:8000/api/accounts/auth/register/ \
 ```
 
 ### 2. 用户登录
-```bash
+``bash
 curl -X POST http://localhost:8000/api/accounts/auth/login/ \
   -H "Content-Type: application/json" \
   -d '{
@@ -125,16 +146,125 @@ curl -X POST http://localhost:8000/api/books/orders/ \
   }'
 ```
 
+### 6. 目标管理（需要认证）
+```bash
+# 获取目标分类
+curl -X GET http://localhost:8000/api/goals/categories/ \
+  -H "Authorization: Token YOUR_TOKEN_HERE"
+
+# 获取目标状态
+curl -X GET http://localhost:8000/api/goals/statuses/ \
+  -H "Authorization: Token YOUR_TOKEN_HERE"
+
+# 创建新的目标分类
+curl -X POST http://localhost:8000/api/goals/categories/create/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Token YOUR_TOKEN_HERE" \
+  -d '{
+    "name": "Fitness",
+    "name_en": "健身"
+  }'
+
+# 创建新的目标状态
+curl -X POST http://localhost:8000/api/goals/statuses/create/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Token YOUR_TOKEN_HERE" \
+  -d '{
+    "name": "In Progress",
+    "name_en": "进行中"
+  }'
+
+# 创建目标（私密）
+curl -X POST http://localhost:8000/api/goals/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Token YOUR_TOKEN_HERE" \
+  -d '{
+    "title": "每日阅读30分钟",
+    "description": "通过每天阅读来扩展知识面和提升思维能力",
+    "category_id": 1,
+    "status_id": 1,
+    "visibility": "private",
+    "target_date": "2024-12-31"
+  }'
+
+# 创建目标（公开）
+curl -X POST http://localhost:8000/api/goals/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Token YOUR_TOKEN_HERE" \
+  -d '{
+    "title": "学习新的编程技能",
+    "description": "掌握 React 和 TypeScript 的高级用法",
+    "category_id": 1,
+    "status_id": 1,
+    "visibility": "public",
+    "target_date": "2024-12-31"
+  }'
+
+# 获取目标列表
+curl -X GET http://localhost:8000/api/goals/ \
+  -H "Authorization: Token YOUR_TOKEN_HERE"
+
+# 获取目标详情
+curl -X GET http://localhost:8000/api/goals/1/ \
+  -H "Authorization: Token YOUR_TOKEN_HERE"
+
+# 更新目标
+curl -X PATCH http://localhost:8000/api/goals/1/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Token YOUR_TOKEN_HERE" \
+  -d '{
+    "progress": 75,
+    "status_id": 2
+  }'
+
+# 删除目标
+curl -X DELETE http://localhost:8000/api/goals/1/ \
+  -H "Authorization: Token YOUR_TOKEN_HERE"
+
+# 获取统计信息
+curl -X GET http://localhost:8000/api/goals/statistics/ \
+  -H "Authorization: Token YOUR_TOKEN_HERE"
+
+# 标记目标为完成
+curl -X POST http://localhost:8000/api/goals/1/complete/ \
+  -H "Authorization: Token YOUR_TOKEN_HERE"
+
+# 生成AI建议
+curl -X POST http://localhost:8000/api/goals/1/analyze/ \
+  -H "Authorization: Token YOUR_TOKEN_HERE"
+
+# 获取AI建议列表
+curl -X GET http://localhost:8000/api/goals/1/suggestions/ \
+  -H "Authorization: Token YOUR_TOKEN_HERE"
+
+# 接受AI建议
+curl -X POST http://localhost:8000/api/goals/1/suggestions/1/accept/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Token YOUR_TOKEN_HERE" \
+  -d '{
+    "accepted": true
+  }'
+```
+
+### 7. 公开目标查看（无需认证）
+```bash
+# 获取所有公开目标
+curl -X GET http://localhost:8000/api/goals/public/
+
+# 获取特定公开目标详情
+curl -X GET http://localhost:8000/api/goals/public/1/
+```
+
 ## 🔧 前后端集成配置
 
 ### 1. 前端环境变量配置
 在前端项目中创建 `.env.local` 文件：
-```env
+```
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
 ```
 
 ### 2. 前端API调用示例
-```typescript
+```
 // lib/api.ts
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api';
 
@@ -184,7 +314,7 @@ export const api = {
 
 ### 3. 错误处理
 所有API返回统一格式：
-```json
+```
 {
   "success": boolean,
   "data": any,           // 成功时的数据
@@ -196,7 +326,7 @@ export const api = {
 
 ### 4. 分页
 列表接口支持分页，返回格式：
-```json
+```
 {
   "success": true,
   "data": [...],
