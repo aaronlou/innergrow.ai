@@ -25,7 +25,7 @@ export default function HomePage() {
             </div>
             <div className="flex items-center space-x-4">
               {/* 语言切换 */}
-              <LanguageToggle 
+              <LanguageToggle
                 currentLanguage={language}
                 onLanguageChange={setLanguage}
               />
@@ -59,11 +59,7 @@ export default function HomePage() {
                   {t('home.hero.startButton')}
                 </Button>
               </Link>
-              <Link href="/chat">
-                <Button variant="outline" size="lg">
-                  {t('home.hero.tryButton')}
-                </Button>
-              </Link>
+
             </div>
           </div>
         </div>
@@ -216,8 +212,8 @@ export default function HomePage() {
             {t('home.cta.subtitle')}
           </p>
           <Link href="/auth/register">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               className="bg-white text-brand-primary hover:bg-gray-100 font-semibold px-8"
             >
               {t('home.cta.button')}

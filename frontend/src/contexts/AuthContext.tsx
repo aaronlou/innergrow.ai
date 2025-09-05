@@ -287,6 +287,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { success: false, error: 'Google Sign-In not initialized' };
       }
 
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+      if (!clientId) {
+        return { success: false, error: 'Missing Google Client ID. Set NEXT_PUBLIC_GOOGLE_CLIENT_ID.' };
+      }
+
       // Cancel any existing credential requests first
       try {
         // @ts-expect-error: google is loaded externally
@@ -298,7 +303,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return new Promise<ApiResponse<User>>((resolve) => {
         // @ts-expect-error: google is loaded externally
         window.google.accounts.id.initialize({
-          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+          client_id: clientId,
           callback: async (response: { credential?: string }) => {
             if (response.credential) {
               try {
