@@ -5,6 +5,14 @@ import { User, ApiResponse } from '@/types';
 import { useLocalStorage } from '@/hooks';
 import { getApiBaseUrl, getAuthScheme } from '@/lib/utils';
 
+// Helper function to get auth token
+const getAuthToken = (): string | null => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('auth_token');
+  }
+  return null;
+};
+
 // Define Google User type
 interface GoogleUser {
   getBasicProfile: () => {
@@ -203,7 +211,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [gapiLoaded, setGapiLoaded] = useState(false);
 
-  const isAuthenticated = !!user;
+  // 检查认证状态：需要同时有user和token
+  const isAuthenticated = !!user && !!getAuthToken();
+
+  // 初始化时检查认证状态
+  useEffect(() => {
+    const token = getAuthToken();
+    // 如果有token但没有user，或者有user但没有token，需要清理状态
+    if ((token && !user) || (!token && user)) {
+      setUser(null);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+      }
+    }
+  }, [user]);
 
   // Initialize Google API
   useEffect(() => {
@@ -326,7 +347,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // API logout
     authService.logout();
     
+    // 清理所有认证相关状态
     setUser(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+    }
     // Can add other cleanup logic here, such as clearing other local storage data
   };
 

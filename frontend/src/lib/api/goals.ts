@@ -49,6 +49,16 @@ const createAbortController = (timeoutMs?: number, externalSignal?: AbortSignal)
 const apiRequest = async (endpoint: string, options: ApiRequestOptions = {}) => {
   const token = getAuthToken();
 
+  // 调试信息
+  if (typeof window !== 'undefined') {
+    console.log('API Request Debug:', {
+      endpoint,
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+      authScheme: getAuthScheme()
+    });
+  }
+
   const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
   };
