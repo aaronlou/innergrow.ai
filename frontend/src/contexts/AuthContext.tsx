@@ -259,6 +259,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const result = await authService.login(email, password);
       if (result.success && result.data) {
         setUser(result.data);
+        // Debug: 检查 token 是否正确保存
+        const token = localStorage.getItem('auth_token');
+        console.log('Login success, token saved:', token ? `${token.substring(0, 10)}...` : 'NO TOKEN');
       }
       return result;
     } finally {
