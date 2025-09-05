@@ -163,7 +163,7 @@ export const zh = {
 
   // 目标
   'goals.title': '目标管理',
-  'goals.subtitle': '设定、追踪和实现您的个人成长目标',
+  'goals.subtitle': '借助 AI 助手拆解目标，找到清晰的实现路径和最佳节奏',
   'goals.addNew': '添加新目标',
   'goals.total': '总目标',
   'goals.active': '进行中',
@@ -194,6 +194,7 @@ export const zh = {
   'goals.create.goalDescription': '目标描述',
   'goals.create.goalDescriptionPlaceholder': '详细描述您的目标',
   'goals.create.category': '类别',
+  'goals.create.status': '状态',
   'goals.create.targetDate': '目标日期',
   'goals.create.createGoal': '创建目标',
   'goals.create.cancel': '取消',

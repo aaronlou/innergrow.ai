@@ -163,7 +163,7 @@ export const en = {
 
   // Goals
   'goals.title': 'Goal Management',
-  'goals.subtitle': 'Set, track, and achieve your personal growth goals',
+  'goals.subtitle': 'Break down your goals with AI assistant to find clear paths and optimal rhythm for achievement',
   'goals.addNew': 'Add New Goal',
   'goals.total': 'Total Goals',
   'goals.active': 'Active',
@@ -194,6 +194,7 @@ export const en = {
   'goals.create.goalDescription': 'Goal Description',
   'goals.create.goalDescriptionPlaceholder': 'Describe your goal in detail',
   'goals.create.category': 'Category',
+  'goals.create.status': 'Status',
   'goals.create.targetDate': 'Target Date',
   'goals.create.createGoal': 'Create Goal',
   'goals.create.cancel': 'Cancel',

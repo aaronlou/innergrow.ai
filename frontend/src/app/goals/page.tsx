@@ -19,7 +19,7 @@ import { goalsService, Goal, AISuggestion, GoalCategory, GoalStatus, GoalStatist
 type LocalGoal = Goal; // Alias keeps room for future UI-only additions via intersection
 
 function GoalsPageContent() {
-  const { t } = useI18n(); // i18n helpers
+  const { t, language } = useI18n(); // i18n helpers
   const { isAuthenticated } = useAuth(); // Authentication state
   const router = useRouter();
   const pathname = usePathname();
@@ -246,10 +246,7 @@ function GoalsPageContent() {
   // Pick status display text based on current language (backend provides name/name_en)
   const getStatusText = (status: GoalStatus) => {
     // Use the translated name based on current language
-    const currentLanguage = typeof window !== 'undefined' ?
-      localStorage.getItem('language') || 'zh' : 'zh';
-
-    return currentLanguage === 'en' ? status.name_en : status.name;
+    return language === 'en' ? status.name_en : status.name;
   };
 
   // Get a language-agnostic status code for logic (prefer English, lowercase)
@@ -260,10 +257,7 @@ function GoalsPageContent() {
   // Pick category display text based on current language (backend provides name/name_en)
   const getCategoryText = (category: GoalCategory) => {
     // Use the translated name based on current language
-    const currentLanguage = typeof window !== 'undefined' ?
-      localStorage.getItem('language') || 'zh' : 'zh';
-
-    return currentLanguage === 'en' ? category.name_en : category.name;
+    return language === 'en' ? category.name_en : category.name;
   };
 
   // Controlled update for create form fields
@@ -547,77 +541,63 @@ function GoalsPageContent() {
               <Button onClick={() => setShowAddModal(true)} aria-label={t('goals.addNew')}>
                 + {t('goals.addNew')}
               </Button>
-              <Button
-                variant="outline"
-                onClick={async () => {
-                  try {
-                    const url = typeof window !== 'undefined' ? window.location.href : '';
-                    await navigator.clipboard.writeText(url);
-                    showToast('success', t('goals.linkCopied'));
-                  } catch {
-                    showToast('error', t('goals.copyFailed'));
-                  }
-                }}
-                aria-label={t('goals.copyLink')}
-              >
-                {t('goals.copyLink')}
-              </Button>
+
             </div>
           </div>
 
           {/* Statistics cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className="pt-4 pb-4">
                 <div className="flex items-center">
                   <div className="p-2 bg-blue-100 rounded-lg">
                     <span className="text-lg">🎯</span>
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">{t('goals.total')}</p>
-                    <p className="text-2xl font-bold">{statistics.total}</p>
+                  <div className="ml-3">
+                    <p className="text-xs font-medium text-muted-foreground">{t('goals.total')}</p>
+                    <p className="text-xl font-bold">{statistics.total}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className="pt-4 pb-4">
                 <div className="flex items-center">
                   <div className="p-2 bg-green-100 rounded-lg">
                     <span className="text-lg">✅</span>
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">{t('goals.active')}</p>
-                    <p className="text-2xl font-bold text-green-600">{statistics.active}</p>
+                  <div className="ml-3">
+                    <p className="text-xs font-medium text-muted-foreground">{t('goals.active')}</p>
+                    <p className="text-xl font-bold text-green-600">{statistics.active}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className="pt-4 pb-4">
                 <div className="flex items-center">
                   <div className="p-2 bg-blue-100 rounded-lg">
                     <span className="text-lg">🏆</span>
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">{t('goals.completed')}</p>
-                    <p className="text-2xl font-bold text-blue-600">{statistics.completed}</p>
+                  <div className="ml-3">
+                    <p className="text-xs font-medium text-muted-foreground">{t('goals.completed')}</p>
+                    <p className="text-xl font-bold text-blue-600">{statistics.completed}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className="pt-4 pb-4">
                 <div className="flex items-center">
                   <div className="p-2 bg-orange-100 rounded-lg">
                     <span className="text-lg">⏸️</span>
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">{t('goals.paused')}</p>
-                    <p className="text-2xl font-bold text-orange-600">{statistics.paused}</p>
+                  <div className="ml-3">
+                    <p className="text-xs font-medium text-muted-foreground">{t('goals.paused')}</p>
+                    <p className="text-xl font-bold text-orange-600">{statistics.paused}</p>
                   </div>
                 </div>
               </CardContent>
@@ -715,51 +695,7 @@ function GoalsPageContent() {
             </div>
           </div>
 
-          {/* Active filter summary chips */}
-          {(activeFilter !== 'all' || filterCategoryId || filterVisibility !== 'all') && (
-            <div className="flex flex-wrap items-center gap-2 mb-6">
-              <span className="sr-only">Active filters:</span>
-              {activeFilter !== 'all' && (
-                <Badge variant="default" size="sm" className="flex items-center gap-1">
-                  {t('goals.status.' + activeFilter)}
-                  <button
-                    className="ml-1 text-xs text-muted-foreground hover:text-foreground"
-                    onClick={() => setActiveFilter('all')}
-                    aria-label={t('common.close')}
-                  >
-                    ×
-                  </button>
-                </Badge>
-              )}
-              {filterCategoryId && (
-                <Badge variant="default" size="sm" className="flex items-center gap-1">
-                  {(() => {
-                    const cat = categories.find(c => c.id === filterCategoryId);
-                    return cat ? getCategoryText(cat) : t('goals.category');
-                  })()}
-                  <button
-                    className="ml-1 text-xs text-muted-foreground hover:text-foreground"
-                    onClick={() => setFilterCategoryId('')}
-                    aria-label={t('common.close')}
-                  >
-                    ×
-                  </button>
-                </Badge>
-              )}
-              {filterVisibility !== 'all' && (
-                <Badge variant="default" size="sm" className="flex items-center gap-1">
-                  {filterVisibility === 'public' ? t('goals.visibility.public') : t('goals.visibility.private')}
-                  <button
-                    className="ml-1 text-xs text-muted-foreground hover:text-foreground"
-                    onClick={() => setFilterVisibility('all')}
-                    aria-label={t('common.close')}
-                  >
-                    ×
-                  </button>
-                </Badge>
-              )}
-            </div>
-          )}
+
 
           {/* Goals list and AI suggestion panel */}
           <div className="space-y-4">
@@ -915,8 +851,8 @@ function GoalsPageContent() {
                             <div
                               key={suggestion.id}
                               className={`flex items-start p-3 rounded-lg ${suggestion.completed
-                                  ? 'bg-green-50 border border-green-200'
-                                  : 'bg-blue-50 border border-blue-200'
+                                ? 'bg-green-50 border border-green-200'
+                                : 'bg-blue-50 border border-blue-200'
                                 }`}
                             >
                               <input
