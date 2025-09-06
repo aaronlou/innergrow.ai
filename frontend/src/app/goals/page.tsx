@@ -124,11 +124,19 @@ function GoalsPageContent() {
       if (statusesResponse.success) {
         const statusList = statusesResponse.data ?? [];
         setStatuses(statusList);
-        // Set default status if none selected
+        // Set default status to "New" or equivalent for new goals
         if (statusList.length > 0) {
-          setFormState(prev => (
-            !prev.status_id ? { ...prev, status_id: statusList[0].id } : prev
-          ));
+          setFormState(prev => {
+            if (!prev.status_id) {
+              // Find "New", "Not Started", or first status as fallback
+              const newStatus = statusList.find(status => {
+                const statusCode = (status.name_en || status.name || '').toLowerCase();
+                return ['new', 'not started'].includes(statusCode);
+              });
+              return { ...prev, status_id: newStatus?.id || statusList[0].id };
+            }
+            return prev;
+          });
         }
       }
 
@@ -232,12 +240,22 @@ function GoalsPageContent() {
   // Map a language-agnostic status code to badge color
   const getStatusColor = (statusCode: string) => {
     switch (statusCode) {
+      case 'new':
+        return 'default';  // Gray for "New" - neutral, not yet started
+      case 'not started':
+        return 'default';  // Gray for "Not Started" - neutral, not yet started
+      case 'in progress':
+        return 'info';     // Blue for "In Progress" - actively working
       case 'active':
-        return 'success';
+        return 'info';     // Blue for "Active" - actively working
+      case 'done':
+        return 'success';  // Green for "Done" - successful completion
       case 'completed':
-        return 'info';
+        return 'success';  // Green for "Completed" - successful completion
+      case 'on hold':
+        return 'warning';  // Orange/Yellow for "On Hold" - temporarily paused
       case 'paused':
-        return 'warning';
+        return 'warning';  // Orange/Yellow for "Paused" - temporarily paused
       default:
         return 'default';
     }
@@ -291,7 +309,14 @@ function GoalsPageContent() {
           title: '',
           description: '',
           category_id: categories.length > 0 ? categories[0].id : '',
-          status_id: statuses.length > 0 ? statuses[0].id : '',
+          status_id: (() => {
+            // Find "New" or "Not Started" status for new goals
+            const newStatus = statuses.find(status => {
+              const statusCode = (status.name_en || status.name || '').toLowerCase();
+              return ['new', 'not started'].includes(statusCode);
+            });
+            return newStatus?.id || (statuses.length > 0 ? statuses[0].id : '');
+          })(),
           visibility: 'private',
           target_date: ''
         });
@@ -452,9 +477,11 @@ function GoalsPageContent() {
     // status filter
     if (activeFilter !== 'all') {
       const code = getStatusCode(goal.status);
-      if (activeFilter === 'active' && code !== 'active') return false;
-      if (activeFilter === 'completed' && code !== 'completed') return false;
-      if (activeFilter === 'paused' && code !== 'paused') return false;
+      // Handle various possible status names from backend
+      if (activeFilter === 'not_started' && !['new', 'not started'].includes(code)) return false;
+      if (activeFilter === 'active' && !['in progress', 'active'].includes(code)) return false;
+      if (activeFilter === 'completed' && !['done', 'completed'].includes(code)) return false;
+      if (activeFilter === 'paused' && !['on hold', 'paused'].includes(code)) return false;
     }
     // category filter
     if (filterCategoryId && goal.category.id !== filterCategoryId) return false;
@@ -616,6 +643,15 @@ function GoalsPageContent() {
               {t('goals.filter.all')}
             </Button>
             <Button
+              variant={activeFilter === 'not_started' ? "primary" : "outline"}
+              size="sm"
+              aria-pressed={activeFilter === 'not_started'}
+              aria-label={t('goals.status.not_started')}
+              onClick={() => setActiveFilter('not_started')}
+            >
+              {t('goals.status.not_started')}
+            </Button>
+            <Button
               variant={activeFilter === 'active' ? "primary" : "outline"}
               size="sm"
               aria-pressed={activeFilter === 'active'}
@@ -705,12 +741,7 @@ function GoalsPageContent() {
                   <>
                     <p className="text-muted-foreground">{t('goals.empty')}</p>
                     <p className="text-muted-foreground mt-2">{t('goals.emptyDescription')}</p>
-                    <Button
-                      className="mt-4"
-                      onClick={() => setShowAddModal(true)}
-                    >
-                      {t('goals.addNew')}
-                    </Button>
+                  
                   </>
                 ) : (
                   <>
@@ -909,10 +940,10 @@ function GoalsPageContent() {
                   onChange={(e) => handleFormChange('description', e.target.value)}
                 />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-2">
                     <label className="text-sm font-medium">{t('goals.create.category')}</label>
                     <select
-                      className="w-full mt-1 p-2 border border-input rounded-md"
+                      className="w-full p-2 border border-input rounded-md bg-background"
                       value={formState.category_id}
                       onChange={(e) => handleFormChange('category_id', e.target.value)}
                     >
@@ -923,10 +954,10 @@ function GoalsPageContent() {
                       ))}
                     </select>
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <label className="text-sm font-medium">{t('goals.create.status')}</label>
                     <select
-                      className="w-full mt-1 p-2 border border-input rounded-md"
+                      className="w-full p-2 border border-input rounded-md bg-background"
                       value={formState.status_id}
                       onChange={(e) => handleFormChange('status_id', e.target.value)}
                     >
@@ -939,10 +970,10 @@ function GoalsPageContent() {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-2">
                     <label className="text-sm font-medium">{t('goals.visibility')}</label>
                     <select
-                      className="w-full mt-1 p-2 border border-input rounded-md"
+                      className="w-full p-2 border border-input rounded-md bg-background"
                       value={formState.visibility}
                       onChange={(e) => handleFormChange('visibility', e.target.value)}
                     >

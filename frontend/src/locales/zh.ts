@@ -178,6 +178,7 @@ export const zh = {
   'goals.edit': '编辑',
   'goals.empty': '暂无目标',
   'goals.emptyDescription': '创建您的第一个目标，开始成长之旅',
+  'goals.status.not_started': '未开始',
   'goals.status.active': '进行中',
   'goals.status.completed': '已完成',
   'goals.status.paused': '暂停',
