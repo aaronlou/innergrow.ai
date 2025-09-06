@@ -130,11 +130,11 @@ function GoalsPageContent() {
         if (statusList.length > 0) {
           setFormState(prev => {
             if (!prev.status_id) {
-              // Find "New", "Not Started", or first status as fallback
+              // Find "New" status for new goals (matching your backend definition)
               const newStatus = statusList.find(status => {
                 if (!status || typeof status !== 'object') return false;
                 const statusCode = (status.name_en || status.name || '').toLowerCase();
-                return ['new', 'not started'].includes(statusCode);
+                return statusCode === 'new';
               });
               return { ...prev, status_id: newStatus?.id || statusList[0]?.id || '' };
             }
@@ -242,25 +242,17 @@ function GoalsPageContent() {
 
   // loadData defined above
 
-  // Map a language-agnostic status code to badge color
+  // Map a language-agnostic status code to badge color (aligned with your backend statuses)
   const getStatusColor = (statusCode: string) => {
     switch (statusCode) {
       case 'new':
-        return 'default';  // Gray for "New" - neutral, not yet started
-      case 'not started':
-        return 'default';  // Gray for "Not Started" - neutral, not yet started
+        return 'default';  // Gray for "New" (未开始)
       case 'in progress':
-        return 'info';     // Blue for "In Progress" - actively working
-      case 'active':
-        return 'info';     // Blue for "Active" - actively working
+        return 'info';     // Blue for "In progress" (进行中)
       case 'done':
-        return 'success';  // Green for "Done" - successful completion
-      case 'completed':
-        return 'success';  // Green for "Completed" - successful completion
-      case 'on hold':
-        return 'warning';  // Orange/Yellow for "On Hold" - temporarily paused
+        return 'success';  // Green for "Done" (已完成)
       case 'paused':
-        return 'warning';  // Orange/Yellow for "Paused" - temporarily paused
+        return 'warning';  // Orange/Yellow for "Paused" (暂停)
       default:
         return 'default';
     }
@@ -279,12 +271,13 @@ function GoalsPageContent() {
     return (status.name_en || status.name || '').toLowerCase();
   };
 
-  // Sort statuses by natural progression order
+  // Sort statuses by natural progression order (aligned with your backend statuses)
   const getSortedStatuses = (statusList: GoalStatus[]) => {
     // Ensure we have a valid array
     if (!statusList || !Array.isArray(statusList)) return [];
     
-    const statusOrder = ['new', 'not started', 'in progress', 'active', 'on hold', 'paused', 'done', 'completed'];
+    // Order based on your exact backend status definitions
+    const statusOrder = ['new', 'in progress', 'paused', 'done'];
     
     // Create a safe copy and filter out invalid entries
     const validStatuses = statusList.filter(status => status && typeof status === 'object' && status.id);
@@ -349,13 +342,13 @@ function GoalsPageContent() {
           description: '',
           category_id: categories.length > 0 ? categories[0].id : '',
           status_id: (() => {
-            // Find "New" or "Not Started" status for new goals
+            // Find "New" status for new goals (matching your backend definition)
             if (!statuses || statuses.length === 0) return '';
             
             const newStatus = statuses.find(status => {
               if (!status || typeof status !== 'object') return false;
               const statusCode = (status.name_en || status.name || '').toLowerCase();
-              return ['new', 'not started'].includes(statusCode);
+              return statusCode === 'new';
             });
             return newStatus?.id || statuses[0]?.id || '';
           })(),
@@ -548,21 +541,22 @@ function GoalsPageContent() {
         const code = getStatusCode(goal.status);
         console.log('DEBUG: Goal status code:', code, 'for goal:', goal.title);
         
-        // Handle various possible status names from backend
-        if (activeFilter === 'not_started' && !['new', 'not started'].includes(code)) {
-          console.log('DEBUG: Goal filtered out by not_started filter:', goal.title);
+        // Handle status names based on your exact backend definitions
+        if (activeFilter === 'new' && code !== 'new') {
+          console.log('DEBUG: Goal filtered out by new filter:', goal.title, 'status code:', code);
           return false;
         }
-        if (activeFilter === 'active' && !['in progress', 'active'].includes(code)) {
-          console.log('DEBUG: Goal filtered out by active filter:', goal.title);
+        if (activeFilter === 'in progress' && code !== 'in progress') {
+          console.log('DEBUG: Goal filtered out by in progress filter:', goal.title, 'status code:', code);
           return false;
         }
-        if (activeFilter === 'completed' && !['done', 'completed'].includes(code)) {
-          console.log('DEBUG: Goal filtered out by completed filter:', goal.title);
+        if (activeFilter === 'done' && code !== 'done') {
+          console.log('DEBUG: Goal filtered out by done filter:', goal.title, 'status code:', code);
           return false;
         }
-        if (activeFilter === 'paused' && !['on hold', 'paused'].includes(code)) {
-          console.log('DEBUG: Goal filtered out by paused filter:', goal.title);
+        if (activeFilter === 'paused' && code !== 'paused') {
+          console.log('DEBUG: Goal filtered out by paused filter:', goal.title, 'status code:', code);
+          console.log('DEBUG: Expected: paused, but got:', code);
           return false;
         }
       }
@@ -749,31 +743,31 @@ function GoalsPageContent() {
               {t('goals.filter.all')}
             </Button>
             <Button
-              variant={activeFilter === 'not_started' ? "primary" : "outline"}
+              variant={activeFilter === 'new' ? "primary" : "outline"}
               size="sm"
-              aria-pressed={activeFilter === 'not_started'}
-              aria-label={t('goals.status.not_started')}
-              onClick={() => setActiveFilter('not_started')}
+              aria-pressed={activeFilter === 'new'}
+              aria-label={t('goals.status.new')}
+              onClick={() => setActiveFilter('new')}
             >
-              {t('goals.status.not_started')}
+              {t('goals.status.new')}
             </Button>
             <Button
-              variant={activeFilter === 'active' ? "primary" : "outline"}
+              variant={activeFilter === 'in progress' ? "primary" : "outline"}
               size="sm"
-              aria-pressed={activeFilter === 'active'}
-              aria-label={t('goals.status.active')}
-              onClick={() => setActiveFilter('active')}
+              aria-pressed={activeFilter === 'in progress'}
+              aria-label={t('goals.status.in_progress')}
+              onClick={() => setActiveFilter('in progress')}
             >
-              {t('goals.status.active')}
+              {t('goals.status.in_progress')}
             </Button>
             <Button
-              variant={activeFilter === 'completed' ? "primary" : "outline"}
+              variant={activeFilter === 'done' ? "primary" : "outline"}
               size="sm"
-              aria-pressed={activeFilter === 'completed'}
-              aria-label={t('goals.status.completed')}
-              onClick={() => setActiveFilter('completed')}
+              aria-pressed={activeFilter === 'done'}
+              aria-label={t('goals.status.done')}
+              onClick={() => setActiveFilter('done')}
             >
-              {t('goals.status.completed')}
+              {t('goals.status.done')}
             </Button>
             <Button
               variant={activeFilter === 'paused' ? "primary" : "outline"}
@@ -951,7 +945,7 @@ function GoalsPageContent() {
                               o3-mini
                             </DropdownItem>
                           </Dropdown>
-                          {getStatusCode(goal.status) !== 'completed' && (
+                          {getStatusCode(goal.status) !== 'done' && (
                             <Button
                               variant="ghost"
                               size="sm"
