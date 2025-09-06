@@ -109,7 +109,7 @@ function GoalsPageContent() {
       // Load categories
       const categoriesResponse = await goalsService.getCategories();
       if (categoriesResponse.success) {
-        const categoryList = categoriesResponse.data ?? [];
+        const categoryList = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
         setCategories(categoryList);
         // Set default category if none selected
         if (categoryList.length > 0) {
@@ -117,12 +117,14 @@ function GoalsPageContent() {
             !prev.category_id ? { ...prev, category_id: categoryList[0].id } : prev
           ));
         }
+      } else {
+        setCategories([]); // Ensure categories is always an array
       }
 
       // Load statuses
       const statusesResponse = await goalsService.getStatuses();
       if (statusesResponse.success) {
-        const statusList = statusesResponse.data ?? [];
+        const statusList = Array.isArray(statusesResponse.data) ? statusesResponse.data : [];
         setStatuses(statusList);
         // Set default status to "New" or equivalent for new goals
         if (statusList.length > 0) {
@@ -139,6 +141,8 @@ function GoalsPageContent() {
             return prev;
           });
         }
+      } else {
+        setStatuses([]); // Ensure statuses is always an array
       }
 
       // Load statistics
@@ -277,11 +281,15 @@ function GoalsPageContent() {
 
   // Sort statuses by natural progression order
   const getSortedStatuses = (statusList: GoalStatus[]) => {
+    // Ensure we have a valid array
     if (!statusList || !Array.isArray(statusList)) return [];
     
     const statusOrder = ['new', 'not started', 'in progress', 'active', 'on hold', 'paused', 'done', 'completed'];
     
-    return [...statusList].filter(status => status && typeof status === 'object').sort((a, b) => {
+    // Create a safe copy and filter out invalid entries
+    const validStatuses = statusList.filter(status => status && typeof status === 'object' && status.id);
+    
+    return validStatuses.sort((a, b) => {
       const codeA = getStatusCode(a);
       const codeB = getStatusCode(b);
       
@@ -507,22 +515,40 @@ function GoalsPageContent() {
   };
 
   // Compute filtered goal list based on activeFilter using language-agnostic status code
-  const filteredGoals = (goals || []).filter(goal => {
-    // status filter
-    if (activeFilter !== 'all') {
-      const code = getStatusCode(goal.status);
-      // Handle various possible status names from backend
-      if (activeFilter === 'not_started' && !['new', 'not started'].includes(code)) return false;
-      if (activeFilter === 'active' && !['in progress', 'active'].includes(code)) return false;
-      if (activeFilter === 'completed' && !['done', 'completed'].includes(code)) return false;
-      if (activeFilter === 'paused' && !['on hold', 'paused'].includes(code)) return false;
-    }
-    // category filter
-    if (filterCategoryId && goal.category.id !== filterCategoryId) return false;
-    // visibility filter
-    if (filterVisibility !== 'all' && goal.visibility !== filterVisibility) return false;
-    return true;
-  });
+  const filteredGoals = (() => {
+    // Ensure goals is a valid array
+    if (!goals || !Array.isArray(goals)) return [];
+    
+    return goals.filter(goal => {
+      // Ensure goal is a valid object
+      if (!goal || typeof goal !== 'object') return false;
+      
+      // status filter
+      if (activeFilter !== 'all') {
+        // Ensure goal has a valid status object
+        if (!goal.status || typeof goal.status !== 'object') return false;
+        
+        const code = getStatusCode(goal.status);
+        // Handle various possible status names from backend
+        if (activeFilter === 'not_started' && !['new', 'not started'].includes(code)) return false;
+        if (activeFilter === 'active' && !['in progress', 'active'].includes(code)) return false;
+        if (activeFilter === 'completed' && !['done', 'completed'].includes(code)) return false;
+        if (activeFilter === 'paused' && !['on hold', 'paused'].includes(code)) return false;
+      }
+      
+      // category filter
+      if (filterCategoryId) {
+        // Ensure goal has a valid category object
+        if (!goal.category || typeof goal.category !== 'object' || !goal.category.id) return false;
+        if (goal.category.id !== filterCategoryId) return false;
+      }
+      
+      // visibility filter
+      if (filterVisibility !== 'all' && goal.visibility !== filterVisibility) return false;
+      
+      return true;
+    });
+  })();
 
   // Loading fallback
   if (loading) {
@@ -723,7 +749,7 @@ function GoalsPageContent() {
                 aria-label={t('goals.category')}
               >
                 <option value="">{t('goals.filter.all')}</option>
-                {categories.map((c) => (
+                {(categories || []).filter(c => c && typeof c === 'object' && c.id).map((c) => (
                   <option key={c.id} value={c.id}>{getCategoryText(c)}</option>
                 ))}
               </select>
@@ -789,7 +815,7 @@ function GoalsPageContent() {
                 )}
               </div>
             ) : (
-              filteredGoals.map((goal) => (
+              (filteredGoals || []).filter(goal => goal && typeof goal === 'object' && goal.id).map((goal) => (
                 <div key={goal.id}>
                   <Card className="hover:shadow-md transition-shadow">
                     <CardHeader>
@@ -912,7 +938,7 @@ function GoalsPageContent() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
-                          {aiSuggestions[goal.id].map((suggestion) => (
+                          {(aiSuggestions[goal.id] || []).filter(suggestion => suggestion && typeof suggestion === 'object' && suggestion.id).map((suggestion) => (
                             <div
                               key={suggestion.id}
                               className={`flex items-start p-3 rounded-lg ${suggestion.completed
@@ -981,7 +1007,7 @@ function GoalsPageContent() {
                       value={formState.category_id}
                       onChange={(e) => handleFormChange('category_id', e.target.value)}
                     >
-                      {categories.map((category) => (
+                      {(categories || []).filter(category => category && typeof category === 'object' && category.id).map((category) => (
                         <option key={category.id} value={category.id}>
                           {getCategoryText(category)}
                         </option>
@@ -1109,7 +1135,7 @@ function GoalsPageContent() {
                     value={editForm.category_id}
                     onChange={(e) => setEditForm(prev => ({ ...prev, category_id: e.target.value }))}
                   >
-                    {categories.map((category) => (
+                    {(categories || []).filter(category => category && typeof category === 'object' && category.id).map((category) => (
                       <option key={category.id} value={category.id}>
                         {getCategoryText(category)}
                       </option>
