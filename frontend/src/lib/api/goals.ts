@@ -203,7 +203,7 @@ export const goalsService = {
       // Handle paginated response - extract results array
       // 数据结构: { success: true, data: { count, next, previous, results: { data: Array, success: true } } }
       if (data.success && data.data && typeof data.data === 'object') {
-        const paginatedContainer = data.data as any;
+        const paginatedContainer = data.data as Record<string, unknown>;
         
         // 检查是否有分页结构 (count, next, previous, results)
         if ('results' in paginatedContainer && paginatedContainer.results) {
