@@ -51,10 +51,16 @@ generate_commit_message() {
     local deletions=$(git diff --cached --numstat | awk '{del += $2} END {print del+0}')
     
     # Analyze types of changes
-    local new_files=$(git diff --cached --name-status | grep -c "^A" 2>/dev/null || echo 0)
-    local modified_files=$(git diff --cached --name-status | grep -c "^M" 2>/dev/null || echo 0)
-    local deleted_files=$(git diff --cached --name-status | grep -c "^D" 2>/dev/null || echo 0)
-    local renamed_files=$(git diff --cached --name-status | grep -c "^R" 2>/dev/null || echo 0)
+    local new_files=$(git diff --cached --name-status | grep "^A" 2>/dev/null | wc -l | tr -d ' \n')
+    local modified_files=$(git diff --cached --name-status | grep "^M" 2>/dev/null | wc -l | tr -d ' \n')
+    local deleted_files=$(git diff --cached --name-status | grep "^D" 2>/dev/null | wc -l | tr -d ' \n')
+    local renamed_files=$(git diff --cached --name-status | grep "^R" 2>/dev/null | wc -l | tr -d ' \n')
+    
+    # Ensure all variables are valid numbers
+    [[ -z "$new_files" || ! "$new_files" =~ ^[0-9]+$ ]] && new_files=0
+    [[ -z "$modified_files" || ! "$modified_files" =~ ^[0-9]+$ ]] && modified_files=0
+    [[ -z "$deleted_files" || ! "$deleted_files" =~ ^[0-9]+$ ]] && deleted_files=0
+    [[ -z "$renamed_files" || ! "$renamed_files" =~ ^[0-9]+$ ]] && renamed_files=0
     
     # Get file extensions to understand what type of changes
     local file_types=$(git diff --cached --name-only | sed 's/.*\.//' | sort | uniq -c | sort -nr | head -3)
