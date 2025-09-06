@@ -1,3 +1,4 @@
+# pyright: reportMissingImports=false
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -5,6 +6,8 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.db.models import Count
 from .models import Goal, AISuggestion, GoalCategory, GoalStatus
+from django.db import models
+
 
 # Import the new AI service
 try:
@@ -58,6 +61,38 @@ class GoalListCreateView(generics.ListCreateAPIView):
         if self.request.method == 'POST':
             return GoalCreateSerializer
         return GoalSerializer
+    
+    def list(self, request, *args, **kwargs):
+        """获取目标列表并返回标准响应格式"""
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response({
+                'success': True,
+                'data': serializer.data
+            })
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'success': True,
+            'data': serializer.data
+        })
+    
+    def create(self, request, *args, **kwargs):
+        """创建目标并返回标准响应格式"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        
+        # Use the standard GoalSerializer for the response to ensure consistent structure
+        response_serializer = GoalSerializer(serializer.instance)
+        return Response({
+            'success': True,
+            'data': response_serializer.data
+        }, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class GoalDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -76,6 +111,42 @@ class GoalDetailView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method in ['PUT', 'PATCH']:
             return GoalUpdateSerializer
         return GoalSerializer
+    
+    def retrieve(self, request, *args, **kwargs):
+        """获取目标详情并返回标准响应格式"""
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        
+        return Response({
+            'success': True,
+            'data': serializer.data
+        })
+    
+    def update(self, request, *args, **kwargs):
+        """更新目标并返回标准序列化数据"""
+        # First, perform the update using the update serializer
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        # Then, return the response using the standard serializer
+        # This ensures the response structure is consistent
+        response_serializer = GoalSerializer(instance)
+        return Response({
+            'success': True,
+            'data': response_serializer.data
+        })
+    
+    def destroy(self, request, *args, **kwargs):
+        """删除目标并返回标准响应格式"""
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({
+            'success': True,
+            'message': '目标已删除'
+        }, status=status.HTTP_204_NO_CONTENT)
 
 
 class PublicGoalListView(generics.ListAPIView):
@@ -139,7 +210,7 @@ def goal_categories(request):
 @permission_classes([IsAuthenticated])
 def goal_statuses(request):
     """获取所有目标状态"""
-    statuses = GoalStatus.objects.all()
+    statuses = GoalStatus.objects.all()  # type: models.QuerySet[GoalStatus]
     serializer = GoalStatusSerializer(statuses, many=True)
     
     return Response({
