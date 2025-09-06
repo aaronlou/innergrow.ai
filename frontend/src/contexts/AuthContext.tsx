@@ -169,16 +169,33 @@ const authService = {
       const authResponse = googleUser.getAuthResponse();
       const idToken = authResponse.id_token;
       
+      console.log('Google login attempt:', {
+        apiUrl: `${API_BASE_URL}/api/accounts/auth/google-login/`,
+        hasIdToken: !!idToken,
+        idTokenLength: idToken?.length
+      });
+      
       // Send the ID token to your backend
       const response = await fetch(`${API_BASE_URL}/api/accounts/auth/google-login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Origin': window.location.origin,
         },
+        credentials: 'include', // Include cookies for CSRF if needed
         body: JSON.stringify({ id_token: idToken }),
       });
 
+      console.log('Google login response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
       const data = await response.json();
+      
+      console.log('Google login data:', data);
 
       if (data.success) {
         // Store token in localStorage

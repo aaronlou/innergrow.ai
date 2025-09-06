@@ -121,8 +121,19 @@ function GoalsPageContent() {
 
       // Load statuses
       const statusesResponse = await goalsService.getStatuses();
+      console.log('Statuses API Response:', statusesResponse);
+      
       if (statusesResponse.success) {
         const statusList = statusesResponse.data ?? [];
+        console.log('Status List:', statusList);
+        console.log('Status List Items:', statusList.map((status, index) => ({
+          index,
+          status,
+          hasNameEn: status && 'name_en' in status,
+          hasName: status && 'name' in status,
+          type: typeof status
+        })));
+        
         setStatuses(statusList);
         // Set default status to "New" or equivalent for new goals
         if (statusList.length > 0) {
@@ -130,10 +141,11 @@ function GoalsPageContent() {
             if (!prev.status_id) {
               // Find "New", "Not Started", or first status as fallback
               const newStatus = statusList.find(status => {
+                if (!status || typeof status !== 'object') return false;
                 const statusCode = (status.name_en || status.name || '').toLowerCase();
                 return ['new', 'not started'].includes(statusCode);
               });
-              return { ...prev, status_id: newStatus?.id || statusList[0].id };
+              return { ...prev, status_id: newStatus?.id || statusList[0]?.id || '' };
             }
             return prev;
           });
@@ -263,20 +275,24 @@ function GoalsPageContent() {
 
   // Pick status display text based on current language (backend provides name/name_en)
   const getStatusText = (status: GoalStatus) => {
+    if (!status || typeof status !== 'object') return '';
     // Use the translated name based on current language
-    return language === 'en' ? status.name_en : status.name;
+    return language === 'en' ? (status.name_en || status.name || '') : (status.name || status.name_en || '');
   };
 
   // Get a language-agnostic status code for logic (prefer English, lowercase)
   const getStatusCode = (status: GoalStatus) => {
+    if (!status || typeof status !== 'object') return '';
     return (status.name_en || status.name || '').toLowerCase();
   };
 
   // Sort statuses by natural progression order
   const getSortedStatuses = (statusList: GoalStatus[]) => {
+    if (!statusList || !Array.isArray(statusList)) return [];
+    
     const statusOrder = ['new', 'not started', 'in progress', 'active', 'on hold', 'paused', 'done', 'completed'];
     
-    return [...statusList].sort((a, b) => {
+    return [...statusList].filter(status => status && typeof status === 'object').sort((a, b) => {
       const codeA = getStatusCode(a);
       const codeB = getStatusCode(b);
       
@@ -336,11 +352,14 @@ function GoalsPageContent() {
           category_id: categories.length > 0 ? categories[0].id : '',
           status_id: (() => {
             // Find "New" or "Not Started" status for new goals
+            if (!statuses || statuses.length === 0) return '';
+            
             const newStatus = statuses.find(status => {
+              if (!status || typeof status !== 'object') return false;
               const statusCode = (status.name_en || status.name || '').toLowerCase();
               return ['new', 'not started'].includes(statusCode);
             });
-            return newStatus?.id || (statuses.length > 0 ? statuses[0].id : '');
+            return newStatus?.id || statuses[0]?.id || '';
           })(),
           visibility: 'private',
           target_date: ''
@@ -1152,8 +1171,25 @@ function GoalsPageContent() {
               onClick={async () => {
                 if (!editingGoal) return;
                 const res = await goalsService.updateGoal(editingGoal.id, editForm);
+                console.log('Update goal response:', res);
+                
                 if (res.success && res.data) {
-                  setGoals(prev => prev.map(g => g.id === editingGoal.id ? res.data as LocalGoal : g));
+                  // Ensure the updated goal has a valid status object
+                  const updatedGoal = res.data as LocalGoal;
+                  console.log('Updated goal data:', updatedGoal);
+                  console.log('Updated goal status:', updatedGoal.status);
+                  
+                  if (updatedGoal && (!updatedGoal.status || typeof updatedGoal.status !== 'object')) {
+                    console.log('Status missing or invalid, trying to find from statuses list');
+                    // If status is missing, try to find it from the current statuses list
+                    const matchingStatus = statuses.find(s => s && s.id === editForm.status_id);
+                    console.log('Matching status found:', matchingStatus);
+                    if (matchingStatus) {
+                      updatedGoal.status = matchingStatus;
+                    }
+                  }
+                  
+                  setGoals(prev => prev.map(g => g.id === editingGoal.id ? updatedGoal : g));
                   showToast('success', t('goals.updateSuccess'));
                   setShowEditModal(false);
                 } else {
