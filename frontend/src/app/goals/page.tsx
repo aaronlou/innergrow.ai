@@ -92,8 +92,60 @@ function GoalsPageContent() {
     setToast({ visible: true, type, title, description });
   };
 
-  // Aggregate load: goals, categories, statuses, statistics
-  const loadData = useCallback(async () => {
+  // Load basic data (categories, statuses, statistics) - only once
+  const loadBasicData = useCallback(async () => {
+    try {
+      // Load categories
+      const categoriesResponse = await goalsService.getCategories();
+      if (categoriesResponse.success) {
+        const categoryList = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
+        setCategories(categoryList);
+        // Set default category if none selected
+        if (categoryList.length > 0) {
+          setFormState(prev => (
+            !prev.category_id ? { ...prev, category_id: categoryList[0].id } : prev
+          ));
+        }
+      } else {
+        setCategories([]); // Ensure categories is always an array
+      }
+
+      // Load statuses
+      const statusesResponse = await goalsService.getStatuses();
+      if (statusesResponse.success) {
+        const statusList = Array.isArray(statusesResponse.data) ? statusesResponse.data : [];
+        setStatuses(statusList);
+        // Set default status to "New" or equivalent for new goals
+        if (statusList.length > 0) {
+          setFormState(prev => {
+            if (!prev.status_id) {
+              // Find "New" status for new goals (matching your backend definition)
+              const newStatus = statusList.find(status => {
+                if (!status || typeof status !== 'object') return false;
+                const statusCode = (status.name_en || status.name || '').toLowerCase();
+                return statusCode === 'new';
+              });
+              return { ...prev, status_id: newStatus?.id || statusList[0]?.id || '' };
+            }
+            return prev;
+          });
+        }
+      } else {
+        setStatuses([]); // Ensure statuses is always an array
+      }
+
+      // Load statistics
+      const statsResponse = await goalsService.getStatistics();
+      if (statsResponse.success && statsResponse.data) {
+        setStatistics(statsResponse.data);
+      }
+    } catch (err) {
+      console.error('Error loading basic data:', err);
+    }
+  }, []);
+
+  // Load goals with current filters
+  const loadGoals = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -147,54 +199,9 @@ function GoalsPageContent() {
           setError(goalsResponse.error);
         }
       }
-
-      // Load categories
-      const categoriesResponse = await goalsService.getCategories();
-      if (categoriesResponse.success) {
-        const categoryList = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
-        setCategories(categoryList);
-        // Set default category if none selected
-        if (categoryList.length > 0) {
-          setFormState(prev => (
-            !prev.category_id ? { ...prev, category_id: categoryList[0].id } : prev
-          ));
-        }
-      } else {
-        setCategories([]); // Ensure categories is always an array
-      }
-
-      // Load statuses
-      const statusesResponse = await goalsService.getStatuses();
-      if (statusesResponse.success) {
-        const statusList = Array.isArray(statusesResponse.data) ? statusesResponse.data : [];
-        setStatuses(statusList);
-        // Set default status to "New" or equivalent for new goals
-        if (statusList.length > 0) {
-          setFormState(prev => {
-            if (!prev.status_id) {
-              // Find "New" status for new goals (matching your backend definition)
-              const newStatus = statusList.find(status => {
-                if (!status || typeof status !== 'object') return false;
-                const statusCode = (status.name_en || status.name || '').toLowerCase();
-                return statusCode === 'new';
-              });
-              return { ...prev, status_id: newStatus?.id || statusList[0]?.id || '' };
-            }
-            return prev;
-          });
-        }
-      } else {
-        setStatuses([]); // Ensure statuses is always an array
-      }
-
-      // Load statistics
-      const statsResponse = await goalsService.getStatistics();
-      if (statsResponse.success && statsResponse.data) {
-        setStatistics(statsResponse.data);
-      }
     } catch (err) {
-      setError('Failed to load data');
-      console.error('Error loading data:', err);
+      setError('Failed to load goals');
+      console.error('Error loading goals:', err);
     } finally {
       setLoading(false);
     }
@@ -203,8 +210,8 @@ function GoalsPageContent() {
   // Load data on component mount - 只有在用户已认证时才加载数据
   useEffect(() => {
     if (isAuthenticated) {
-      // Fetch all required data on mount
-      loadData();
+      // Load basic data first
+      loadBasicData();
     }
     // Restore preferred AI model
     if (typeof window !== 'undefined') {
@@ -233,7 +240,7 @@ function GoalsPageContent() {
         }
       }
     }
-  }, [loadData, isAuthenticated]);
+  }, [loadBasicData, isAuthenticated]);
 
   // Debounced URL updater to reduce replace() calls
   const urlUpdateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -282,14 +289,12 @@ function GoalsPageContent() {
     scheduleUrlUpdate({ visibility: filterVisibility !== 'all' ? filterVisibility : undefined });
   }, [filterVisibility, scheduleUrlUpdate]);
 
-  // Reload data when filters change (but only if we have loaded data initially)
+  // Reload goals when filters change (but only if we have loaded basic data initially)
   useEffect(() => {
     if (isAuthenticated && statuses.length > 0) {
-      loadData();
+      loadGoals();
     }
-  }, [activeFilter, filterCategoryId, filterVisibility, isAuthenticated, statuses.length, loadData]);
-
-  // loadData defined above
+  }, [activeFilter, filterCategoryId, filterVisibility, isAuthenticated, statuses.length, loadGoals]);
 
   // Map a language-agnostic status code to badge color (aligned with your backend statuses)
   const getStatusColor = (statusCode: string) => {
@@ -620,7 +625,10 @@ function GoalsPageContent() {
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-red-800">{error}</p>
               <Button
-                onClick={loadData}
+                onClick={() => {
+                  loadBasicData();
+                  loadGoals();
+                }}
                 className="mt-2"
               >
                 {t('common.retry')}
