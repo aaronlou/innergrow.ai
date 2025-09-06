@@ -3,21 +3,12 @@
 import { useEffect, useState } from 'react';
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, Button } from '@/components/ui';
-import { goalsService } from '@/lib/api/goals';
+import { goalsService, GoalStatistics } from '@/lib/api/goals';
 import { useI18n } from '@/contexts';
-
-interface Stats {
-  total: number;
-  active: number;
-  completed: number;
-  paused: number;
-  public: number;
-  private: number;
-}
 
 export default function ReportsPage() {
   const { t } = useI18n();
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<GoalStatistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,14 +71,14 @@ export default function ReportsPage() {
                 <CardTitle>Active</CardTitle>
                 <CardDescription>In progress</CardDescription>
               </CardHeader>
-              <CardContent><div className="text-3xl font-bold text-green-600">{stats?.active ?? 0}</div></CardContent>
+              <CardContent><div className="text-3xl font-bold text-green-600">{((stats?.new ?? 0) + (stats?.['in progress'] ?? 0))}</div></CardContent>
             </Card>
             <Card>
               <CardHeader>
                 <CardTitle>Completed</CardTitle>
                 <CardDescription>Finished goals</CardDescription>
               </CardHeader>
-              <CardContent><div className="text-3xl font-bold text-blue-600">{stats?.completed ?? 0}</div></CardContent>
+              <CardContent><div className="text-3xl font-bold text-blue-600">{stats?.done ?? 0}</div></CardContent>
             </Card>
             <Card>
               <CardHeader>
