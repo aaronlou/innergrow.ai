@@ -371,8 +371,8 @@ def mark_goal_complete(request, goal_id):
     # 获取或创建完成状态
     completed_status, _ = GoalStatus.objects.get_or_create(
         name='已完成',
-        name_en='completed',
-        defaults={'name': '已完成', 'name_en': 'completed'}
+        name_en='done',
+        defaults={'name': '已完成', 'name_en': 'done'}
     )
     
     goal.status = completed_status

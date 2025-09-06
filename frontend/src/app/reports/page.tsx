@@ -71,7 +71,7 @@ export default function ReportsPage() {
                 <CardTitle>Active</CardTitle>
                 <CardDescription>In progress</CardDescription>
               </CardHeader>
-              <CardContent><div className="text-3xl font-bold text-green-600">{((stats?.new ?? 0) + (stats?.['in progress'] ?? 0))}</div></CardContent>
+              <CardContent><div className="text-3xl font-bold text-green-600">{((stats?.new ?? 0) + (stats?.['active'] ?? 0))}</div></CardContent>
             </Card>
             <Card>
               <CardHeader>

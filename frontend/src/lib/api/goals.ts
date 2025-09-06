@@ -56,7 +56,7 @@ const apiRequest = async (endpoint: string, options: ApiRequestOptions = {}) => 
   };
 
   const authHeaders: Record<string, string> = token ? {
-  'Authorization': `${getAuthScheme()} ${token}`,
+    'Authorization': `${getAuthScheme()} ${token}`,
   } : {};
 
   // Ensure headers are always a plain object
@@ -179,8 +179,8 @@ export interface AISuggestion {
 export interface GoalStatistics {
   total: number;
   new: number;
-  'in progress': number;
-  done: number;
+  active: number;
+  completed: number;
   paused: number;
   public: number;
   private: number;
@@ -188,6 +188,22 @@ export interface GoalStatistics {
 
 // Goals API service
 export const goalsService = {
+  // Internal normalization helper to flatten paginated/list variants
+  _normalizeList<T>(raw: unknown): T[] {
+    // Case 1: already an array
+    if (Array.isArray(raw)) return raw as T[];
+    if (!raw || typeof raw !== 'object') return [];
+    const obj = raw as Record<string, any>;
+    // Case 2: { success, data: [...] }
+    if (Array.isArray(obj.data)) return obj.data as T[];
+    // Case 3: { results: [...] }
+    if (Array.isArray(obj.results)) return obj.results as T[];
+    // Case 4: { results: { data: [...] } }
+    if (obj.results && typeof obj.results === 'object' && Array.isArray(obj.results.data)) {
+      return obj.results.data as T[];
+    }
+    return [];
+  },
   // Get user's goals
   async getGoals(params: Record<string, string> = {}): Promise<ApiResponse<Goal[]>> {
     const searchParams = new URLSearchParams(params);
@@ -197,48 +213,48 @@ export const goalsService = {
       const data = await apiRequest(`/api/goals/${queryString}`, {
         method: 'GET',
       });
-      
+
       console.log('DEBUG: Raw API response in getGoals:', data);
-      
+
       // Handle paginated response - extract results array
       // 数据结构: { success: true, data: { count, next, previous, results: { data: Array, success: true } } }
       if (data.success && data.data && typeof data.data === 'object') {
         const paginatedContainer = data.data as Record<string, unknown>;
-        
+
         // 检查是否有分页结构 (count, next, previous, results)
         if ('results' in paginatedContainer && paginatedContainer.results) {
           const results = paginatedContainer.results;
           console.log('DEBUG: Found paginated structure with results:', results);
-          
+
           // 检查 results.data 是否存在且为数组
           if (results && typeof results === 'object' && 'data' in results && Array.isArray(results.data)) {
             console.log('DEBUG: Extracting goals array from results.data:', results.data);
             return { success: true, data: results.data };
           }
-          
+
           // 如果 results 直接是数组（备用处理）
           if (Array.isArray(results)) {
             console.log('DEBUG: Results is direct array:', results);
             return { success: true, data: results };
           }
         }
-        
+
         // 如果直接是数组（非分页情况）
         if (Array.isArray(paginatedContainer)) {
           console.log('DEBUG: Direct array response:', paginatedContainer);
           return { success: true, data: paginatedContainer };
         }
-        
+
         console.log('DEBUG: Unexpected paginated structure, falling back to empty array');
         return { success: true, data: [] };
       }
-      
+
       // Handle direct array response
       if (data.success && Array.isArray(data.data)) {
         console.log('DEBUG: Detected direct array response:', data.data);
         return data;
       }
-      
+
       // Handle any other case
       console.log('DEBUG: Unexpected response format:', data);
       return data;
@@ -451,7 +467,10 @@ export const goalsService = {
         body: JSON.stringify(body),
         timeoutMs: opts?.timeoutMs,
       });
-      return data;
+      if (data.success) {
+        return { success: true, data: goalsService._normalizeList<AISuggestion>(data.data) };
+      }
+      return data as ApiResponse<AISuggestion[]>;
     } catch (error: unknown) {
       if (error instanceof Error) {
         return { success: false, error: error.message };
@@ -466,7 +485,10 @@ export const goalsService = {
       const data = await apiRequest(`/api/goals/${goalId}/suggestions/`, {
         method: 'GET',
       });
-      return data;
+      if (data.success) {
+        return { success: true, data: goalsService._normalizeList<AISuggestion>(data.data) };
+      }
+      return data as ApiResponse<AISuggestion[]>;
     } catch (error: unknown) {
       if (error instanceof Error) {
         return { success: false, error: error.message };

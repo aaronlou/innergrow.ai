@@ -32,7 +32,7 @@ function GoalsPageContent() {
   const [statistics, setStatistics] = useState<GoalStatistics>({
     total: 0,
     new: 0,
-    'in progress': 0,
+    active: 0,
     done: 0,
     paused: 0,
     public: 0,
@@ -322,9 +322,9 @@ function GoalsPageContent() {
     switch (statusCode) {
       case 'new':
         return 'default';  // Gray for "New" (未开始)
-      case 'in progress':
-        return 'info';     // Blue for "In progress" (进行中)
-      case 'done':
+      case 'active':
+        return 'info';     // Blue for "active" (进行中)
+      case 'completed':
         return 'success';  // Green for "Done" (已完成)
       case 'paused':
         return 'warning';  // Orange/Yellow for "Paused" (暂停)
@@ -352,7 +352,7 @@ function GoalsPageContent() {
     if (!statusList || !Array.isArray(statusList)) return [];
 
     // Order based on your exact backend status definitions
-    const statusOrder = ['new', 'in progress', 'paused', 'done'];
+    const statusOrder = ['new', 'active', 'paused', 'completed'];
 
     // Create a safe copy and filter out invalid entries
     const validStatuses = statusList.filter(status => status && typeof status === 'object' && status.id);
@@ -462,35 +462,42 @@ function GoalsPageContent() {
       // First try to get existing suggestions
       const suggestionsResponse = await goalsService.getSuggestions(goalId);
 
-      if (suggestionsResponse.success && suggestionsResponse.data) {
-        // Use existing suggestions
-        setAiSuggestions(prev => ({
-          ...prev,
-          [goalId]: suggestionsResponse.data || []
-        }));
-      } else {
-        // Generate new suggestions
-        const analyzeResponse = await goalsService.analyzeGoal(goalId, { model, timeoutMs: 20000 });
+      const normalize = (raw: unknown): AISuggestion[] => {
+        if (Array.isArray(raw)) return raw as AISuggestion[];
+        if (!raw || typeof raw !== 'object') return [];
+        const obj = raw as any;
+        if (Array.isArray(obj.data)) return obj.data as AISuggestion[];
+        if (Array.isArray(obj.results)) return obj.results as AISuggestion[];
+        if (obj.results && Array.isArray(obj.results.data)) return obj.results.data as AISuggestion[];
+        return [];
+      };
 
-        if (analyzeResponse.success && analyzeResponse.data) {
-          setAiSuggestions(prev => ({
-            ...prev,
-            [goalId]: analyzeResponse.data || []
-          }));
-          showToast('success', t('goals.aiAnalyzeSuccess'));
+      if (suggestionsResponse.success) {
+        const list = normalize(suggestionsResponse.data);
+        if (list.length > 0) {
+          setAiSuggestions(prev => ({ ...prev, [goalId]: list }));
         } else {
-          const msg = analyzeResponse.error || 'Failed to analyze goal';
-          setError(msg);
-          showToast('error', t('goals.aiAnalyzeFailed'), msg);
-          return;
+          // Generate new suggestions only if none exist
+          const analyzeResponse = await goalsService.analyzeGoal(goalId, { model, timeoutMs: 20000 });
+          if (analyzeResponse.success) {
+            const genList = normalize(analyzeResponse.data);
+            setAiSuggestions(prev => ({ ...prev, [goalId]: genList }));
+            showToast('success', t('goals.aiAnalyzeSuccess'));
+          } else {
+            const msg = analyzeResponse.error || 'Failed to analyze goal';
+            setError(msg);
+            showToast('error', t('goals.aiAnalyzeFailed'), msg);
+            return;
+          }
         }
+      } else {
+        const msg = suggestionsResponse.error || 'Failed to load suggestions';
+        setError(msg);
+        showToast('error', t('goals.aiAnalyzeFailed'), msg);
+        return;
       }
 
-      // Show suggestions
-      setShowSuggestions(prev => ({
-        ...prev,
-        [goalId]: true
-      }));
+      setShowSuggestions(prev => ({ ...prev, [goalId]: true }));
     } catch (err) {
       setError('Failed to analyze goal');
       console.error('Error analyzing goal:', err);
@@ -509,7 +516,7 @@ function GoalsPageContent() {
         // Update local state to mark suggestion as accepted
         setAiSuggestions(prev => ({
           ...prev,
-          [goalId]: prev[goalId].map(suggestion =>
+          [goalId]: (Array.isArray(prev[goalId]) ? prev[goalId] : []).map(suggestion =>
             suggestion.id === suggestionId
               ? { ...suggestion, accepted: true }
               : suggestion
@@ -705,7 +712,7 @@ function GoalsPageContent() {
                   </div>
                   <div className="ml-3">
                     <p className="text-xs font-medium text-muted-foreground">{t('goals.active')}</p>
-                    <p className="text-xl font-bold text-green-600">{(statistics.new || 0) + (statistics['in progress'] || 0)}</p>
+                    <p className="text-xl font-bold text-green-600">{(statistics.new || 0) + (statistics['active'] || 0)}</p>
                   </div>
                 </div>
               </CardContent>
@@ -766,22 +773,22 @@ function GoalsPageContent() {
               {t('goals.status.new')}
             </Button>
             <Button
-              variant={activeFilter === 'in progress' ? "primary" : "outline"}
+              variant={activeFilter === 'active' ? "primary" : "outline"}
               size="sm"
-              aria-pressed={activeFilter === 'in progress'}
-              aria-label={t('goals.status.in_progress')}
-              onClick={() => setActiveFilter('in progress')}
+              aria-pressed={activeFilter === 'active'}
+              aria-label={t('goals.status.active')}
+              onClick={() => setActiveFilter('active')}
             >
               {t('goals.status.in_progress')}
             </Button>
             <Button
-              variant={activeFilter === 'done' ? "primary" : "outline"}
+              variant={activeFilter === 'completed' ? "primary" : "outline"}
               size="sm"
-              aria-pressed={activeFilter === 'done'}
-              aria-label={t('goals.status.done')}
-              onClick={() => setActiveFilter('done')}
+              aria-pressed={activeFilter === 'completed'}
+              aria-label={t('goals.status.completed')}
+              onClick={() => setActiveFilter('completed')}
             >
-              {t('goals.status.done')}
+              {t('goals.status.completed')}
             </Button>
             <Button
               variant={activeFilter === 'paused' ? "primary" : "outline"}
@@ -997,7 +1004,7 @@ function GoalsPageContent() {
                   </Card>
 
                   {/* AI Suggestions */}
-                  {showSuggestions[goal.id] && aiSuggestions[goal.id] && (
+                  {showSuggestions[goal.id] && Array.isArray(aiSuggestions[goal.id]) && (
                     <Card className="mt-2 border-l-4 border-l-blue-500">
                       <CardHeader>
                         <CardTitle className="text-lg">{t('goals.aiSuggestions')}</CardTitle>
@@ -1005,7 +1012,9 @@ function GoalsPageContent() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
-                          {(aiSuggestions[goal.id] || []).filter(suggestion => suggestion && typeof suggestion === 'object' && suggestion.id).map((suggestion) => (
+                          {(Array.isArray(aiSuggestions[goal.id]) ? aiSuggestions[goal.id] : [])
+                              .filter(suggestion => suggestion && typeof suggestion === 'object' && suggestion.id)
+                              .map((suggestion) => (
                             <div
                               key={suggestion.id}
                               className={`flex items-start p-3 rounded-lg ${suggestion.completed
