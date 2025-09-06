@@ -142,6 +142,9 @@ export const zh = {
   'auth.registerNow': '立即注册',
   'auth.orContinueWith': '或继续使用',
   'auth.googleLogin': 'Google 登录',
+  'auth.redirectingToLogin': '正在跳转到登录页...',
+  'auth.verifying': '正在验证身份...',
+  'common.retry': '重试',
 
   // 仪表板
   'dashboard.welcome': '你好，{name}！',

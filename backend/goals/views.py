@@ -39,7 +39,17 @@ class GoalListCreateView(generics.ListCreateAPIView):
         """获取当前用户的目标"""
         queryset = Goal.objects.filter(user=self.request.user).select_related('category', 'status')
         
-        # 支持按状态过滤
+        # 支持按状态过滤 (支持ID或英文名称)
+        status_param = self.request.query_params.get('status', None)
+        if status_param:
+            if status_param.isdigit():
+                # 如果是数字，按ID过滤
+                queryset = queryset.filter(status_id=status_param)
+            else:
+                # 如果是字符串，按英文名称过滤
+                queryset = queryset.filter(status__name_en=status_param)
+        
+        # 保持原有的status_id过滤支持（向后兼容）
         status_id = self.request.query_params.get('status_id', None)
         if status_id:
             queryset = queryset.filter(status_id=status_id)

@@ -152,7 +152,7 @@ function GoalsPageContent() {
     try {
       // Build filter parameters for the API
       const filterParams: Record<string, string> = {};
-      
+
       // Add status filter if not 'all'
       if (activeFilter !== 'all') {
         // Find the status ID for the selected status
@@ -164,21 +164,26 @@ function GoalsPageContent() {
           filterParams.status_id = selectedStatus.id;
         }
       }
-      
+
       // Add category filter
       if (filterCategoryId) {
         filterParams.category_id = filterCategoryId;
       }
-      
+
       // Add visibility filter
       if (filterVisibility !== 'all') {
         filterParams.visibility = filterVisibility;
       }
+      console.log('DEBUG: Filter parameters:', filterParams);
+      console.log('DEBUG: Current statuses:', statuses);
+      console.log('DEBUG: Current active filter:', activeFilter);
+      console.log('DEBUG: Current filter category ID:', filterCategoryId);
+      console.log('DEBUG: Current filter visibility:', filterVisibility);
 
       // Load goals with filters
       const goalsResponse = await goalsService.getGoals(filterParams);
       console.log('DEBUG: Raw goals API response:', goalsResponse);
-      
+
       if (goalsResponse.success && goalsResponse.data) {
         // Ensure the data is actually an array
         const goalsData = Array.isArray(goalsResponse.data) ? goalsResponse.data : [];
@@ -249,6 +254,7 @@ function GoalsPageContent() {
     urlUpdateTimer.current = setTimeout(() => {
       try {
         const params = new URLSearchParams(searchParams?.toString());
+        console.log('DEBUG: URL update before changes:', params.toString());
         if (delta.status !== undefined) {
           if (delta.status) params.set('status', delta.status); else params.delete('status');
         }
@@ -259,8 +265,14 @@ function GoalsPageContent() {
           if (delta.visibility) params.set('visibility', delta.visibility); else params.delete('visibility');
         }
         const qs = params.toString();
-        router.replace(qs ? `${pathname}?${qs}` : pathname);
-      } catch { }
+        const newUrl = qs ? `${pathname}?${qs}` : pathname;
+        console.log('DEBUG: URL update delta:', delta);
+        console.log('DEBUG: URL update after changes:', qs);
+        console.log('DEBUG: New URL:', newUrl);
+        router.replace(newUrl);
+      } catch (err) {
+        console.error('DEBUG: URL update error:', err);
+      }
     }, 150);
   }, [searchParams, router, pathname]);
 
@@ -329,29 +341,29 @@ function GoalsPageContent() {
   const getSortedStatuses = (statusList: GoalStatus[]) => {
     // Ensure we have a valid array
     if (!statusList || !Array.isArray(statusList)) return [];
-    
+
     // Order based on your exact backend status definitions
     const statusOrder = ['new', 'in progress', 'paused', 'done'];
-    
+
     // Create a safe copy and filter out invalid entries
     const validStatuses = statusList.filter(status => status && typeof status === 'object' && status.id);
-    
+
     return validStatuses.sort((a, b) => {
       const codeA = getStatusCode(a);
       const codeB = getStatusCode(b);
-      
+
       const indexA = statusOrder.findIndex(order => order === codeA);
       const indexB = statusOrder.findIndex(order => order === codeB);
-      
+
       // If both statuses are in the order array, sort by their position
       if (indexA !== -1 && indexB !== -1) {
         return indexA - indexB;
       }
-      
+
       // If only one is in the order array, it comes first
       if (indexA !== -1) return -1;
       if (indexB !== -1) return 1;
-      
+
       // If neither is in the order array, sort alphabetically
       return codeA.localeCompare(codeB);
     });
@@ -398,7 +410,7 @@ function GoalsPageContent() {
           status_id: (() => {
             // Find "New" status for new goals (matching your backend definition)
             if (!statuses || statuses.length === 0) return '';
-            
+
             const newStatus = statuses.find(status => {
               if (!status || typeof status !== 'object') return false;
               const statusCode = (status.name_en || status.name || '').toLowerCase();
@@ -570,7 +582,7 @@ function GoalsPageContent() {
       console.log('DEBUG: Goals value:', goals);
       return [];
     }
-    
+
     console.log('DEBUG: Using backend-filtered goals, count:', goals.length);
     return goals;
   })();
@@ -726,7 +738,12 @@ function GoalsPageContent() {
               size="sm"
               aria-pressed={activeFilter === 'all'}
               aria-label={t('goals.filter.all')}
-              onClick={() => setActiveFilter('all')}
+              onClick={() => {
+                setActiveFilter('all');
+                // When user clicks "All" for status, also reset other filters for truly showing all data
+                setFilterCategoryId('');
+                setFilterVisibility('all');
+              }}
             >
               {t('goals.filter.all')}
             </Button>
@@ -772,7 +789,15 @@ function GoalsPageContent() {
               <select
                 className="p-2 border border-input rounded-md text-sm"
                 value={filterCategoryId}
-                onChange={(e) => setFilterCategoryId(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFilterCategoryId(value);
+                  // When user selects "All" for category (empty value), also reset other filters
+                  if (!value) {
+                    setActiveFilter('all');
+                    setFilterVisibility('all');
+                  }
+                }}
                 id="goals-filter-category"
                 aria-label={t('goals.category')}
               >
@@ -790,7 +815,12 @@ function GoalsPageContent() {
                 size="sm"
                 aria-pressed={filterVisibility === 'all'}
                 aria-label={t('goals.filter.all')}
-                onClick={() => setFilterVisibility('all')}
+                onClick={() => {
+                  setFilterVisibility('all');
+                  // When user clicks "All" for visibility, also reset other filters for truly showing all data
+                  setActiveFilter('all');
+                  setFilterCategoryId('');
+                }}
               >{t('goals.filter.all')}</Button>
               <Button
                 variant={filterVisibility === 'public' ? 'primary' : 'outline'}
@@ -829,7 +859,7 @@ function GoalsPageContent() {
                   <>
                     <p className="text-muted-foreground">{t('goals.empty')}</p>
                     <p className="text-muted-foreground mt-2">{t('goals.emptyDescription')}</p>
-                  
+
                   </>
                 ) : (
                   <>
@@ -1216,14 +1246,14 @@ function GoalsPageContent() {
                 if (!editingGoal) return;
                 const res = await goalsService.updateGoal(editingGoal.id, editForm);
                 console.log('Update goal response:', res);
-                
+
                 if (res.success && res.data) {
                   // Ensure the updated goal has a valid status object
                   const updatedGoal = res.data as LocalGoal;
                   console.log('Updated goal data:', updatedGoal);
                   console.log('Updated goal status:', updatedGoal.status);
                   console.log('Updated goal category:', updatedGoal.category);
-                  
+
                   if (updatedGoal && (!updatedGoal.status || typeof updatedGoal.status !== 'object')) {
                     console.log('Status missing or invalid, trying to find from statuses list');
                     // If status is missing, try to find it from the current statuses list
@@ -1237,7 +1267,7 @@ function GoalsPageContent() {
                       updatedGoal.status = editingGoal.status;
                     }
                   }
-                  
+
                   if (updatedGoal && (!updatedGoal.category || typeof updatedGoal.category !== 'object')) {
                     console.log('Category missing or invalid, trying to find from categories list');
                     // If category is missing, try to find it from the current categories list
@@ -1251,7 +1281,7 @@ function GoalsPageContent() {
                       updatedGoal.category = editingGoal.category;
                     }
                   }
-                  
+
                   setGoals(prev => (prev || []).map(g => g.id === editingGoal.id ? updatedGoal : g));
                   showToast('success', t('goals.updateSuccess'));
                   setShowEditModal(false);

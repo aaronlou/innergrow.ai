@@ -142,6 +142,9 @@ export const en = {
   'auth.registerNow': 'Register Now',
   'auth.orContinueWith': 'Or continue with',
   'auth.googleLogin': 'Sign in with Google',
+  'auth.redirectingToLogin': 'Redirecting to login...',
+  'auth.verifying': 'Verifying authentication...',
+  'common.retry': 'Retry',
 
   // Dashboard
   'dashboard.welcome': 'Hello, {name}!',
