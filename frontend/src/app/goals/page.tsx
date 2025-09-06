@@ -465,10 +465,18 @@ function GoalsPageContent() {
       const normalize = (raw: unknown): AISuggestion[] => {
         if (Array.isArray(raw)) return raw as AISuggestion[];
         if (!raw || typeof raw !== 'object') return [];
-        const obj = raw as any;
-        if (Array.isArray(obj.data)) return obj.data as AISuggestion[];
-        if (Array.isArray(obj.results)) return obj.results as AISuggestion[];
-        if (obj.results && Array.isArray(obj.results.data)) return obj.results.data as AISuggestion[];
+        // Narrow potential container shapes
+        type Container = { data?: unknown; results?: unknown };
+        const container = raw as Container;
+        if (container.data && Array.isArray(container.data)) return container.data as AISuggestion[];
+        if (container.results) {
+          const results = container.results as unknown;
+          if (Array.isArray(results)) return results as AISuggestion[];
+          if (results && typeof results === 'object') {
+            const nested = results as { data?: unknown };
+            if (nested.data && Array.isArray(nested.data)) return nested.data as AISuggestion[];
+          }
+        }
         return [];
       };
 
@@ -726,7 +734,7 @@ function GoalsPageContent() {
                   </div>
                   <div className="ml-3">
                     <p className="text-xs font-medium text-muted-foreground">{t('goals.completed')}</p>
-                    <p className="text-xl font-bold text-blue-600">{statistics.done}</p>
+                    <p className="text-xl font-bold text-blue-600">{(statistics as any).completed ?? (statistics as any).done ?? 0}</p>
                   </div>
                 </div>
               </CardContent>
@@ -779,7 +787,7 @@ function GoalsPageContent() {
               aria-label={t('goals.status.active')}
               onClick={() => setActiveFilter('active')}
             >
-              {t('goals.status.in_progress')}
+              {t('goals.status.active')}
             </Button>
             <Button
               variant={activeFilter === 'completed' ? "primary" : "outline"}
@@ -1013,37 +1021,37 @@ function GoalsPageContent() {
                       <CardContent>
                         <div className="space-y-3">
                           {(Array.isArray(aiSuggestions[goal.id]) ? aiSuggestions[goal.id] : [])
-                              .filter(suggestion => suggestion && typeof suggestion === 'object' && suggestion.id)
-                              .map((suggestion) => (
-                            <div
-                              key={suggestion.id}
-                              className={`flex items-start p-3 rounded-lg ${suggestion.completed
-                                ? 'bg-green-50 border border-green-200'
-                                : 'bg-blue-50 border border-blue-200'
-                                }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={suggestion.accepted}
-                                onChange={() => !suggestion.accepted && handleAcceptSuggestion(goal.id, suggestion.id)}
-                                className="mt-1 mr-3 h-4 w-4 text-blue-600 rounded"
-                                disabled={suggestion.accepted}
-                              />
-                              <div className="flex-1">
-                                <div className="font-medium">{suggestion.title}</div>
-                                <div className="text-sm text-muted-foreground mt-1">
-                                  {suggestion.description}
+                            .filter(suggestion => suggestion && typeof suggestion === 'object' && suggestion.id)
+                            .map((suggestion) => (
+                              <div
+                                key={suggestion.id}
+                                className={`flex items-start p-3 rounded-lg ${suggestion.completed
+                                  ? 'bg-green-50 border border-green-200'
+                                  : 'bg-blue-50 border border-blue-200'
+                                  }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={suggestion.accepted}
+                                  onChange={() => !suggestion.accepted && handleAcceptSuggestion(goal.id, suggestion.id)}
+                                  className="mt-1 mr-3 h-4 w-4 text-blue-600 rounded"
+                                  disabled={suggestion.accepted}
+                                />
+                                <div className="flex-1">
+                                  <div className="font-medium">{suggestion.title}</div>
+                                  <div className="text-sm text-muted-foreground mt-1">
+                                    {suggestion.description}
+                                  </div>
+                                  <Badge
+                                    variant={suggestion.priority === 'high' ? 'success' : suggestion.priority === 'medium' ? 'warning' : 'default'}
+                                    size="sm"
+                                    className="mt-2"
+                                  >
+                                    {t(`goals.priority.${suggestion.priority}`)}
+                                  </Badge>
                                 </div>
-                                <Badge
-                                  variant={suggestion.priority === 'high' ? 'success' : suggestion.priority === 'medium' ? 'warning' : 'default'}
-                                  size="sm"
-                                  className="mt-2"
-                                >
-                                  {t(`goals.priority.${suggestion.priority}`)}
-                                </Badge>
                               </div>
-                            </div>
-                          ))}
+                            ))}
                         </div>
                       </CardContent>
                     </Card>

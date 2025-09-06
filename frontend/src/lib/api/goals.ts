@@ -193,14 +193,20 @@ export const goalsService = {
     // Case 1: already an array
     if (Array.isArray(raw)) return raw as T[];
     if (!raw || typeof raw !== 'object') return [];
-    const obj = raw as Record<string, any>;
-    // Case 2: { success, data: [...] }
-    if (Array.isArray(obj.data)) return obj.data as T[];
-    // Case 3: { results: [...] }
-    if (Array.isArray(obj.results)) return obj.results as T[];
-    // Case 4: { results: { data: [...] } }
-    if (obj.results && typeof obj.results === 'object' && Array.isArray(obj.results.data)) {
-      return obj.results.data as T[];
+    const obj = raw as Record<string, unknown>;
+    // Case 2: { data: [...] }
+    if ('data' in obj) {
+      const dataVal = (obj as { data?: unknown }).data;
+      if (Array.isArray(dataVal)) return dataVal as T[];
+    }
+    // Case 3: { results: [...] } or nested container
+    if ('results' in obj) {
+      const resultsVal = (obj as { results?: unknown }).results;
+      if (Array.isArray(resultsVal)) return resultsVal as T[];
+      if (resultsVal && typeof resultsVal === 'object') {
+        const nested = resultsVal as { data?: unknown };
+        if (nested.data && Array.isArray(nested.data)) return nested.data as T[];
+      }
     }
     return [];
   },
