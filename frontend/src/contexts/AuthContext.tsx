@@ -77,7 +77,7 @@ const authService = {
       if (!csrfToken) {
         try {
           // Make a request to Django to get CSRF cookie set
-          const csrfResponse = await fetch(`${API_BASE_URL}/`, {
+          await fetch(`${API_BASE_URL}/`, {
             method: 'GET',
             credentials: 'include',
           });
