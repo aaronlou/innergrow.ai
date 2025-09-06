@@ -31,47 +31,49 @@ export function getCSRFTokenFromCookie(): string | null {
  * Fetch CSRF token from Django backend
  */
 export async function fetchCSRFToken(): Promise<string | null> {
+  console.log('🔐 Fetching CSRF token from Django backend...');
+  console.log('🌐 API Base URL:', API_BASE_URL);
+  
   try {
-    console.log('Fetching CSRF token from:', `${API_BASE_URL}/api/csrf/`);
+    // 首先尝试专门的CSRF端点
+    console.log('📡 Requesting CSRF token from:', `${API_BASE_URL}/api/csrf/`);
     
-    // Try to get CSRF token from a dedicated endpoint first
     const response = await fetch(`${API_BASE_URL}/api/csrf/`, {
       method: 'GET',
-      credentials: 'include',
+      credentials: 'include', // 重要：包含cookies
       headers: {
         'Accept': 'application/json',
       },
     });
 
+    console.log('📊 CSRF endpoint response:', {
+      status: response.status,
+      ok: response.ok,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+
     if (response.ok) {
       const data = await response.json();
+      console.log('📦 CSRF response data:', data);
+      
       if (data.csrfToken) {
-        console.log('Got CSRF token from API endpoint');
+        console.log('✅ Got CSRF token from API endpoint');
         return data.csrfToken;
       }
     }
   } catch (error) {
-    console.warn('Failed to get CSRF token from API endpoint:', error);
+    console.warn('❌ Failed to get CSRF token from API endpoint:', error);
   }
 
-  try {
-    // Fallback: make a request to root to set CSRF cookie
-    console.log('Trying to get CSRF cookie from root endpoint');
-    await fetch(`${API_BASE_URL}/`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    // Check if cookie was set
-    const tokenFromCookie = getCSRFTokenFromCookie();
-    if (tokenFromCookie) {
-      console.log('Got CSRF token from cookie after root request');
-      return tokenFromCookie;
-    }
-  } catch (error) {
-    console.warn('Failed to get CSRF token from root endpoint:', error);
+  // 备用方案：检查cookie中是否已有token
+  console.log('🔄 Checking for existing CSRF token in cookies...');
+  const tokenFromCookie = getCSRFTokenFromCookie();
+  if (tokenFromCookie) {
+    console.log('✅ Found existing CSRF token in cookie');
+    return tokenFromCookie;
   }
 
+  console.log('❌ No CSRF token available');
   return null;
 }
 

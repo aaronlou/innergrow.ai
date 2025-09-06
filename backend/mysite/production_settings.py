@@ -186,3 +186,8 @@ TIME_ZONE = 'Asia/Shanghai'  # 设置为中国时区
 LANGUAGE_CODE = 'zh-hans'
 USE_I18N = True
 USE_L10N = True
+
+# CSRF Cookie Settings for Production
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SECURE = True  # Secure in production (only sent over HTTPS)
+CSRF_COOKIE_SAMESITE = 'Lax'
