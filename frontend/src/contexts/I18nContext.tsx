@@ -44,6 +44,12 @@ export function I18nProvider({ children, defaultLanguage }: I18nProviderProps) {
       return key;
     }
     
+    // Ensure we always return a string
+    if (typeof message !== 'string') {
+      console.warn(`Translation for key "${key}" is not a string:`, message);
+      return key;
+    }
+    
     if (params && typeof message === 'string') {
       return interpolate(message, params);
     }

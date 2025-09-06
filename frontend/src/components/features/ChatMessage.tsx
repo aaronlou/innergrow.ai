@@ -73,8 +73,8 @@ export function ChatMessageComponent({
             'mt-1 text-xs text-muted-foreground',
             isAssistant ? 'text-left' : 'text-right'
           )}>
-            {message.type === 'goal_suggestion' && '🎯 目标建议'}
-            {message.type === 'reflection' && '🤔 反思'}
+            {message.type === 'goal_suggestion' ? '🎯 目标建议' : null}
+            {message.type === 'reflection' ? '🤔 反思' : null}
           </div>
         )}
       </div>

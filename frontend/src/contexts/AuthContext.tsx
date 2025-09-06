@@ -42,26 +42,82 @@ const API_BASE_URL = getApiBaseUrl();
 const authService = {
   async login(email: string, password: string): Promise<ApiResponse<User>> {
     try {
+      console.log('Login attempt:', {
+        email: email,
+        apiUrl: `${API_BASE_URL}/api/accounts/auth/login/`,
+        apiBaseUrl: API_BASE_URL,
+        hasPassword: !!password,
+        passwordLength: password?.length
+      });
+
       const response = await fetch(`${API_BASE_URL}/api/accounts/auth/login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
+        mode: 'cors',
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
+      console.log('Login response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        url: response.url,
+        ok: response.ok
+      });
+
+      // Check if response is not ok (404, 403, 500, etc.)
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Login failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText
+        });
+        
+        // Provide specific error messages for common issues
+        if (response.status === 403) {
+          return { success: false, error: 'Login forbidden. Please check your credentials or backend CORS settings.' };
+        }
+        if (response.status === 404) {
+          return { success: false, error: 'Login endpoint not found. Please check backend configuration.' };
+        }
+        if (response.status === 401) {
+          return { success: false, error: 'Invalid email or password. Please check your credentials.' };
+        }
+        if (response.status === 500) {
+          return { success: false, error: 'Server error during login. Please try again later.' };
+        }
+        
+        return { success: false, error: `Login failed: ${response.status} ${response.statusText}` };
+      }
+
       const data = await response.json();
+      
+      console.log('Login data:', {
+        success: data.success,
+        hasUser: !!data.data?.user,
+        hasToken: !!data.data?.token,
+        tokenLength: data.data?.token?.length,
+        userEmail: data.data?.user?.email,
+        error: data.error
+      });
 
       if (data.success) {
         // Store token in localStorage
         if (typeof window !== 'undefined') {
           localStorage.setItem('auth_token', data.data.token);
+          console.log('Token stored in localStorage:', `${data.data.token.substring(0, 10)}...`);
         }
         return { success: true, data: data.data.user };
       } else {
         return { success: false, error: data.error || 'Login failed' };
       }
     } catch (error: unknown) {
+      console.error('Login network error:', error);
       if (error instanceof Error) {
         return { success: false, error: error.message || 'Network error, please try again later' };
       }
@@ -171,6 +227,8 @@ const authService = {
       
       console.log('Google login attempt:', {
         apiUrl: `${API_BASE_URL}/api/accounts/auth/google-login/`,
+        apiBaseUrl: API_BASE_URL,
+        currentOrigin: window.location.origin,
         hasIdToken: !!idToken,
         idTokenLength: idToken?.length
       });
@@ -181,17 +239,42 @@ const authService = {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Origin': window.location.origin,
+          // Remove Origin header as it might cause CORS issues
         },
-        credentials: 'include', // Include cookies for CSRF if needed
+        mode: 'cors', // Explicitly set CORS mode
+        credentials: 'same-origin', // Change to same-origin for better compatibility
         body: JSON.stringify({ id_token: idToken }),
       });
 
       console.log('Google login response:', {
         status: response.status,
         statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
+        headers: Object.fromEntries(response.headers.entries()),
+        url: response.url
       });
+
+      // Check if response is not ok (404, 403, 500, etc.)
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Google login failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText
+        });
+        
+        // Provide specific error messages for common issues
+        if (response.status === 403) {
+          return { success: false, error: 'Google login not allowed. Please check backend CORS settings.' };
+        }
+        if (response.status === 404) {
+          return { success: false, error: 'Google login endpoint not found. Please check backend configuration.' };
+        }
+        if (response.status === 500) {
+          return { success: false, error: 'Server error during Google login. Please try again later.' };
+        }
+        
+        return { success: false, error: `Google login failed: ${response.status} ${response.statusText}` };
+      }
 
       const data = await response.json();
       
@@ -274,7 +357,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string): Promise<ApiResponse<User>> => {
     setIsLoading(true);
     try {
+      console.log('Login function called:', {
+        email: email,
+        hasPassword: !!password,
+        apiBaseUrl: API_BASE_URL,
+        timestamp: new Date().toISOString()
+      });
+
       const result = await authService.login(email, password);
+      
+      console.log('AuthService login result:', {
+        success: result.success,
+        error: result.error,
+        hasData: !!result.data,
+        timestamp: new Date().toISOString()
+      });
+
       if (result.success && result.data) {
         setUser(result.data);
         // Debug: Check if token is saved correctly
@@ -282,6 +380,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.log('Login success, token saved:', token ? `${token.substring(0, 10)}...` : 'NO TOKEN');
       }
       return result;
+    } catch (error: unknown) {
+      console.error('Login function error:', error);
+      if (error instanceof Error) {
+        return { success: false, error: error.message || 'Login function error' };
+      }
+      return { success: false, error: 'Login function error' };
     } finally {
       setIsLoading(false);
     }

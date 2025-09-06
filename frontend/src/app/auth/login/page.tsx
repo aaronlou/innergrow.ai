@@ -44,7 +44,20 @@ export default function LoginPage() {
       },
     },
     onSubmit: async (values) => {
+      console.log('Form submission:', {
+        email: values.email,
+        hasPassword: !!values.password,
+        passwordLength: values.password?.length,
+        formValues: { ...values, password: '[REDACTED]' }
+      });
+
       const result = await login(values.email, values.password);
+
+      console.log('Login form result:', {
+        success: result.success,
+        error: result.error,
+        hasData: !!result.data
+      });
 
       if (result.success) {
         setToast({
@@ -68,7 +81,15 @@ export default function LoginPage() {
 
   // Google Sign-In handler
   const handleGoogleLogin = async () => {
+    console.log('Google login button clicked');
+    console.log('Environment check:', {
+      hasGoogleClientId: !!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+      apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'not set'
+    });
+    
     const result = await googleLogin();
+    
+    console.log('Google login result:', result);
 
     if (result.success) {
       setToast({

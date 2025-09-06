@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider, ChatProvider, I18nProvider } from "@/contexts";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import "./globals.css";
 import Script from 'next/script';
 
@@ -39,13 +40,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <I18nProvider>
-          <AuthProvider>
-            <ChatProvider>
-              {children}
-            </ChatProvider>
-          </AuthProvider>
-        </I18nProvider>
+        <ErrorBoundary>
+          <I18nProvider>
+            <AuthProvider>
+              <ChatProvider>
+                {children}
+              </ChatProvider>
+            </AuthProvider>
+          </I18nProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
