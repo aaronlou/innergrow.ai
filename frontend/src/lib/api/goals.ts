@@ -201,10 +201,36 @@ export const goalsService = {
       console.log('DEBUG: Raw API response in getGoals:', data);
       
       // Handle paginated response - extract results array
-      if (data.success && data.data && typeof data.data === 'object' && 'results' in data.data) {
-        const paginatedData = data.data as { results: Goal[] };
-        console.log('DEBUG: Detected paginated response, extracting results:', paginatedData.results);
-        return { success: true, data: paginatedData.results };
+      // 数据结构: { success: true, data: { count, next, previous, results: { data: Array, success: true } } }
+      if (data.success && data.data && typeof data.data === 'object') {
+        const paginatedContainer = data.data as any;
+        
+        // 检查是否有分页结构 (count, next, previous, results)
+        if ('results' in paginatedContainer && paginatedContainer.results) {
+          const results = paginatedContainer.results;
+          console.log('DEBUG: Found paginated structure with results:', results);
+          
+          // 检查 results.data 是否存在且为数组
+          if (results && typeof results === 'object' && 'data' in results && Array.isArray(results.data)) {
+            console.log('DEBUG: Extracting goals array from results.data:', results.data);
+            return { success: true, data: results.data };
+          }
+          
+          // 如果 results 直接是数组（备用处理）
+          if (Array.isArray(results)) {
+            console.log('DEBUG: Results is direct array:', results);
+            return { success: true, data: results };
+          }
+        }
+        
+        // 如果直接是数组（非分页情况）
+        if (Array.isArray(paginatedContainer)) {
+          console.log('DEBUG: Direct array response:', paginatedContainer);
+          return { success: true, data: paginatedContainer };
+        }
+        
+        console.log('DEBUG: Unexpected paginated structure, falling back to empty array');
+        return { success: true, data: [] };
       }
       
       // Handle direct array response

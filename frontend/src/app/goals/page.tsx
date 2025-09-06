@@ -39,6 +39,12 @@ function GoalsPageContent() {
     private: 0
   });
 
+  // Debug: monitor goals state changes
+  useEffect(() => {
+    console.log('DEBUG: Goals state changed:', goals);
+    console.log('DEBUG: Goals count:', goals.length);
+  }, [goals]);
+
   // Generic UI states
   const [loading, setLoading] = useState(true); // initial and refresh loading
   const [error, setError] = useState<string | null>(null); // global error banner
@@ -185,7 +191,7 @@ function GoalsPageContent() {
       console.log('DEBUG: Raw goals API response:', goalsResponse);
 
       if (goalsResponse.success && goalsResponse.data) {
-        // Ensure the data is actually an array
+        // 确保 data 是一个数组
         const goalsData = Array.isArray(goalsResponse.data) ? goalsResponse.data : [];
         console.log('DEBUG: Goals API response structure:', {
           success: goalsResponse.success,
@@ -194,9 +200,12 @@ function GoalsPageContent() {
           isArray: Array.isArray(goalsResponse.data),
           dataLength: goalsData.length,
           firstGoal: goalsData[0] || null,
-          filterParams
+          filterParams,
+          rawData: goalsResponse.data
         });
+        console.log('DEBUG: About to call setGoals with:', goalsData);
         setGoals(goalsData as LocalGoal[]);
+        console.log('DEBUG: setGoals called, new goals state should be:', goalsData);
       } else {
         console.log('DEBUG: Goals API failed or no data:', goalsResponse);
         setGoals([]); // Ensure goals is always an array
