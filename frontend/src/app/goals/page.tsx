@@ -1011,6 +1011,7 @@ function GoalsPageContent() {
                     type="date"
                     value={formState.target_date}
                     onChange={(e) => handleFormChange('target_date', e.target.value)}
+                    lang={language === 'zh' ? 'zh-CN' : 'en-US'}
                   />
                 </div>
               </div>
@@ -1138,6 +1139,7 @@ function GoalsPageContent() {
                   type="date"
                   value={editForm.target_date}
                   onChange={(e) => setEditForm(prev => ({ ...prev, target_date: e.target.value }))}
+                  lang={language === 'zh' ? 'zh-CN' : 'en-US'}
                 />
               </div>
             </div>
