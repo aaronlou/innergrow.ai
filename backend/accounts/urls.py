@@ -11,6 +11,9 @@ urlpatterns = [
     path('auth/check-email/', views.check_email_view, name='check_email'),
     path('auth/google-login/', views.google_login_view, name='google_login'),
     
+    # CSRF Token endpoint
+    path('csrf/', views.csrf_token_view, name='csrf_token'),
+    
     # 用户信息
     path('profile/', views.user_profile_view, name='user_profile'),
     path('profile/update/', views.update_profile_view, name='update_profile'),

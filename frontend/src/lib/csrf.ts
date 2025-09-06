@@ -36,9 +36,9 @@ export async function fetchCSRFToken(): Promise<string | null> {
   
   try {
     // 首先尝试专门的CSRF端点
-    console.log('📡 Requesting CSRF token from:', `${API_BASE_URL}/api/csrf/`);
+    console.log('📡 Requesting CSRF token from:', `${API_BASE_URL}/api/accounts/csrf/`);
     
-    const response = await fetch(`${API_BASE_URL}/api/csrf/`, {
+    const response = await fetch(`${API_BASE_URL}/api/accounts/csrf/`, {
       method: 'GET',
       credentials: 'include', // 重要：包含cookies
       headers: {
@@ -104,6 +104,9 @@ export async function ensureCSRFToken(): Promise<string | null> {
  * Create headers with CSRF token for Django requests
  */
 export async function createCSRFHeaders(additionalHeaders: Record<string, string> = {}): Promise<Record<string, string>> {
+  console.log('🔨 Creating CSRF headers...');
+  console.log('🍪 Current cookies:', document.cookie);
+  
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -114,10 +117,11 @@ export async function createCSRFHeaders(additionalHeaders: Record<string, string
   const csrfToken = await ensureCSRFToken();
   if (csrfToken) {
     headers['X-CSRFToken'] = csrfToken;
-    console.log('Added CSRF token to headers');
+    console.log('✅ Added CSRF token to headers:', csrfToken.substring(0, 10) + '...');
   } else {
-    console.warn('No CSRF token available for request');
+    console.warn('⚠️ No CSRF token available for request - this will likely cause 403 errors');
   }
 
+  console.log('📋 Final headers:', Object.keys(headers));
   return headers;
 }

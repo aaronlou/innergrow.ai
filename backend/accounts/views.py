@@ -247,3 +247,17 @@ def check_email_view(request):
             'available': not exists
         }
     }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def csrf_token_view(request):
+    """
+    CSRF Token endpoint for frontend
+    """
+    from django.middleware.csrf import get_token
+    csrf_token = get_token(request)
+    
+    return Response({
+        'success': True,
+        'csrfToken': csrf_token
+    }, status=status.HTTP_200_OK)
