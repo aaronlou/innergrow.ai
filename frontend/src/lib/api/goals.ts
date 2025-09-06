@@ -488,9 +488,15 @@ export const goalsService = {
   // Get AI suggestions for a goal
   async getSuggestions(goalId: string): Promise<ApiResponse<AISuggestion[]>> {
     try {
-      const data = await apiRequest(`/api/goals/${goalId}/suggestions/`, {
-        method: 'GET',
-      });
+      // First attempt with GET
+      let data = await apiRequest(`/api/goals/${goalId}/suggestions/`, { method: 'GET' });
+
+      // If method not allowed (backend expects POST), retry with POST
+      if (!data.success && typeof data.error === 'string' && /method/i.test(data.error) && /not allowed|不被允许/.test(data.error)) {
+        console.warn('GET /suggestions/ not allowed, retrying with POST');
+        data = await apiRequest(`/api/goals/${goalId}/suggestions/`, { method: 'POST', body: JSON.stringify({}) });
+      }
+
       if (data.success) {
         return { success: true, data: goalsService._normalizeList<AISuggestion>(data.data) };
       }
