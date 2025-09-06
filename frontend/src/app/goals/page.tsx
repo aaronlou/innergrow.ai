@@ -121,19 +121,8 @@ function GoalsPageContent() {
 
       // Load statuses
       const statusesResponse = await goalsService.getStatuses();
-      console.log('Statuses API Response:', statusesResponse);
-      
       if (statusesResponse.success) {
         const statusList = statusesResponse.data ?? [];
-        console.log('Status List:', statusList);
-        console.log('Status List Items:', statusList.map((status, index) => ({
-          index,
-          status,
-          hasNameEn: status && 'name_en' in status,
-          hasName: status && 'name' in status,
-          type: typeof status
-        })));
-        
         setStatuses(statusList);
         // Set default status to "New" or equivalent for new goals
         if (statusList.length > 0) {
@@ -315,8 +304,9 @@ function GoalsPageContent() {
 
   // Pick category display text based on current language (backend provides name/name_en)
   const getCategoryText = (category: GoalCategory) => {
+    if (!category || typeof category !== 'object') return '';
     // Use the translated name based on current language
-    return language === 'en' ? category.name_en : category.name;
+    return language === 'en' ? (category.name_en || category.name || '') : (category.name || category.name_en || '');
   };
 
   // Controlled update for create form fields
@@ -1178,6 +1168,7 @@ function GoalsPageContent() {
                   const updatedGoal = res.data as LocalGoal;
                   console.log('Updated goal data:', updatedGoal);
                   console.log('Updated goal status:', updatedGoal.status);
+                  console.log('Updated goal category:', updatedGoal.category);
                   
                   if (updatedGoal && (!updatedGoal.status || typeof updatedGoal.status !== 'object')) {
                     console.log('Status missing or invalid, trying to find from statuses list');
@@ -1186,6 +1177,24 @@ function GoalsPageContent() {
                     console.log('Matching status found:', matchingStatus);
                     if (matchingStatus) {
                       updatedGoal.status = matchingStatus;
+                    } else {
+                      // Fallback to original goal's status
+                      console.log('Using original goal status as fallback:', editingGoal.status);
+                      updatedGoal.status = editingGoal.status;
+                    }
+                  }
+                  
+                  if (updatedGoal && (!updatedGoal.category || typeof updatedGoal.category !== 'object')) {
+                    console.log('Category missing or invalid, trying to find from categories list');
+                    // If category is missing, try to find it from the current categories list
+                    const matchingCategory = categories.find(c => c && c.id === editForm.category_id);
+                    console.log('Matching category found:', matchingCategory);
+                    if (matchingCategory) {
+                      updatedGoal.category = matchingCategory;
+                    } else {
+                      // Fallback to original goal's category
+                      console.log('Using original goal category as fallback:', editingGoal.category);
+                      updatedGoal.category = editingGoal.category;
                     }
                   }
                   
