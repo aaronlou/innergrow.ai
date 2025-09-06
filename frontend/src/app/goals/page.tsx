@@ -99,11 +99,26 @@ function GoalsPageContent() {
     try {
       // Load goals
       const goalsResponse = await goalsService.getGoals();
+      console.log('DEBUG: Raw goals API response:', goalsResponse);
+      
       if (goalsResponse.success && goalsResponse.data) {
-        setGoals(goalsResponse.data as LocalGoal[]);
+        // Ensure the data is actually an array
+        const goalsData = Array.isArray(goalsResponse.data) ? goalsResponse.data : [];
+        console.log('DEBUG: Goals API response structure:', {
+          success: goalsResponse.success,
+          hasData: !!goalsResponse.data,
+          dataType: typeof goalsResponse.data,
+          isArray: Array.isArray(goalsResponse.data),
+          dataLength: goalsData.length,
+          firstGoal: goalsData[0] || null
+        });
+        setGoals(goalsData as LocalGoal[]);
       } else {
+        console.log('DEBUG: Goals API failed or no data:', goalsResponse);
         setGoals([]); // Ensure goals is always an array
-        setError(goalsResponse.error || 'Failed to load goals');
+        if (goalsResponse.error) {
+          setError(goalsResponse.error);
+        }
       }
 
       // Load categories
@@ -334,7 +349,7 @@ function GoalsPageContent() {
 
       if (response.success && response.data) {
         // Add the new goal to the list
-        setGoals(prev => [...prev, response.data as LocalGoal]);
+        setGoals(prev => [...(prev || []), response.data as LocalGoal]);
 
         // Reset form
         setFormState({
@@ -461,7 +476,7 @@ function GoalsPageContent() {
       if (response.success && response.data) {
         // Update the goal in the list
         setGoals(prev =>
-          prev.map(goal =>
+          (prev || []).map(goal =>
             goal.id === goalId ? response.data as LocalGoal : goal
           )
         );
@@ -512,6 +527,8 @@ function GoalsPageContent() {
     // Ensure goals is a valid array
     if (!goals || !Array.isArray(goals)) {
       console.log('DEBUG: Goals is not a valid array:', goals);
+      console.log('DEBUG: Goals type:', typeof goals);
+      console.log('DEBUG: Goals value:', goals);
       return [];
     }
     
@@ -1264,7 +1281,7 @@ function GoalsPageContent() {
                     }
                   }
                   
-                  setGoals(prev => prev.map(g => g.id === editingGoal.id ? updatedGoal : g));
+                  setGoals(prev => (prev || []).map(g => g.id === editingGoal.id ? updatedGoal : g));
                   showToast('success', t('goals.updateSuccess'));
                   setShowEditModal(false);
                 } else {

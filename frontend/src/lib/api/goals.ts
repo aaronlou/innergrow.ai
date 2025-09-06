@@ -197,14 +197,26 @@ export const goalsService = {
         method: 'GET',
       });
       
+      console.log('DEBUG: Raw API response in getGoals:', data);
+      
       // Handle paginated response - extract results array
       if (data.success && data.data && typeof data.data === 'object' && 'results' in data.data) {
         const paginatedData = data.data as { results: Goal[] };
+        console.log('DEBUG: Detected paginated response, extracting results:', paginatedData.results);
         return { success: true, data: paginatedData.results };
       }
       
+      // Handle direct array response
+      if (data.success && Array.isArray(data.data)) {
+        console.log('DEBUG: Detected direct array response:', data.data);
+        return data;
+      }
+      
+      // Handle any other case
+      console.log('DEBUG: Unexpected response format:', data);
       return data;
     } catch (error: unknown) {
+      console.error('DEBUG: Error in getGoals:', error);
       if (error instanceof Error) {
         return { success: false, error: error.message };
       }
