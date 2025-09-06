@@ -31,8 +31,9 @@ function GoalsPageContent() {
   const [statuses, setStatuses] = useState<GoalStatus[]>([]);
   const [statistics, setStatistics] = useState<GoalStatistics>({
     total: 0,
-    active: 0,
-    completed: 0,
+    new: 0,
+    'in progress': 0,
+    done: 0,
     paused: 0,
     public: 0,
     private: 0
@@ -97,8 +98,33 @@ function GoalsPageContent() {
     setError(null);
 
     try {
-      // Load goals
-      const goalsResponse = await goalsService.getGoals();
+      // Build filter parameters for the API
+      const filterParams: Record<string, string> = {};
+      
+      // Add status filter if not 'all'
+      if (activeFilter !== 'all') {
+        // Find the status ID for the selected status
+        const selectedStatus = statuses.find(status => {
+          const statusCode = (status.name_en || status.name || '').toLowerCase();
+          return statusCode === activeFilter;
+        });
+        if (selectedStatus) {
+          filterParams.status_id = selectedStatus.id;
+        }
+      }
+      
+      // Add category filter
+      if (filterCategoryId) {
+        filterParams.category_id = filterCategoryId;
+      }
+      
+      // Add visibility filter
+      if (filterVisibility !== 'all') {
+        filterParams.visibility = filterVisibility;
+      }
+
+      // Load goals with filters
+      const goalsResponse = await goalsService.getGoals(filterParams);
       console.log('DEBUG: Raw goals API response:', goalsResponse);
       
       if (goalsResponse.success && goalsResponse.data) {
@@ -110,7 +136,8 @@ function GoalsPageContent() {
           dataType: typeof goalsResponse.data,
           isArray: Array.isArray(goalsResponse.data),
           dataLength: goalsData.length,
-          firstGoal: goalsData[0] || null
+          firstGoal: goalsData[0] || null,
+          filterParams
         });
         setGoals(goalsData as LocalGoal[]);
       } else {
@@ -171,7 +198,7 @@ function GoalsPageContent() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeFilter, filterCategoryId, filterVisibility, statuses]);
 
   // Load data on component mount - 只有在用户已认证时才加载数据
   useEffect(() => {
@@ -254,6 +281,13 @@ function GoalsPageContent() {
     // Update URL query (visibility)
     scheduleUrlUpdate({ visibility: filterVisibility !== 'all' ? filterVisibility : undefined });
   }, [filterVisibility, scheduleUrlUpdate]);
+
+  // Reload data when filters change (but only if we have loaded data initially)
+  useEffect(() => {
+    if (isAuthenticated && statuses.length > 0) {
+      loadData();
+    }
+  }, [activeFilter, filterCategoryId, filterVisibility, isAuthenticated, statuses.length, loadData]);
 
   // loadData defined above
 
@@ -522,7 +556,7 @@ function GoalsPageContent() {
     }
   };
 
-  // Compute filtered goal list based on activeFilter using language-agnostic status code
+  // Since filtering is now done on the backend, just ensure goals is a valid array
   const filteredGoals = (() => {
     // Ensure goals is a valid array
     if (!goals || !Array.isArray(goals)) {
@@ -532,79 +566,8 @@ function GoalsPageContent() {
       return [];
     }
     
-    console.log('DEBUG: Starting filter process');
-    console.log('DEBUG: Total goals:', goals.length);
-    console.log('DEBUG: Active filter:', activeFilter);
-    console.log('DEBUG: Filter category ID:', filterCategoryId);
-    console.log('DEBUG: Filter visibility:', filterVisibility);
-    
-    const result = goals.filter(goal => {
-      console.log('DEBUG: Processing goal:', goal?.title, 'ID:', goal?.id);
-      
-      // Ensure goal is a valid object
-      if (!goal || typeof goal !== 'object') {
-        console.log('DEBUG: Goal is not a valid object:', goal);
-        return false;
-      }
-      
-      // status filter
-      if (activeFilter !== 'all') {
-        // Ensure goal has a valid status object
-        if (!goal.status || typeof goal.status !== 'object') {
-          console.log('DEBUG: Goal has invalid status:', goal.status);
-          return false;
-        }
-        
-        const code = getStatusCode(goal.status);
-        console.log('DEBUG: Goal status code:', code, 'for goal:', goal.title);
-        
-        // Handle status names based on your exact backend definitions
-        if (activeFilter === 'new' && code !== 'new') {
-          console.log('DEBUG: Goal filtered out by new filter:', goal.title, 'status code:', code);
-          return false;
-        }
-        if (activeFilter === 'in progress' && code !== 'in progress') {
-          console.log('DEBUG: Goal filtered out by in progress filter:', goal.title, 'status code:', code);
-          return false;
-        }
-        if (activeFilter === 'done' && code !== 'done') {
-          console.log('DEBUG: Goal filtered out by done filter:', goal.title, 'status code:', code);
-          return false;
-        }
-        if (activeFilter === 'paused' && code !== 'paused') {
-          console.log('DEBUG: Goal filtered out by paused filter:', goal.title, 'status code:', code);
-          console.log('DEBUG: Expected: paused, but got:', code);
-          return false;
-        }
-      }
-      
-      // category filter
-      if (filterCategoryId) {
-        // Ensure goal has a valid category object
-        if (!goal.category || typeof goal.category !== 'object' || !goal.category.id) {
-          console.log('DEBUG: Goal has invalid category:', goal.category);
-          return false;
-        }
-        if (goal.category.id !== filterCategoryId) {
-          console.log('DEBUG: Goal filtered out by category filter:', goal.title, 'category:', goal.category.id);
-          return false;
-        }
-      }
-      
-      // visibility filter
-      if (filterVisibility !== 'all' && goal.visibility !== filterVisibility) {
-        console.log('DEBUG: Goal filtered out by visibility filter:', goal.title, 'visibility:', goal.visibility);
-        return false;
-      }
-      
-      console.log('DEBUG: Goal passed all filters:', goal.title);
-      return true;
-    });
-    
-    console.log('DEBUG: Filtered goals count:', result.length);
-    console.log('DEBUG: Filtered goals:', result.map(g => ({ title: g.title, status: g.status?.name || g.status?.name_en, category: g.category?.name || g.category?.name_en })));
-    
-    return result;
+    console.log('DEBUG: Using backend-filtered goals, count:', goals.length);
+    return goals;
   })();
 
   // Loading fallback
@@ -713,7 +676,7 @@ function GoalsPageContent() {
                   </div>
                   <div className="ml-3">
                     <p className="text-xs font-medium text-muted-foreground">{t('goals.active')}</p>
-                    <p className="text-xl font-bold text-green-600">{statistics.active}</p>
+                    <p className="text-xl font-bold text-green-600">{(statistics.new || 0) + (statistics['in progress'] || 0)}</p>
                   </div>
                 </div>
               </CardContent>
@@ -727,7 +690,7 @@ function GoalsPageContent() {
                   </div>
                   <div className="ml-3">
                     <p className="text-xs font-medium text-muted-foreground">{t('goals.completed')}</p>
-                    <p className="text-xl font-bold text-blue-600">{statistics.completed}</p>
+                    <p className="text-xl font-bold text-blue-600">{statistics.done}</p>
                   </div>
                 </div>
               </CardContent>

@@ -178,8 +178,9 @@ export interface AISuggestion {
 
 export interface GoalStatistics {
   total: number;
-  active: number;
-  completed: number;
+  new: number;
+  'in progress': number;
+  done: number;
   paused: number;
   public: number;
   private: number;

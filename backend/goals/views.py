@@ -180,8 +180,10 @@ def goal_statistics(request):
     
     stats = {
         'total': user_goals.count(),
-        'active': user_goals.filter(status__name_en='active').count(),
-        'completed': user_goals.filter(status__name_en='completed').count(),
+        'new': user_goals.filter(status__name_en='new').count(),
+
+        'in progress': user_goals.filter(status__name_en='in progress').count(),
+        'done': user_goals.filter(status__name_en='done').count(),
         'paused': user_goals.filter(status__name_en='paused').count(),
         'public': user_goals.filter(visibility='public').count(),
         'private': user_goals.filter(visibility='private').count(),
