@@ -50,12 +50,61 @@ const authService = {
         passwordLength: password?.length
       });
 
+      // Helper function to get CSRF token from cookies
+      const getCSRFTokenFromCookie = (): string | null => {
+        if (typeof document === 'undefined') return null;
+        
+        const name = 'csrftoken';
+        let cookieValue: string | null = null;
+        
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        
+        return cookieValue;
+      };
+
+      // Try to get CSRF token from cookie first, or make a request to get it
+      let csrfToken = getCSRFTokenFromCookie();
+      
+      if (!csrfToken) {
+        try {
+          // Make a request to Django to get CSRF cookie set
+          const csrfResponse = await fetch(`${API_BASE_URL}/`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+          // After this request, the CSRF cookie should be set
+          csrfToken = getCSRFTokenFromCookie();
+          console.log('CSRF token from cookie after GET request:', csrfToken ? 'YES' : 'NO');
+        } catch (csrfError) {
+          console.warn('Could not get CSRF token:', csrfError);
+        }
+      } else {
+        console.log('CSRF token from existing cookie:', 'YES');
+      }
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest', // This helps bypass CSRF for Django
+      };
+
+      // Add CSRF token if we have one
+      if (csrfToken) {
+        headers['X-CSRFToken'] = csrfToken;
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/accounts/auth/login/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+        headers,
         mode: 'cors',
         credentials: 'include',
         body: JSON.stringify({ email, password }),
@@ -80,7 +129,14 @@ const authService = {
         
         // Provide specific error messages for common issues
         if (response.status === 403) {
-          return { success: false, error: 'Login forbidden. Please check your credentials or backend CORS settings.' };
+          let errorMessage = 'Login forbidden. Please check your credentials or backend CORS settings.';
+          
+          // Check if it's a CSRF error
+          if (errorText.includes('CSRF') || errorText.includes('csrf')) {
+            errorMessage = 'CSRF error. The backend requires CSRF token protection. This is a backend configuration issue - please contact the administrator.';
+          }
+          
+          return { success: false, error: errorMessage };
         }
         if (response.status === 404) {
           return { success: false, error: 'Login endpoint not found. Please check backend configuration.' };
@@ -131,7 +187,10 @@ const authService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest', // This helps bypass CSRF for Django
         },
+        credentials: 'include',
         body: JSON.stringify({ name, email, password }),
       });
 
