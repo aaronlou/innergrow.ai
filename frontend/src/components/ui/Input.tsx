@@ -11,6 +11,7 @@ interface InputProps extends ComponentProps {
   error?: string;
   label?: string;
   required?: boolean;
+  lang?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   rows?: number;
@@ -28,6 +29,7 @@ export const Input = forwardRef<
   error,
   label,
   required = false,
+  lang,
   className,
   onChange,
   onBlur,
@@ -64,6 +66,7 @@ export const Input = forwardRef<
           onChange={onChange}
           onBlur={onBlur}
           rows={rows}
+          lang={lang}
           {...props}
         />
       ) : (
@@ -77,6 +80,7 @@ export const Input = forwardRef<
           disabled={disabled}
           onChange={onChange}
           onBlur={onBlur}
+          lang={lang}
           {...props}
         />
       )}

@@ -272,6 +272,31 @@ function GoalsPageContent() {
     return (status.name_en || status.name || '').toLowerCase();
   };
 
+  // Sort statuses by natural progression order
+  const getSortedStatuses = (statusList: GoalStatus[]) => {
+    const statusOrder = ['new', 'not started', 'in progress', 'active', 'on hold', 'paused', 'done', 'completed'];
+    
+    return [...statusList].sort((a, b) => {
+      const codeA = getStatusCode(a);
+      const codeB = getStatusCode(b);
+      
+      const indexA = statusOrder.findIndex(order => order === codeA);
+      const indexB = statusOrder.findIndex(order => order === codeB);
+      
+      // If both statuses are in the order array, sort by their position
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+      
+      // If only one is in the order array, it comes first
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      
+      // If neither is in the order array, sort alphabetically
+      return codeA.localeCompare(codeB);
+    });
+  };
+
   // Pick category display text based on current language (backend provides name/name_en)
   const getCategoryText = (category: GoalCategory) => {
     // Use the translated name based on current language
@@ -961,7 +986,7 @@ function GoalsPageContent() {
                       value={formState.status_id}
                       onChange={(e) => handleFormChange('status_id', e.target.value)}
                     >
-                      {statuses.map((status) => (
+                      {getSortedStatuses(statuses).map((status) => (
                         <option key={status.id} value={status.id}>
                           {getStatusText(status)}
                         </option>
@@ -1088,7 +1113,7 @@ function GoalsPageContent() {
                     value={editForm.status_id}
                     onChange={(e) => setEditForm(prev => ({ ...prev, status_id: e.target.value }))}
                   >
-                    {statuses.map((status) => (
+                    {getSortedStatuses(statuses).map((status) => (
                       <option key={status.id} value={status.id}>
                         {getStatusText(status)}
                       </option>
