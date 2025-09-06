@@ -33,11 +33,33 @@ function GoalsPageContent() {
     total: 0,
     new: 0,
     active: 0,
-    done: 0,
+    completed: 0,
     paused: 0,
     public: 0,
     private: 0
   });
+
+  // Normalize statistics coming from backend (handles legacy keys like done, in progress)
+  const normalizeStatistics = (raw: unknown): GoalStatistics => {
+    const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
+    const src = isObj(raw) ? raw : {};
+    const num = (k: string): number => {
+      const v = src[k];
+      return typeof v === 'number' && !Number.isNaN(v) ? v : 0;
+    };
+    // active might be provided directly, or previously as 'in progress' / 'in_progress'
+    const activeVal = num('active') || num('in progress') || num('in_progress');
+    const completedVal = num('completed') || num('done');
+    return {
+      total: num('total'),
+      new: num('new'),
+      active: activeVal,
+      completed: completedVal,
+      paused: num('paused'),
+      public: num('public'),
+      private: num('private')
+    };
+  };
 
   // Debug: monitor goals state changes
   useEffect(() => {
@@ -143,7 +165,7 @@ function GoalsPageContent() {
       // Load statistics
       const statsResponse = await goalsService.getStatistics();
       if (statsResponse.success && statsResponse.data) {
-        setStatistics(statsResponse.data);
+        setStatistics(normalizeStatistics(statsResponse.data));
       }
     } catch (err) {
       console.error('Error loading basic data:', err);
@@ -437,7 +459,7 @@ function GoalsPageContent() {
         // Reload statistics
         const statsResponse = await goalsService.getStatistics();
         if (statsResponse.success && statsResponse.data) {
-          setStatistics(statsResponse.data);
+          setStatistics(normalizeStatistics(statsResponse.data));
         }
       } else {
         setError(response.error || 'Failed to create goal');
@@ -559,7 +581,7 @@ function GoalsPageContent() {
         // Reload statistics
         const statsResponse = await goalsService.getStatistics();
         if (statsResponse.success && statsResponse.data) {
-          setStatistics(statsResponse.data);
+          setStatistics(normalizeStatistics(statsResponse.data));
         }
         showToast('success', t('goals.markedComplete'));
       } else {
@@ -582,7 +604,7 @@ function GoalsPageContent() {
         setGoals(prev => (prev || []).filter(g => g.id !== goalId));
         const statsResponse = await goalsService.getStatistics();
         if (statsResponse.success && statsResponse.data) {
-          setStatistics(statsResponse.data);
+          setStatistics(normalizeStatistics(statsResponse.data));
         }
         showToast('success', t('goals.deleted'));
       } else {
@@ -720,7 +742,7 @@ function GoalsPageContent() {
                   </div>
                   <div className="ml-3">
                     <p className="text-xs font-medium text-muted-foreground">{t('goals.active')}</p>
-                    <p className="text-xl font-bold text-green-600">{(statistics.new || 0) + (statistics['active'] || 0)}</p>
+                    <p className="text-xl font-bold text-green-600">{statistics.new + statistics.active}</p>
                   </div>
                 </div>
               </CardContent>
@@ -734,7 +756,7 @@ function GoalsPageContent() {
                   </div>
                   <div className="ml-3">
                     <p className="text-xs font-medium text-muted-foreground">{t('goals.completed')}</p>
-                    <p className="text-xl font-bold text-blue-600">{(statistics as any).completed ?? (statistics as any).done ?? 0}</p>
+                    <p className="text-xl font-bold text-blue-600">{statistics.completed}</p>
                   </div>
                 </div>
               </CardContent>
