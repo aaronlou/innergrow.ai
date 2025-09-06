@@ -517,37 +517,83 @@ function GoalsPageContent() {
   // Compute filtered goal list based on activeFilter using language-agnostic status code
   const filteredGoals = (() => {
     // Ensure goals is a valid array
-    if (!goals || !Array.isArray(goals)) return [];
+    if (!goals || !Array.isArray(goals)) {
+      console.log('DEBUG: Goals is not a valid array:', goals);
+      return [];
+    }
     
-    return goals.filter(goal => {
+    console.log('DEBUG: Starting filter process');
+    console.log('DEBUG: Total goals:', goals.length);
+    console.log('DEBUG: Active filter:', activeFilter);
+    console.log('DEBUG: Filter category ID:', filterCategoryId);
+    console.log('DEBUG: Filter visibility:', filterVisibility);
+    
+    const result = goals.filter(goal => {
+      console.log('DEBUG: Processing goal:', goal?.title, 'ID:', goal?.id);
+      
       // Ensure goal is a valid object
-      if (!goal || typeof goal !== 'object') return false;
+      if (!goal || typeof goal !== 'object') {
+        console.log('DEBUG: Goal is not a valid object:', goal);
+        return false;
+      }
       
       // status filter
       if (activeFilter !== 'all') {
         // Ensure goal has a valid status object
-        if (!goal.status || typeof goal.status !== 'object') return false;
+        if (!goal.status || typeof goal.status !== 'object') {
+          console.log('DEBUG: Goal has invalid status:', goal.status);
+          return false;
+        }
         
         const code = getStatusCode(goal.status);
+        console.log('DEBUG: Goal status code:', code, 'for goal:', goal.title);
+        
         // Handle various possible status names from backend
-        if (activeFilter === 'not_started' && !['new', 'not started'].includes(code)) return false;
-        if (activeFilter === 'active' && !['in progress', 'active'].includes(code)) return false;
-        if (activeFilter === 'completed' && !['done', 'completed'].includes(code)) return false;
-        if (activeFilter === 'paused' && !['on hold', 'paused'].includes(code)) return false;
+        if (activeFilter === 'not_started' && !['new', 'not started'].includes(code)) {
+          console.log('DEBUG: Goal filtered out by not_started filter:', goal.title);
+          return false;
+        }
+        if (activeFilter === 'active' && !['in progress', 'active'].includes(code)) {
+          console.log('DEBUG: Goal filtered out by active filter:', goal.title);
+          return false;
+        }
+        if (activeFilter === 'completed' && !['done', 'completed'].includes(code)) {
+          console.log('DEBUG: Goal filtered out by completed filter:', goal.title);
+          return false;
+        }
+        if (activeFilter === 'paused' && !['on hold', 'paused'].includes(code)) {
+          console.log('DEBUG: Goal filtered out by paused filter:', goal.title);
+          return false;
+        }
       }
       
       // category filter
       if (filterCategoryId) {
         // Ensure goal has a valid category object
-        if (!goal.category || typeof goal.category !== 'object' || !goal.category.id) return false;
-        if (goal.category.id !== filterCategoryId) return false;
+        if (!goal.category || typeof goal.category !== 'object' || !goal.category.id) {
+          console.log('DEBUG: Goal has invalid category:', goal.category);
+          return false;
+        }
+        if (goal.category.id !== filterCategoryId) {
+          console.log('DEBUG: Goal filtered out by category filter:', goal.title, 'category:', goal.category.id);
+          return false;
+        }
       }
       
       // visibility filter
-      if (filterVisibility !== 'all' && goal.visibility !== filterVisibility) return false;
+      if (filterVisibility !== 'all' && goal.visibility !== filterVisibility) {
+        console.log('DEBUG: Goal filtered out by visibility filter:', goal.title, 'visibility:', goal.visibility);
+        return false;
+      }
       
+      console.log('DEBUG: Goal passed all filters:', goal.title);
       return true;
     });
+    
+    console.log('DEBUG: Filtered goals count:', result.length);
+    console.log('DEBUG: Filtered goals:', result.map(g => ({ title: g.title, status: g.status?.name || g.status?.name_en, category: g.category?.name || g.category?.name_en })));
+    
+    return result;
   })();
 
   // Loading fallback
