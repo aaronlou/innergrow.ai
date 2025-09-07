@@ -92,6 +92,10 @@ export const apiRequest = async <T = unknown>(endpoint: string, options: ApiRequ
   const token = getAuthToken();
 
   const baseHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (!('Accept' in baseHeaders)) baseHeaders['Accept'] = 'application/json';
+  // lightweight request id for correlation
+  const requestId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  baseHeaders['X-Request-Id'] = requestId;
   if (token) baseHeaders['Authorization'] = `${getAuthScheme()} ${token}`;
 
   const mergedHeaders: Record<string, string> = {
@@ -105,18 +109,19 @@ export const apiRequest = async <T = unknown>(endpoint: string, options: ApiRequ
 
   if (shouldDebug()) {
     // Minimal debug to avoid leaking full token
-    console.log('[apiRequest]', {
+      console.log('[apiRequest]', {
       endpoint: url.toString(),
       method: rest.method || 'GET',
       hasToken: !!token,
       tokenLen: token?.length,
       timeoutMs,
+        requestId,
     });
   }
 
   const attemptFetch = async (attempt: number): Promise<ApiResponse<T>> => {
     if (shouldDebug()) {
-      console.log('[apiRequest attempt]', { endpoint: url.toString(), attempt });
+  console.log('[apiRequest attempt]', { endpoint: url.toString(), attempt, requestId });
     }
     try {
       const response = await fetch(url.toString(), { ...rest, headers: mergedHeaders, signal });
