@@ -291,6 +291,12 @@ export const en = {
   'exams.planRegenerated': 'Study plan regenerated',
   'exams.examTime': 'Exam Time',
   'exams.examMaterial': 'Material (optional)',
+  'exams.materialUploadHint': 'Click or drop to upload',
+  'exams.examTimeRequired': 'Exam date is required',
+  'exams.fileTooLarge': 'File is too large (max 10MB)',
+  'exams.unsupportedFileType': 'Unsupported file type',
+  'exams.materialAvailable': 'Material',
+  'exams.materialReady': 'Material ready',
 
   // Books Market
   'books.title': '📚 Book Market',

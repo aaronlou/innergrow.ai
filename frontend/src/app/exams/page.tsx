@@ -8,7 +8,7 @@ import examsService from '@/lib/api/exams';
 import { StudyPlanData, Exam } from '@/types';
 
 export default function ExamsPage() {
-  const { t } = useI18n();
+  const { t, formatDate } = useI18n();
   const [activeTab, setActiveTab] = useState<'discover' | 'plans' | 'practice'>('discover');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -25,12 +25,13 @@ export default function ExamsPage() {
     exam_time: '',
     materialFile: null as File | null,
   });
+  const [validationErrors, setValidationErrors] = useState<{ exam_time?: string; materialFile?: string }>({});
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Exam | null>(null);
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // Toast-like feedback via simple transient state (minimal impl)
+  // Toast-like feedback via simple transient state
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
@@ -50,36 +51,26 @@ export default function ExamsPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    fetchExams();
-  }, [fetchExams]);
+  useEffect(() => { fetchExams(); }, [fetchExams]);
 
-  const filteredExams = exams.filter(exam =>
-    exam.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredExams = exams.filter(exam => exam.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const handleCreateExam = async () => {
-    if (!newExam.title || !newExam.description) return;
+    const errors: typeof validationErrors = {};
+    if (!newExam.exam_time) errors.exam_time = t('exams.examTimeRequired');
+    setValidationErrors(errors);
+    if (Object.keys(errors).length) {
+      showToast('error', t('exams.examTimeRequired'));
+      return;
+    }
     setCreating(true);
-    const payload = {
-      title: newExam.title,
-      description: newExam.description,
-      category: newExam.category,
-      exam_time: newExam.exam_time ? new Date(newExam.exam_time).toISOString() : undefined,
-      file: newExam.materialFile || undefined,
-    } as Partial<Exam> & { file?: File };
+    const examTimeISO = newExam.exam_time ? new Date(newExam.exam_time + 'T00:00:00').toISOString() : undefined;
+    const payload = { title: newExam.title, description: newExam.description, category: newExam.category, exam_time: examTimeISO, file: newExam.materialFile || undefined } as Partial<Exam> & { file?: File };
     const res = await examsService.create(payload);
     if (res.success && res.data) {
-      const created = res.data as Exam; // narrow
-      setExams(prev => [...prev, created]);
-      showToast('success', t('common.success'));
-      setNewExam({
-        title: '',
-        category: 'Language',
-        description: '',
-        exam_time: '',
-        materialFile: null,
-      });
+      setExams(prev => [...prev, res.data!]);
+      showToast('success', newExam.materialFile ? t('exams.materialReady') : t('common.success'));
+      setNewExam({ title: '', category: 'Language', description: '', exam_time: '', materialFile: null });
       setShowCreateModal(false);
     } else {
       showToast('error', res.error || t('common.error'));
@@ -89,18 +80,21 @@ export default function ExamsPage() {
 
   const handleUpdateExam = async () => {
     if (!editingExam) return;
+    const errors: typeof validationErrors = {};
+    if (!newExam.exam_time) errors.exam_time = t('exams.examTimeRequired');
+    setValidationErrors(errors);
+    if (Object.keys(errors).length) {
+      showToast('error', t('exams.examTimeRequired'));
+      return;
+    }
     setUpdating(true);
-    const payload = {
-      title: newExam.title,
-      description: newExam.description,
-      category: newExam.category,
-      exam_time: newExam.exam_time ? new Date(newExam.exam_time).toISOString() : undefined,
-      file: newExam.materialFile || undefined,
-    } as Partial<Exam> & { file?: File };
+    const examTimeISO = newExam.exam_time ? new Date(newExam.exam_time + 'T00:00:00').toISOString() : undefined;
+    const payload = { title: newExam.title, description: newExam.description, category: newExam.category, exam_time: examTimeISO, file: newExam.materialFile || undefined } as Partial<Exam> & { file?: File };
     const res = await examsService.update(editingExam.id, payload);
     if (res.success && res.data) {
       setExams(prev => prev.map(e => e.id === editingExam.id ? res.data! : e));
-      showToast('success', t('common.success'));
+      const usedMaterial = newExam.materialFile || editingExam.material;
+      showToast('success', usedMaterial ? t('exams.materialReady') : t('common.success'));
       setShowCreateModal(false);
       setEditingExam(null);
     } else {
@@ -128,7 +122,6 @@ export default function ExamsPage() {
     const res = await examsService.delete(showDeleteConfirm.id);
     if ((res.success && !res.error) || res.success === true) {
       setExams(prev => prev.filter(e => e.id !== showDeleteConfirm.id));
-      // remove related plan if exists
       setStudyPlans(prev => { const clone = { ...prev }; delete clone[showDeleteConfirm.id]; return clone; });
       showToast('success', t('common.success'));
       setShowDeleteConfirm(null);
@@ -144,7 +137,7 @@ export default function ExamsPage() {
       title: exam.title,
       category: exam.category || 'Language',
       description: exam.description || '',
-      exam_time: exam.exam_time ? exam.exam_time.slice(0,16) : '',
+      exam_time: exam.exam_time ? exam.exam_time.slice(0,10) : '',
       materialFile: null,
     });
     setShowCreateModal(true);
@@ -185,108 +178,62 @@ export default function ExamsPage() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-2xl font-bold mb-2">{t('exams.title')}</h1>
-            <p className="text-muted-foreground">
-              {t('exams.subtitle')}
-            </p>
+            <p className="text-muted-foreground">{t('exams.subtitle')}</p>
           </div>
 
           {/* Tab Navigation */}
           <div className="flex space-x-1 mb-8 bg-muted p-1 rounded-lg w-fit">
-            <button
-              onClick={() => setActiveTab('discover')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'discover'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-                }`}
-            >
-              {t('exams.discoverTab')}
-            </button>
-            <button
-              onClick={() => setActiveTab('plans')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'plans'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-                }`}
-            >
-              {t('exams.plansTab')}
-            </button>
-            <button
-              onClick={() => setActiveTab('practice')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'practice'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-                }`}
-            >
-              {t('exams.practiceTab')}
-            </button>
+            <button onClick={() => setActiveTab('discover')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'discover' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{t('exams.discoverTab')}</button>
+            <button onClick={() => setActiveTab('plans')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'plans' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{t('exams.plansTab')}</button>
+            <button onClick={() => setActiveTab('practice')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'practice' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{t('exams.practiceTab')}</button>
           </div>
 
           {/* Loading/Error States */}
-          {activeTab === 'discover' && loading && (
-            <div className="text-sm text-muted-foreground mb-4">{t('common.loading')}</div>
-          )}
-          {activeTab === 'discover' && error && !loading && (
-            <div className="text-sm text-red-500 mb-4">{error}</div>
-          )}
+          {activeTab === 'discover' && loading && (<div className="text-sm text-muted-foreground mb-4">{t('common.loading')}</div>)}
+          {activeTab === 'discover' && error && !loading && (<div className="text-sm text-red-500 mb-4">{error}</div>)}
 
-          {/* Tab Content */}
+          {/* Discover Tab */}
           {activeTab === 'discover' && !loading && (
             <div className="space-y-6">
-              {/* Search */}
               <div className="flex gap-4 mb-4">
-                <Input
-                  type="text"
-                  placeholder={t('exams.searchPlaceholder')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1"
-                />
-                <Button onClick={() => setShowCreateModal(true)}>
-                  {t('exams.createExam')}
-                </Button>
+                <Input type="text" placeholder={t('exams.searchPlaceholder')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1" />
+                <Button onClick={() => { setValidationErrors({}); setShowCreateModal(true); }}>{t('exams.createExam')}</Button>
               </div>
-
-              {/* Exam Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredExams.map((exam) => (
+                {filteredExams.map(exam => (
                   <Card key={exam.id} className="hover:shadow-md transition-shadow">
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <CardTitle className="text-lg">{exam.title}</CardTitle>
-                        {/* difficulty removed */}
                       </div>
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm text-muted-foreground mb-4">{exam.description}</p>
                       <div className="space-y-2 text-xs text-muted-foreground mb-4">
                         {exam.category && <div>📚 {t('exams.category')}: {exam.category}</div>}
-                        {exam.exam_time && <div>� {t('exams.examTime') || 'Exam Time'}: {exam.exam_time}</div>}
+                        {exam.exam_time && <div>🕒 {t('exams.examTime')}: {(() => { try { return formatDate(new Date(exam.exam_time), { dateStyle: 'medium' }); } catch { return exam.exam_time; } })()}</div>}
+                        {exam.material && (
+                          <div className="flex items-center gap-1 text-green-600 dark:text-green-400">📎 <a href={exam.material} target="_blank" rel="noreferrer" className="underline hover:no-underline">{t('exams.materialAvailable')}</a></div>
+                        )}
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" className="flex-1" onClick={() => handleGeneratePlan(exam.id)} disabled={planGenerating === exam.id}>
-                          {planGenerating === exam.id ? t('common.loading') : t('exams.startPreparation')}
-                        </Button>
-                        <Button size="sm" variant="outline" className="flex-1">
-                          {t('exams.viewRequirements')}
-                        </Button>
+                        <Button size="sm" className="flex-1" onClick={() => handleGeneratePlan(exam.id)} disabled={planGenerating === exam.id}>{planGenerating === exam.id ? t('common.loading') : t('exams.startPreparation')}</Button>
+                        <Button size="sm" variant="outline" className="flex-1">{t('exams.viewRequirements')}</Button>
                         <Button size="sm" variant="outline" onClick={() => openEdit(exam)}>✏️</Button>
                         <Button size="sm" variant="outline" onClick={() => setShowDeleteConfirm(exam)}>🗑️</Button>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
-                {filteredExams.length === 0 && (
-                  <div className="col-span-full text-sm text-muted-foreground">No exams found</div>
-                )}
+                {filteredExams.length === 0 && (<div className="col-span-full text-sm text-muted-foreground">No exams found</div>)}
               </div>
             </div>
           )}
 
+          {/* Plans Tab */}
           {activeTab === 'plans' && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">{t('exams.myStudyPlans')}</h3>
-              </div>
+              <div className="flex justify-between items-center"><h3 className="text-lg font-semibold">{t('exams.myStudyPlans')}</h3></div>
               {Object.keys(studyPlans).length === 0 && (
                 <div className="text-center py-12">
                   <div className="text-4xl mb-4">📋</div>
@@ -302,9 +249,7 @@ export default function ExamsPage() {
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <CardTitle className="text-lg">{exam?.title || 'Exam'}</CardTitle>
-                          <Button size="sm" variant="outline" onClick={() => openPlanOptions(exam!)} disabled={planGenerating === examId}>
-                            {planGenerating === examId ? t('exams.regeneratingPlan') : t('exams.regeneratePlan')}
-                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => openPlanOptions(exam!)} disabled={planGenerating === examId}>{planGenerating === examId ? t('exams.regeneratingPlan') : t('exams.regeneratePlan')}</Button>
                         </div>
                       </CardHeader>
                       <CardContent>
@@ -317,9 +262,7 @@ export default function ExamsPage() {
                               {section.duration && <div className="text-[10px] mt-1 text-muted-foreground">⏱️ {section.duration}</div>}
                             </div>
                           ))}
-                          {plan.plan.length === 0 && (
-                            <div className="text-xs text-muted-foreground">(Empty plan)</div>
-                          )}
+                          {plan.plan.length === 0 && (<div className="text-xs text-muted-foreground">(Empty plan)</div>)}
                         </div>
                       </CardContent>
                     </Card>
@@ -329,61 +272,29 @@ export default function ExamsPage() {
             </div>
           )}
 
+          {/* Practice Tab */}
           {activeTab === 'practice' && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold mb-4">{t('exams.practiceTools')}</h3>
-              {/* Practice Categories */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <span className="text-2xl">📝</span>
-                      {t('exams.mockExams')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {t('exams.mockExamsDesc')}
-                    </p>
-                    <Button className="w-full">{t('exams.startMockExam')}</Button>
-                  </CardContent>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><span className="text-2xl">📝</span>{t('exams.mockExams')}</CardTitle></CardHeader>
+                  <CardContent><p className="text-sm text-muted-foreground mb-4">{t('exams.mockExamsDesc')}</p><Button className="w-full">{t('exams.startMockExam')}</Button></CardContent>
                 </Card>
-
                 <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <span className="text-2xl">🃏</span>
-                      {t('exams.flashcards')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {t('exams.flashcardsDesc')}
-                    </p>
-                    <Button className="w-full">{t('exams.studyFlashcards')}</Button>
-                  </CardContent>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><span className="text-2xl">🃏</span>{t('exams.flashcards')}</CardTitle></CardHeader>
+                  <CardContent><p className="text-sm text-muted-foreground mb-4">{t('exams.flashcardsDesc')}</p><Button className="w-full">{t('exams.studyFlashcards')}</Button></CardContent>
                 </Card>
-
                 <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <span className="text-2xl">⚡</span>
-                      {t('exams.quickQuizzes')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {t('exams.quickQuizzesDesc')}
-                    </p>
-                    <Button className="w-full">{t('exams.takeQuiz')}</Button>
-                  </CardContent>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><span className="text-2xl">⚡</span>{t('exams.quickQuizzes')}</CardTitle></CardHeader>
+                  <CardContent><p className="text-sm text-muted-foreground mb-4">{t('exams.quickQuizzesDesc')}</p><Button className="w-full">{t('exams.takeQuiz')}</Button></CardContent>
                 </Card>
               </div>
             </div>
           )}
         </div>
 
-        {/* Create Exam Modal */}
+        {/* Create / Edit Exam Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div className="bg-background rounded-lg p-6 w-full max-w-md mx-4">
@@ -391,69 +302,81 @@ export default function ExamsPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('exams.examTitle')}</label>
-                  <Input
-                    type="text"
-                    placeholder={t('exams.examTitlePlaceholder')}
-                    value={newExam.title}
-                    onChange={(e) => setNewExam({ ...newExam, title: e.target.value })}
-                  />
+                  <Input type="text" placeholder={t('exams.examTitlePlaceholder')} value={newExam.title} onChange={(e) => setNewExam({ ...newExam, title: e.target.value })} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('exams.examDescription')}</label>
-                  <Input
-                    type="text"
-                    placeholder={t('exams.examDescriptionPlaceholder')}
-                    value={newExam.description}
-                    onChange={(e) => setNewExam({ ...newExam, description: e.target.value })}
-                  />
+                  <Input type="text" placeholder={t('exams.examDescriptionPlaceholder')} value={newExam.description} onChange={(e) => setNewExam({ ...newExam, description: e.target.value })} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('exams.examCategory')}</label>
-                  <select
-                    className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
-                    value={newExam.category}
-                    onChange={(e) => setNewExam({ ...newExam, category: e.target.value })}
-                  >
+                  <select className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background" value={newExam.category} onChange={(e) => setNewExam({ ...newExam, category: e.target.value })}>
                     <option value="Language">{t('exams.categoryLanguage')}</option>
                     <option value="Technical">{t('exams.categoryTechnical')}</option>
                     <option value="Business">{t('exams.categoryBusiness')}</option>
                     <option value="Health">{t('exams.categoryHealth')}</option>
                   </select>
                 </div>
-                {/* Removed difficulty, duration, studyTime inputs */}
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">{t('exams.examTime') || 'Exam Time'}</label>
+                    <label className="block text-sm font-medium mb-1">{t('exams.examTime')}</label>
                     <input
-                      type="datetime-local"
-                      className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
+                      type="date"
+                      required
+                      className={`w-full px-3 py-2 text-sm border rounded-md bg-background ${validationErrors.exam_time ? 'border-red-500 focus-visible:outline-red-500' : 'border-input'}`}
                       value={newExam.exam_time}
-                      onChange={(e) => setNewExam({ ...newExam, exam_time: e.target.value })}
+                      onChange={(e) => { setNewExam({ ...newExam, exam_time: e.target.value }); setValidationErrors(v => ({ ...v, exam_time: undefined })); }}
                     />
+                    {validationErrors.exam_time && <div className="mt-1 text-[11px] text-red-500">{validationErrors.exam_time}</div>}
+                    {newExam.exam_time && (
+                      <div className="mt-1 text-[11px] text-muted-foreground">{(() => { try { return formatDate(new Date(newExam.exam_time + 'T00:00:00'), { dateStyle: 'full' }); } catch { return newExam.exam_time; } })()}</div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">{t('exams.examMaterial') || 'Material (optional)'}</label>
-                    <input
-                      type="file"
-                      className="w-full text-sm"
-                      onChange={(e) => setNewExam({ ...newExam, materialFile: e.target.files?.[0] || null })}
-                    />
+                    {editingExam?.material && !newExam.materialFile ? (
+                      <div className="text-xs flex flex-col gap-2">
+                        <a href={editingExam.material} target="_blank" rel="noreferrer" className="text-primary underline break-all">{editingExam.material}</a>
+                        <button type="button" className="self-start text-[11px] text-muted-foreground hover:text-primary" onClick={() => setNewExam({ ...newExam, materialFile: null })}>{t('common.update') || 'Replace'}</button>
+                      </div>
+                    ) : (
+                      <label className={`flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted/30 text-xs gap-1 ${validationErrors.materialFile ? 'border-red-500 text-red-500' : 'text-muted-foreground'}`}>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            if (file) {
+                              const allowed = ['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','image/png','image/jpeg'];
+                              if (!allowed.includes(file.type)) {
+                                setValidationErrors(v => ({ ...v, materialFile: t('exams.unsupportedFileType') }));
+                                showToast('error', t('exams.unsupportedFileType'));
+                                return;
+                              }
+                              if (file.size > 10 * 1024 * 1024) {
+                                setValidationErrors(v => ({ ...v, materialFile: t('exams.fileTooLarge') }));
+                                showToast('error', t('exams.fileTooLarge'));
+                                return;
+                              }
+                            }
+                            setValidationErrors(v => ({ ...v, materialFile: undefined }));
+                            setNewExam({ ...newExam, materialFile: file });
+                          }}
+                        />
+                        <span>📤 {newExam.materialFile ? newExam.materialFile.name : (t('exams.materialUploadHint') || 'Click to upload')}</span>
+                        {newExam.materialFile && (
+                          <button type="button" className="mt-1 text-[10px] text-red-500 hover:underline" onClick={() => setNewExam({ ...newExam, materialFile: null })}>{t('common.delete') || 'Clear'}</button>
+                        )}
+                        {validationErrors.materialFile && <div className="text-[10px] mt-1">{validationErrors.materialFile}</div>}
+                      </label>
+                    )}
                   </div>
                 </div>
               </div>
               <div className="flex gap-2 mt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1"
-                >
-                  {t('common.cancel')}
-                </Button>
-                <Button
-                  onClick={editingExam ? handleUpdateExam : handleCreateExam}
-                  className="flex-1"
-                  disabled={!newExam.title || !newExam.description || creating || updating}
-                >
+                <Button variant="outline" onClick={() => setShowCreateModal(false)} className="flex-1">{t('common.cancel')}</Button>
+                <Button onClick={editingExam ? handleUpdateExam : handleCreateExam} className="flex-1" disabled={!newExam.title || !newExam.description || !newExam.exam_time || creating || updating}>
                   {creating || updating ? t('common.loading') : editingExam ? t('common.update') : t('common.create')}
                 </Button>
               </div>
@@ -495,9 +418,7 @@ export default function ExamsPage() {
               </div>
               <div className="flex gap-2 mt-6">
                 <Button variant="outline" className="flex-1" onClick={() => setPlanOptionsExam(null)} disabled={planGenerating === planOptionsExam.id}>{t('common.cancel')}</Button>
-                <Button className="flex-1" onClick={handleGenerateWithOptions} disabled={planGenerating === planOptionsExam.id}>
-                  {planGenerating === planOptionsExam.id ? t('common.loading') : (studyPlans[planOptionsExam.id] ? t('exams.regeneratePlan') : t('exams.generatePlan'))}
-                </Button>
+                <Button className="flex-1" onClick={handleGenerateWithOptions} disabled={planGenerating === planOptionsExam.id}>{planGenerating === planOptionsExam.id ? t('common.loading') : (studyPlans[planOptionsExam.id] ? t('exams.regeneratePlan') : t('exams.generatePlan'))}</Button>
               </div>
             </div>
           </div>
