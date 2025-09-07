@@ -10,9 +10,12 @@ class AIClient:
         if not api_key:
             raise ValueError("OPENAI_API_KEY not set in environment or Django settings")
         
+        # Handle proxy settings explicitly to avoid conflicts
+        # Create the OpenAI client without passing proxy arguments
         self.client = OpenAI(api_key=api_key)
+        
         # Default model (can be overridden)
-        self.default_model = getattr(settings, 'OPENAI_MODEL', None) or os.environ.get('OPENAI_MODEL', 'gpt-4-turbo')
+        self.default_model = getattr(settings, 'OPENAI_MODEL', None) or os.environ.get('OPENAI_MODEL', 'gpt-5')
     
     def generate_response(self, prompt, model=None, max_tokens=500, temperature=0.7):
         """Generate a response from OpenAI's model"""

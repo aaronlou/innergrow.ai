@@ -10,6 +10,8 @@ class AIService:
         if not api_key:
             raise ValueError("OPENAI_API_KEY environment variable not set")
         
+        # Handle proxy settings explicitly to avoid conflicts
+        # Create the OpenAI client without passing proxy arguments
         self.client = OpenAI(api_key=api_key)
     
     def generate_goal_suggestions(self, goal: Goal):
@@ -40,7 +42,7 @@ class AIService:
         try:
             # Call the OpenAI API
             response = self.client.chat.completions.create(
-                model="gpt-5-turbo",  # Using ChatGPT-5
+                model="gpt-4-turbo",  # Using a valid model
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant for goal achievement."},
                     {"role": "user", "content": prompt}
@@ -50,7 +52,11 @@ class AIService:
             )
             
             # Extract the response content
-            suggestions_text = response.choices[0].message.content.strip()
+            content = response.choices[0].message.content
+            if content is None:
+                raise Exception("AI response content is empty")
+            
+            suggestions_text = content.strip()
             
             # Parse the suggestions
             suggestions = self._parse_suggestions(suggestions_text)
