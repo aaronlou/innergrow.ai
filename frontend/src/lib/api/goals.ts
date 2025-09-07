@@ -1,140 +1,5 @@
 import { ApiResponse } from '@/types';
-import { getApiBaseUrl, getAuthScheme, getAuthToken } from '@/lib/utils';
-
-// Get API base URL from AuthContext pattern
-const API_BASE_URL = getApiBaseUrl();
-
-// Extend RequestInit with optional timeout support
-type ApiRequestOptions = RequestInit & { timeoutMs?: number };
-
-// Internal: create an AbortController that respects an optional timeout and an external signal
-const createAbortController = (timeoutMs?: number, externalSignal?: AbortSignal) => {
-  const controller = new AbortController();
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  let timedOut = false;
-
-  if (externalSignal) {
-    if (externalSignal.aborted) {
-      controller.abort(externalSignal.reason ?? new Error('Aborted'));
-    } else {
-      externalSignal.addEventListener('abort', () => {
-        controller.abort(externalSignal.reason ?? new Error('Aborted'));
-      });
-    }
-  }
-
-  if (typeof timeoutMs === 'number' && timeoutMs > 0) {
-    timer = setTimeout(() => {
-      timedOut = true;
-      controller.abort(new Error('Request timeout'));
-    }, timeoutMs);
-  }
-
-  const cleanup = () => {
-    if (timer) clearTimeout(timer);
-  };
-
-  return { signal: controller.signal, cleanup, isTimedOut: () => timedOut };
-};
-
-// Helper function for API requests with robust error handling and optional timeout/cancellation
-const apiRequest = async (endpoint: string, options: ApiRequestOptions = {}) => {
-  const token = getAuthToken();
-
-  // Debug information
-  if (typeof window !== 'undefined') {
-    console.log('API Request Debug:', {
-      endpoint,
-      hasToken: !!token,
-      tokenLength: token?.length || 0,
-      authScheme: getAuthScheme()
-    });
-  }
-
-  const defaultHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-
-  const authHeaders: Record<string, string> = token ? {
-    'Authorization': `${getAuthScheme()} ${token}`,
-  } : {};
-
-  // Ensure headers are always a plain object
-  const mergedHeaders: Record<string, string> = {
-    ...defaultHeaders,
-    ...authHeaders,
-    ...(options.headers && typeof options.headers === 'object' && !Array.isArray(options.headers)
-      ? options.headers as Record<string, string>
-      : {}),
-  };
-
-  const { timeoutMs, signal: externalSignal, ...rest } = options as ApiRequestOptions;
-  const { signal, cleanup, isTimedOut } = createAbortController(timeoutMs, externalSignal as AbortSignal | undefined);
-
-  const config: RequestInit = {
-    ...rest,
-    headers: mergedHeaders,
-    signal,
-  };
-
-  try {
-    // Resolve endpoint against base using URL to avoid duplicate segments
-    const url = new URL(endpoint, API_BASE_URL.endsWith('/') ? API_BASE_URL : `${API_BASE_URL}/`);
-    const response = await fetch(url.toString(), config);
-
-    // Try to parse JSON, but fall back to text on failure
-    const tryParseJson = async () => {
-      try {
-        return await response.json();
-      } catch {
-        try {
-          const text = await response.text();
-          return text ? { message: text } : {};
-        } catch {
-          return {};
-        }
-      }
-    };
-
-    const payload = await tryParseJson();
-
-    if (!response.ok) {
-      // Normalize into ApiResponse shape
-      const errorMsg =
-        (payload && (payload.error || payload.detail || payload.message)) ||
-        `${response.status} ${response.statusText}`;
-      // On unauthorized, clear token and notify app to redirect/login
-      if (response.status === 401 && typeof window !== 'undefined') {
-        try {
-          localStorage.removeItem('auth_token');
-          window.dispatchEvent(new CustomEvent('app:unauthorized'));
-        } catch {
-          // ignore storage issues
-        }
-      }
-      return { success: false, error: String(errorMsg) } as ApiResponse<unknown>;
-    }
-
-    // If backend already returns ApiResponse, pass through; else wrap
-    if (payload && typeof payload === 'object' && 'success' in payload) {
-      return payload;
-    }
-    return { success: true, data: payload } as ApiResponse<unknown>;
-  } catch (err: unknown) {
-    if (err instanceof Error) {
-      if (err.name === 'AbortError' || err.message.includes('aborted')) {
-        return { success: false, error: isTimedOut() ? 'Request timeout' : 'Request aborted' } as ApiResponse<unknown>;
-      }
-      if (isTimedOut()) {
-        return { success: false, error: 'Request timeout' } as ApiResponse<unknown>;
-      }
-      return { success: false, error: err.message } as ApiResponse<unknown>;
-    }
-    return { success: false, error: 'Network error' } as ApiResponse<unknown>;
-  } finally {
-    cleanup();
-  }
-};
+import { apiRequest } from '@/lib/api/client';
 
 // Goal related types based on Django serializers
 export interface GoalCategory {
@@ -216,7 +81,7 @@ export const goalsService = {
     const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
 
     try {
-      const data = await apiRequest(`/api/goals/${queryString}`, {
+  const data = await apiRequest<unknown>(`/api/goals/${queryString}`, {
         method: 'GET',
       });
 
@@ -258,12 +123,12 @@ export const goalsService = {
       // Handle direct array response
       if (data.success && Array.isArray(data.data)) {
         console.log('DEBUG: Detected direct array response:', data.data);
-        return data;
+        return data as ApiResponse<Goal[]>;
       }
 
       // Handle any other case
       console.log('DEBUG: Unexpected response format:', data);
-      return data;
+  return data as ApiResponse<Goal[]>;
     } catch (error: unknown) {
       console.error('DEBUG: Error in getGoals:', error);
       if (error instanceof Error) {
@@ -276,7 +141,7 @@ export const goalsService = {
   // Create a new goal
   async createGoal(goalData: Partial<Goal>): Promise<ApiResponse<Goal>> {
     try {
-      const data = await apiRequest('/api/goals/', {
+  const data = await apiRequest<Goal>('/api/goals/', {
         method: 'POST',
         body: JSON.stringify(goalData),
       });
@@ -292,7 +157,7 @@ export const goalsService = {
   // Get a specific goal
   async getGoal(id: string): Promise<ApiResponse<Goal>> {
     try {
-      const data = await apiRequest(`/api/goals/${id}/`, {
+  const data = await apiRequest<Goal>(`/api/goals/${id}/`, {
         method: 'GET',
       });
       return data;
@@ -307,7 +172,7 @@ export const goalsService = {
   // Update a goal
   async updateGoal(id: string, goalData: Partial<Goal>): Promise<ApiResponse<Goal>> {
     try {
-      const data = await apiRequest(`/api/goals/${id}/`, {
+  const data = await apiRequest<Goal>(`/api/goals/${id}/`, {
         method: 'PUT',
         body: JSON.stringify(goalData),
       });
@@ -323,7 +188,7 @@ export const goalsService = {
   // Delete a goal
   async deleteGoal(id: string): Promise<ApiResponse<null>> {
     try {
-      const data = await apiRequest(`/api/goals/${id}/`, {
+  const data = await apiRequest<null>(`/api/goals/${id}/`, {
         method: 'DELETE',
       });
       return data;
@@ -338,7 +203,7 @@ export const goalsService = {
   // Get public goals
   async getPublicGoals(): Promise<ApiResponse<Goal[]>> {
     try {
-      const data = await apiRequest('/api/goals/public/', {
+  const data = await apiRequest<Goal[]>('/api/goals/public/', {
         method: 'GET',
       });
       return data;
@@ -353,7 +218,7 @@ export const goalsService = {
   // Get a single public goal (not currently used, added for parity with backend)
   async getPublicGoal(id: string): Promise<ApiResponse<Goal>> {
     try {
-      const data = await apiRequest(`/api/goals/public/${id}/`, {
+  const data = await apiRequest<Goal>(`/api/goals/public/${id}/`, {
         method: 'GET',
       });
       return data;
@@ -368,7 +233,7 @@ export const goalsService = {
   // Get goal statistics
   async getStatistics(): Promise<ApiResponse<GoalStatistics>> {
     try {
-      const data = await apiRequest('/api/goals/statistics/', {
+  const data = await apiRequest<GoalStatistics>('/api/goals/statistics/', {
         method: 'GET',
       });
       return data;
@@ -383,7 +248,7 @@ export const goalsService = {
   // Get goal categories
   async getCategories(): Promise<ApiResponse<GoalCategory[]>> {
     try {
-      const data = await apiRequest('/api/goals/categories/', {
+  const data = await apiRequest<GoalCategory[]>('/api/goals/categories/', {
         method: 'GET',
       });
       // Handle empty response as success with empty array
@@ -402,7 +267,7 @@ export const goalsService = {
   // Get goal statuses
   async getStatuses(): Promise<ApiResponse<GoalStatus[]>> {
     try {
-      const data = await apiRequest('/api/goals/statuses/', {
+  const data = await apiRequest<GoalStatus[]>('/api/goals/statuses/', {
         method: 'GET',
       });
       // Handle empty response as success with empty array
@@ -421,7 +286,7 @@ export const goalsService = {
   // Create goal category
   async createCategory(categoryData: Partial<GoalCategory>): Promise<ApiResponse<GoalCategory>> {
     try {
-      const data = await apiRequest('/api/goals/categories/create/', {
+  const data = await apiRequest<GoalCategory>('/api/goals/categories/create/', {
         method: 'POST',
         body: JSON.stringify(categoryData),
       });
@@ -437,7 +302,7 @@ export const goalsService = {
   // Create goal status
   async createStatus(statusData: Partial<GoalStatus>): Promise<ApiResponse<GoalStatus>> {
     try {
-      const data = await apiRequest('/api/goals/statuses/create/', {
+  const data = await apiRequest<GoalStatus>('/api/goals/statuses/create/', {
         method: 'POST',
         body: JSON.stringify(statusData),
       });
@@ -468,7 +333,7 @@ export const goalsService = {
         ...(opts?.model ? { model: opts.model } : {}),
       };
 
-      const data = await apiRequest(`/api/goals/${goalId}/analyze/`, {
+  const data = await apiRequest<unknown>(`/api/goals/${goalId}/analyze/`, {
         method: 'POST',
         body: JSON.stringify(body),
         timeoutMs: opts?.timeoutMs,
@@ -490,12 +355,12 @@ export const goalsService = {
   async getSuggestions(goalId: string): Promise<ApiResponse<AISuggestion[]>> {
     try {
       // First attempt with GET
-      let data = await apiRequest(`/api/goals/${goalId}/suggestions/`, { method: 'GET' });
+  let data = await apiRequest<unknown>(`/api/goals/${goalId}/suggestions/`, { method: 'GET' });
 
       // If method not allowed (backend expects POST), retry with POST
       if (!data.success && typeof data.error === 'string' && /method/i.test(data.error) && /not allowed|不被允许/.test(data.error)) {
         console.warn('GET /suggestions/ not allowed, retrying with POST');
-        data = await apiRequest(`/api/goals/${goalId}/suggestions/`, { method: 'POST', body: JSON.stringify({}) });
+  data = await apiRequest<unknown>(`/api/goals/${goalId}/suggestions/`, { method: 'POST', body: JSON.stringify({}) });
       }
 
       if (data.success) {
@@ -513,7 +378,7 @@ export const goalsService = {
   // Accept AI suggestion
   async acceptSuggestion(goalId: string, suggestionId: string, accepted: boolean): Promise<ApiResponse<AISuggestion>> {
     try {
-      const data = await apiRequest(`/api/goals/${goalId}/suggestions/${suggestionId}/accept/`, {
+  const data = await apiRequest<AISuggestion>(`/api/goals/${goalId}/suggestions/${suggestionId}/accept/`, {
         method: 'POST',
         body: JSON.stringify({ accepted }),
       });
@@ -529,7 +394,7 @@ export const goalsService = {
   // Mark goal as complete
   async markComplete(goalId: string): Promise<ApiResponse<Goal>> {
     try {
-      const data = await apiRequest(`/api/goals/${goalId}/complete/`, {
+  const data = await apiRequest<Goal>(`/api/goals/${goalId}/complete/`, {
         method: 'POST',
       });
       return data;

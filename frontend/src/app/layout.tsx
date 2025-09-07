@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider, ChatProvider, I18nProvider } from "@/contexts";
+import GlobalApiErrorToaster from '@/components/GlobalApiErrorToaster';
 import ErrorBoundary from "@/components/ErrorBoundary";
 import "./globals.css";
 import Script from 'next/script';
@@ -46,6 +47,7 @@ export default function RootLayout({
               <ChatProvider>
                 {children}
               </ChatProvider>
+              <GlobalApiErrorToaster />
             </AuthProvider>
           </I18nProvider>
         </ErrorBoundary>
