@@ -8,7 +8,7 @@ import examsService from '@/lib/api/exams';
 import { StudyPlanData, Exam } from '@/types';
 
 export default function ExamsPage() {
-  const { t, formatDate } = useI18n();
+  const { t, formatDate, language } = useI18n();
   const [activeTab, setActiveTab] = useState<'discover' | 'plans' | 'practice'>('discover');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -335,7 +335,7 @@ export default function ExamsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('exams.examDescription')}</label>
-                  <Input type="text" placeholder={t('exams.examDescriptionPlaceholder')} value={newExam.description} onChange={(e) => setNewExam({ ...newExam, description: e.target.value })} />
+                  <Input type="textarea" rows={5} placeholder={t('exams.examDescriptionPlaceholder')} value={newExam.description} onChange={(e) => setNewExam({ ...newExam, description: e.target.value })} className="min-h-[120px]" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('exams.examCategory')}</label>
@@ -352,6 +352,7 @@ export default function ExamsPage() {
                     <input
                       type="date"
                       required
+                      lang={language === 'zh' ? 'zh-CN' : 'en-US'}
                       className={`w-full px-3 py-2 text-sm border rounded-md bg-background ${validationErrors.exam_time ? 'border-red-500 focus-visible:outline-red-500' : 'border-input'}`}
                       value={newExam.exam_time}
                       onChange={(e) => { setNewExam({ ...newExam, exam_time: e.target.value }); setValidationErrors(v => ({ ...v, exam_time: undefined })); }}
