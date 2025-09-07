@@ -136,7 +136,7 @@ export default function ExamsPage() {
       title: exam.title,
       category: exam.category || 'Language',
       description: exam.description || '',
-      exam_time: exam.exam_time ? exam.exam_time.slice(0,10) : '',
+      exam_time: exam.exam_time ? exam.exam_time.slice(0, 10) : '',
       materialFile: null,
     });
     setShowCreateModal(true);
@@ -349,20 +349,27 @@ export default function ExamsPage() {
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">{t('exams.examTime')}</label>
-                    <Input
-                      key={language}
-                      type="date"
-                      value={newExam.exam_time}
-                      onChange={(e) => { setNewExam({ ...newExam, exam_time: e.target.value }); setValidationErrors(v => ({ ...v, exam_time: undefined })); }}
-                      lang={language === 'zh' ? 'zh-CN' : 'en-US'}
-                      className={validationErrors.exam_time ? 'border-red-500 focus-visible:outline-red-500' : ''}
-                    />
+                    <div className="relative">
+                      <Input
+                        key={language}
+                        type="date"
+                        value={newExam.exam_time}
+                        onChange={(e) => { setNewExam({ ...newExam, exam_time: e.target.value }); setValidationErrors(v => ({ ...v, exam_time: undefined })); }}
+                        lang={language === 'zh' ? 'zh-CN' : 'en-US'}
+                        className={validationErrors.exam_time ? 'border-red-500 focus-visible:outline-red-500' : ''}
+                      />
+                      {newExam.exam_time && (
+                        <button
+                          type="button"
+                          onClick={() => setNewExam({ ...newExam, exam_time: '' })}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-sm"
+                          title={t('common.clear') || 'Clear'}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
                     {validationErrors.exam_time && <div className="mt-1 text-[11px] text-red-500">{validationErrors.exam_time}</div>}
-                    {!validationErrors.exam_time && !newExam.exam_time && (
-                      <div className="mt-1 text-[11px] text-muted-foreground">
-                        {language === 'zh' ? '格式: YYYY-MM-DD (点击选择日期)' : 'Format: YYYY-MM-DD'}
-                      </div>
-                    )}
                     {newExam.exam_time && (
                       <div className="mt-1 text-[11px] text-muted-foreground">{(() => { try { return formatDate(new Date(newExam.exam_time + 'T00:00:00'), { dateStyle: 'full' }); } catch { return newExam.exam_time; } })()}</div>
                     )}
@@ -383,7 +390,7 @@ export default function ExamsPage() {
                           onChange={(e) => {
                             const file = e.target.files?.[0] || null;
                             if (file) {
-                              const allowed = ['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','image/png','image/jpeg'];
+                              const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'image/jpeg'];
                               if (!allowed.includes(file.type)) {
                                 setValidationErrors(v => ({ ...v, materialFile: t('exams.unsupportedFileType') }));
                                 showToast('error', t('exams.unsupportedFileType'));
