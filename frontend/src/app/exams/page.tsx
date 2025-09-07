@@ -44,6 +44,7 @@ export default function ExamsPage() {
     setLoading(true);
     setError(null);
     const res = await examsService.list();
+    console.log('Fetched exams:', { success: res.success, error: res.error, dataCount: res.data?.length || 0 });
     if (res.success && res.data) {
       setExams(res.data);
     } else {
@@ -356,8 +357,8 @@ export default function ExamsPage() {
                         key={language}
                         selected={newExam.exam_time ? new Date(newExam.exam_time + 'T00:00:00') : null}
                         onChange={(date: Date | null) => {
-                          const dateStr = date ? 
-                            new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split('T')[0] : 
+                          const dateStr = date ?
+                            new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split('T')[0] :
                             '';
                           setNewExam({ ...newExam, exam_time: dateStr });
                           setValidationErrors(v => ({ ...v, exam_time: undefined }));
