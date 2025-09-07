@@ -58,23 +58,29 @@ ALLOWED_HOSTS = [
 # 安全密钥（生产环境必须修改）
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='CHANGE-THIS-IN-PRODUCTION')
 
-# 数据库配置（生产环境推荐使用PostgreSQL）
+# 数据库配置（仅使用PostgreSQL）
 if config('DATABASE_URL', default='') and dj_database_url is not None:
     DATABASES = {
         'default': dj_database_url.parse(config('DATABASE_URL'))
     }
-    # 如果是PostgreSQL，添加专用配置
-    if 'postgresql' in DATABASES['default']['ENGINE']:
-        DATABASES['default']['OPTIONS'] = {
-            'connect_timeout': 60,
-            # 注意：事务隔离级别通过PostgreSQL默认配置即可，无需显式设置
-        }
+    # PostgreSQL专用配置
+    DATABASES['default']['OPTIONS'] = {
+        'connect_timeout': 60,
+        # 注意：事务隔离级别通过PostgreSQL默认配置即可，无需显式设置
+    }
 else:
-    # 保持SQLite作为后备选项
+    # 默认PostgreSQL配置
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default='innergrow_db'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default=''),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432', cast=int),
+            'OPTIONS': {
+                'connect_timeout': 60,
+            },
         }
     }
 
