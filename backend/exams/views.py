@@ -24,10 +24,8 @@ class ExamListCreateView(generics.ListCreateAPIView):
     serializer_class = ExamSerializer
     
     def get_queryset(self):
-        """获取当前用户的考试（创建的和参与的）"""
-        return Exam.objects.filter(  # type: ignore
-            models.Q(user=self.request.user) | models.Q(participants=self.request.user)
-        ).distinct()
+        """获取所有考试（所有用户都可以看到）"""
+        return Exam.objects.all()  # type: ignore
     
     def perform_create(self, serializer):
         """创建考试时关联当前用户"""
@@ -40,10 +38,38 @@ class ExamDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ExamSerializer
     
     def get_queryset(self):
-        """获取当前用户可以访问的考试（创建的和参与的）"""
-        return Exam.objects.filter(  # type: ignore
-            models.Q(user=self.request.user) | models.Q(participants=self.request.user)
-        ).distinct()
+        """获取所有考试（所有用户都可以查看详情）"""
+        return Exam.objects.all()  # type: ignore
+    
+    def update(self, request, *args, **kwargs):
+        """只允许创建者和参与者更新考试"""
+        exam = self.get_object()
+        user = request.user
+        
+        # 检查权限：只有创建者和参与者可以更新
+        if user != exam.user and not exam.is_participant(user):
+            return Response({
+                'success': False,
+                'error': _('You do not have permission to update this exam'),
+                'message': _('Only the creator and participants can update this exam')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        return super().update(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        """只允许创建者删除考试"""
+        exam = self.get_object()
+        user = request.user
+        
+        # 检查权限：只有创建者可以删除
+        if user != exam.user:
+            return Response({
+                'success': False,
+                'error': _('You do not have permission to delete this exam'),
+                'message': _('Only the creator can delete this exam')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        return super().destroy(request, *args, **kwargs)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
