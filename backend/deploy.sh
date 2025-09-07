@@ -105,7 +105,8 @@ run_migrations() {
     
     # 创建迁移文件
     python "$MANAGE_PY" makemigrations accounts
-    python "$MANAGE_PY" makemigrations books
+    python "$MANAGE_PY" makemigrations exams
+    python "$MANAGE_PY" makemigrations goals
     
     # 应用迁移
     python "$MANAGE_PY" migrate

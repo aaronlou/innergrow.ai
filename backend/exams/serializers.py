@@ -17,7 +17,9 @@ class ExamSerializer(serializers.ModelSerializer):
 	participants = ExamParticipantSerializer(many=True, read_only=True)
 	is_creator = serializers.SerializerMethodField()
 	is_participant = serializers.SerializerMethodField()
-	exam_time = serializers.DateField()  # 明确指定为DateField
+	exam_time = serializers.DateField(format='%Y-%m-%d')  # 明确指定格式
+	created_at = serializers.DateTimeField(read_only=True)
+	updated_at = serializers.DateTimeField(read_only=True)
 	
 	class Meta:
 		model = Exam

@@ -24,7 +24,7 @@ pip install -r requirements.txt
 
 # 数据库迁移
 echo "🗄️  执行数据库迁移..."
-python manage.py makemigrations accounts books
+python manage.py makemigrations accounts exams goals
 python manage.py migrate
 
 # 启动服务
