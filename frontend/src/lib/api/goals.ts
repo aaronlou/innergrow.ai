@@ -474,6 +474,7 @@ export const goalsService = {
         timeoutMs: opts?.timeoutMs,
       });
       if (data.success) {
+        console.log('DEBUG: analyzeGoal response data:', data.data);
         return { success: true, data: goalsService._normalizeList<AISuggestion>(data.data) };
       }
       return data as ApiResponse<AISuggestion[]>;

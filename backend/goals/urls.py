@@ -16,7 +16,7 @@ urlpatterns = [
     path('', views.GoalListCreateView.as_view(), name='goal-list-create'),
     path('<str:id>/', views.GoalDetailView.as_view(), name='goal-detail'),
     path('<str:id>/complete/', views.mark_goal_complete, name='goal-complete'),
-    path('<str:id>/analyze/', views.analyze_goal_with_ai, name='goal-analyze'),
+    path('<str:goal_id>/analyze/', views.analyze_goal_with_ai, name='goal-analyze'),
     
     # 最后放嵌套的通配符路径
     path('public/<str:id>/', views.PublicGoalDetailView.as_view(), name='public-goal-detail'),
