@@ -134,6 +134,19 @@ export const apiRequest = async <T = unknown>(endpoint: string, options: ApiRequ
 
     if (!response.ok) {
       const errorMsg = (payload && (payload.error || payload.detail || payload.message)) || `${response.status} ${response.statusText}`;
+      
+      // Add more detailed logging for debugging
+      if (shouldDebug()) {
+        console.log('[apiRequest error]', {
+          url: url.toString(),
+          status: response.status,
+          statusText: response.statusText,
+          payload,
+          errorMsg,
+          requestId
+        });
+      }
+      
       if (response.status === 401 && typeof window !== 'undefined') {
         try {
           localStorage.removeItem('auth_token');
@@ -158,7 +171,24 @@ export const apiRequest = async <T = unknown>(endpoint: string, options: ApiRequ
     }
 
     if (payload && typeof payload === 'object' && 'success' in payload) {
+      if (shouldDebug()) {
+        console.log('[apiRequest success with success field]', {
+          url: url.toString(),
+          payload,
+          requestId
+        });
+      }
       return payload as ApiResponse<T>;
+    }
+
+    if (shouldDebug()) {
+      console.log('[apiRequest success raw payload]', {
+        url: url.toString(),
+        payloadType: typeof payload,
+        isArray: Array.isArray(payload),
+        payload,
+        requestId
+      });
     }
 
     return { success: true, data: payload as T } as ApiResponse<T>;

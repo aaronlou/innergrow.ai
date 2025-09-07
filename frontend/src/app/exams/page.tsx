@@ -43,8 +43,24 @@ export default function ExamsPage() {
   const fetchExams = useCallback(async () => {
     setLoading(true);
     setError(null);
+    
+    // Debug authentication status
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    console.log('[fetchExams] Auth debug:', {
+      hasToken: !!token,
+      tokenLength: token?.length,
+      tokenPreview: token ? `${token.substring(0, 10)}...` : null,
+      isAuthenticated: true // This should match the auth context
+    });
+    
     const res = await examsService.list();
-    console.log('Fetched exams:', { success: res.success, error: res.error, dataCount: res.data?.length || 0 });
+    console.log('Fetched exams:', { 
+      success: res.success, 
+      error: res.error, 
+      dataCount: res.data?.length || 0,
+      rawData: res.data,
+      fullResponse: res
+    });
     if (res.success && res.data) {
       setExams(res.data);
     } else {

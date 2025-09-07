@@ -29,25 +29,25 @@ export interface StudyPlanData {
 }
 
 interface RawExam {
-  id?: unknown;
-  title?: unknown;
-  description?: unknown;
-  desc?: unknown;
-  category?: unknown;
-  category_name?: unknown;
-  exam_time?: unknown;
-  examDate?: unknown;
-  examTime?: unknown;
-  material?: unknown;
-  created_at?: unknown;
-  createdAt?: unknown;
-  updated_at?: unknown;
-  updatedAt?: unknown;
-  user?: unknown;
-  user_id?: unknown;
-  participants?: unknown;
-  participants_count?: unknown;
-  is_participant?: unknown;
+    id?: unknown;
+    title?: unknown;
+    description?: unknown;
+    desc?: unknown;
+    category?: unknown;
+    category_name?: unknown;
+    exam_time?: unknown;
+    examDate?: unknown;
+    examTime?: unknown;
+    material?: unknown;
+    created_at?: unknown;
+    createdAt?: unknown;
+    updated_at?: unknown;
+    updatedAt?: unknown;
+    user?: unknown;
+    user_id?: unknown;
+    participants?: unknown;
+    participants_count?: unknown;
+    is_participant?: unknown;
 }
 
 interface RawUserLike { id?: unknown; pk?: unknown; name?: unknown; username?: unknown; email?: unknown; }
@@ -108,9 +108,20 @@ export const examsService = {
     async list(params: Record<string, string> = {}): Promise<ApiResponse<Exam[]>> {
         const searchParams = new URLSearchParams(params);
         const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
+        console.log('[examsService.list] Making API request to:', `/api/exams/${qs}`);
         const res = await apiRequest<unknown>(`/api/exams/${qs}`, { method: 'GET' });
+        console.log('[examsService.list] Raw API response:', {
+            success: res.success,
+            error: res.error,
+            dataType: typeof res.data,
+            isArray: Array.isArray(res.data),
+            rawData: res.data
+        });
         if (res.success) {
-            const list = this._normalizeList<unknown>(res.data).map(item => this._normalizeExam(item));
+            const normalizedList = this._normalizeList<unknown>(res.data);
+            console.log('[examsService.list] Normalized list:', normalizedList);
+            const list = normalizedList.map(item => this._normalizeExam(item));
+            console.log('[examsService.list] Final processed list:', list);
             return { success: true, data: list };
         }
         return res as ApiResponse<Exam[]>;
@@ -129,7 +140,7 @@ export const examsService = {
             body = form;
         } else {
             const json: Record<string, unknown> = {};
-            ['title','description','category','exam_time'].forEach(k => {
+            ['title', 'description', 'category', 'exam_time'].forEach(k => {
                 const v = (payload as Record<string, unknown>)[k];
                 if (v !== undefined && v !== null && v !== '') json[k] = v;
             });
@@ -152,7 +163,7 @@ export const examsService = {
         let headers: Record<string, string> | undefined;
         if (payload.file) {
             const form = new FormData();
-            ['title','description','category','exam_time'].forEach(k => {
+            ['title', 'description', 'category', 'exam_time'].forEach(k => {
                 const v = (payload as Record<string, unknown>)[k];
                 if (v !== undefined && v !== null && v !== '') form.append(k, String(v));
             });
@@ -160,7 +171,7 @@ export const examsService = {
             body = form;
         } else {
             const json: Record<string, unknown> = {};
-            ['title','description','category','exam_time'].forEach(k => {
+            ['title', 'description', 'category', 'exam_time'].forEach(k => {
                 const v = (payload as Record<string, unknown>)[k];
                 if (v !== undefined && v !== null && v !== '') json[k] = v;
             });
