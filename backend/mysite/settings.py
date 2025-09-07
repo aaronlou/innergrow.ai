@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     'accounts',
-    'books',
     'goals',
     'exams',
     'ai_services',  # Add this line
