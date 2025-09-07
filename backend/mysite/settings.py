@@ -198,5 +198,16 @@ CORS_EXPOSE_HEADERS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# OpenAI API 配置
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+
+# OpenAI Model 配置
+OPENAI_MODEL = os.environ.get('OPENAI_MODEL', 'gpt-4-turbo')
+
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'
+
+# CSRF Cookie Settings
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_SAMESITE = 'Lax'

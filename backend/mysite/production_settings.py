@@ -175,6 +175,12 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
+# OpenAI API 配置
+OPENAI_API_KEY = config('OPENAI_API_KEY', default='')
+
+# OpenAI Model 配置
+OPENAI_MODEL = config('OPENAI_MODEL', default='gpt-4-turbo')
+
 # 性能优化
 CONN_MAX_AGE = 60  # 数据库连接池
 
