@@ -24,6 +24,7 @@ class ExamSuggestionService:
         Exam: {exam.title}
         Category: {exam.category}
         Description: {exam.description}
+        Exam Date: {exam.exam_time}
         
         Please provide a study plan in the following format:
         1. [Task Title]

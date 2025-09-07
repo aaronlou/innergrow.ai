@@ -297,6 +297,15 @@ export const zh = {
   'exams.regeneratePlan': '重新生成计划',
   'exams.regeneratingPlan': '重新生成中...',
   'exams.planRegenerated': '学习计划已重新生成',
+  'exams.join': '加入',
+  'exams.leave': '退出',
+  'exams.joined': '已加入',
+  'exams.participants': '参与人数',
+  'exams.joinSuccess': '已加入考试学习小组',
+  'exams.leaveSuccess': '已退出考试学习小组',
+  'exams.leaveCreatorForbidden': '创建者不能退出',
+  'exams.alreadyJoined': '已加入',
+  'exams.notParticipant': '尚未加入',
 
   // 二手书市场
   'books.title': '📚 二手书市场',

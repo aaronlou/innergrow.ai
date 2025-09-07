@@ -28,6 +28,30 @@ export interface StudyPlanData {
     total_duration?: string;
 }
 
+interface RawExam {
+  id?: unknown;
+  title?: unknown;
+  description?: unknown;
+  desc?: unknown;
+  category?: unknown;
+  category_name?: unknown;
+  exam_time?: unknown;
+  examDate?: unknown;
+  examTime?: unknown;
+  material?: unknown;
+  created_at?: unknown;
+  createdAt?: unknown;
+  updated_at?: unknown;
+  updatedAt?: unknown;
+  user?: unknown;
+  user_id?: unknown;
+  participants?: unknown;
+  participants_count?: unknown;
+  is_participant?: unknown;
+}
+
+interface RawUserLike { id?: unknown; pk?: unknown; name?: unknown; username?: unknown; email?: unknown; }
+
 export const examsService = {
     _normalizeList<T>(raw: unknown): T[] {
         if (Array.isArray(raw)) return raw as T[];
@@ -45,19 +69,40 @@ export const examsService = {
         return [];
     },
 
-    _normalizeExam(raw: unknown): Exam {
+    _normalizeExam(raw: unknown): import('@/types').Exam {
         if (!raw || typeof raw !== 'object') return { id: '', title: '' };
-        const obj = raw as Record<string, unknown>;
-        return {
+        const obj = raw as RawExam;
+        const exam: import('@/types').Exam = {
             id: String(obj.id ?? ''),
             title: String(obj.title ?? ''),
             description: (obj.description as string) ?? (obj.desc as string) ?? '',
             category: (obj.category as string) ?? (obj.category_name as string) ?? '',
-            exam_time: (obj.exam_time as string) ?? (obj.examTime as string),
+            exam_time: (obj.exam_time as string) ?? (obj.examDate as string) ?? (obj.examTime as string),
             material: (obj.material as string) ?? undefined,
             created_at: (obj.created_at as string) ?? (obj.createdAt as string),
             updated_at: (obj.updated_at as string) ?? (obj.updatedAt as string),
         };
+        if (obj.user && typeof obj.user === 'object') {
+            const u = obj.user as RawUserLike;
+            exam.user_id = String(u.id ?? u.pk ?? '');
+            const nameSource = u.name ?? u.username ?? u.email;
+            if (nameSource) exam.user_name = String(nameSource);
+        } else if (obj.user_id) {
+            exam.user_id = String(obj.user_id);
+        }
+        if (Array.isArray(obj.participants)) {
+            exam.participants = (obj.participants as unknown[]).map(p => {
+                if (p && typeof p === 'object') {
+                    const pu = p as RawUserLike;
+                    return String(pu.id ?? pu.username ?? pu.email ?? '');
+                }
+                return String(p);
+            });
+            exam.participants_count = exam.participants.length;
+        }
+        if (obj.participants_count !== undefined) exam.participants_count = Number(obj.participants_count);
+        if (obj.is_participant !== undefined) exam.is_participant = Boolean(obj.is_participant);
+        return exam;
     },
 
     async list(params: Record<string, string> = {}): Promise<ApiResponse<Exam[]>> {
@@ -71,29 +116,29 @@ export const examsService = {
         return res as ApiResponse<Exam[]>;
     },
 
-    async create(payload: Partial<Exam> & { file?: File }): Promise<ApiResponse<Exam>> {
+    async create(payload: Partial<import('@/types').Exam> & { file?: File }): Promise<ApiResponse<import('@/types').Exam>> {
         let body: BodyInit;
         let headers: Record<string, string> | undefined;
-                if (payload.file) {
-                        const form = new FormData();
-                        if (payload.title) form.append('title', payload.title);
-                        if (payload.description) form.append('description', payload.description);
-                        if (payload.category) form.append('category', payload.category);
-                        if (payload.exam_time) form.append('exam_time', payload.exam_time);
-                        form.append('material', payload.file);
-                        body = form;
-                } else {
-                        const json: Record<string, unknown> = {};
-                        ['title','description','category','exam_time'].forEach(k => {
-                            const v = (payload as Record<string, unknown>)[k];
-                            if (v !== undefined && v !== null && v !== '') json[k] = v;
-                        });
-                        body = JSON.stringify(json);
-                        headers = { 'Content-Type': 'application/json' };
-                }
+        if (payload.file) {
+            const form = new FormData();
+            if (payload.title) form.append('title', payload.title);
+            if (payload.description) form.append('description', payload.description);
+            if (payload.category) form.append('category', payload.category);
+            if (payload.exam_time) form.append('exam_time', payload.exam_time); // already YYYY-MM-DD
+            form.append('material', payload.file);
+            body = form;
+        } else {
+            const json: Record<string, unknown> = {};
+            ['title','description','category','exam_time'].forEach(k => {
+                const v = (payload as Record<string, unknown>)[k];
+                if (v !== undefined && v !== null && v !== '') json[k] = v;
+            });
+            body = JSON.stringify(json);
+            headers = { 'Content-Type': 'application/json' };
+        }
         const res = await apiRequest<unknown>('/api/exams/', { method: 'POST', body, headers });
         if (res.success) return { success: true, data: this._normalizeExam(res.data) };
-        return res as ApiResponse<Exam>;
+        return res as ApiResponse<import('@/types').Exam>;
     },
 
     async retrieve(id: string): Promise<ApiResponse<Exam>> {
@@ -102,29 +147,29 @@ export const examsService = {
         return res as ApiResponse<Exam>;
     },
 
-        async update(id: string, payload: Partial<Exam> & { file?: File }): Promise<ApiResponse<Exam>> {
-                let body: BodyInit;
-                let headers: Record<string, string> | undefined;
-                if (payload.file) {
-                    const form = new FormData();
-                    ['title','description','category','exam_time'].forEach(k => {
-                        const v = (payload as Record<string, unknown>)[k];
-                        if (v !== undefined && v !== null && v !== '') form.append(k, String(v));
-                    });
-                    form.append('material', payload.file);
-                    body = form;
-                } else {
-                    const json: Record<string, unknown> = {};
-                    ['title','description','category','exam_time'].forEach(k => {
-                        const v = (payload as Record<string, unknown>)[k];
-                        if (v !== undefined && v !== null && v !== '') json[k] = v;
-                    });
-                    body = JSON.stringify(json);
-                    headers = { 'Content-Type': 'application/json' };
-                }
-                const res = await apiRequest<unknown>(`/api/exams/${id}/`, { method: 'PUT', body, headers });
+    async update(id: string, payload: Partial<import('@/types').Exam> & { file?: File }): Promise<ApiResponse<import('@/types').Exam>> {
+        let body: BodyInit;
+        let headers: Record<string, string> | undefined;
+        if (payload.file) {
+            const form = new FormData();
+            ['title','description','category','exam_time'].forEach(k => {
+                const v = (payload as Record<string, unknown>)[k];
+                if (v !== undefined && v !== null && v !== '') form.append(k, String(v));
+            });
+            form.append('material', payload.file);
+            body = form;
+        } else {
+            const json: Record<string, unknown> = {};
+            ['title','description','category','exam_time'].forEach(k => {
+                const v = (payload as Record<string, unknown>)[k];
+                if (v !== undefined && v !== null && v !== '') json[k] = v;
+            });
+            body = JSON.stringify(json);
+            headers = { 'Content-Type': 'application/json' };
+        }
+        const res = await apiRequest<unknown>(`/api/exams/${id}/`, { method: 'PUT', body, headers });
         if (res.success) return { success: true, data: this._normalizeExam(res.data) };
-        return res as ApiResponse<Exam>;
+        return res as ApiResponse<import('@/types').Exam>;
     },
 
     async delete(id: string): Promise<ApiResponse<null>> {
@@ -168,6 +213,18 @@ export const examsService = {
             return { success: true, data: { exam_id: examId, language: body.language, plan: [] } };
         }
         return res as ApiResponse<StudyPlanData>;
+    },
+
+    async joinExam(id: string): Promise<ApiResponse<import('@/types').Exam>> {
+        const res = await apiRequest<unknown>(`/api/exams/${id}/join/`, { method: 'POST' });
+        if (res.success) return { success: true, data: this._normalizeExam(res.data) };
+        return res as ApiResponse<import('@/types').Exam>;
+    },
+
+    async leaveExam(id: string): Promise<ApiResponse<import('@/types').Exam>> {
+        const res = await apiRequest<unknown>(`/api/exams/${id}/leave/`, { method: 'POST' });
+        if (res.success) return { success: true, data: this._normalizeExam(res.data) };
+        return res as ApiResponse<import('@/types').Exam>;
     },
 };
 

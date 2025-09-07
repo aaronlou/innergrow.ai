@@ -1,8 +1,11 @@
+# pyright: reportMissingImports=false
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 from .models import Exam
 from .serializers import ExamSerializer
 
@@ -11,6 +14,7 @@ try:
     from ai_services.exam_suggestions import ExamSuggestionService
     AI_SERVICE_AVAILABLE = True
 except ImportError:
+    ExamSuggestionService = None
     AI_SERVICE_AVAILABLE = False
 
 class ExamListCreateView(generics.ListCreateAPIView):
@@ -20,8 +24,10 @@ class ExamListCreateView(generics.ListCreateAPIView):
     serializer_class = ExamSerializer
     
     def get_queryset(self):
-        """获取当前用户的考试"""
-        return Exam.objects.filter(user=self.request.user)
+        """获取当前用户的考试（创建的和参与的）"""
+        return Exam.objects.filter(  # type: ignore
+            models.Q(user=self.request.user) | models.Q(participants=self.request.user)
+        ).distinct()
     
     def perform_create(self, serializer):
         """创建考试时关联当前用户"""
@@ -34,8 +40,73 @@ class ExamDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ExamSerializer
     
     def get_queryset(self):
-        """获取当前用户的考试"""
-        return Exam.objects.filter(user=self.request.user)
+        """获取当前用户可以访问的考试（创建的和参与的）"""
+        return Exam.objects.filter(  # type: ignore
+            models.Q(user=self.request.user) | models.Q(participants=self.request.user)
+        ).distinct()
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def join_exam(request, exam_id):
+    """加入考试学习小组"""
+    exam = get_object_or_404(Exam, id=exam_id)
+    
+    # Check if user is already a participant or the creator
+    if request.user == exam.user:
+        return Response({
+            'success': False,
+            'error': _('You are the creator of this exam'),
+            'message': _('You are the creator of this exam')
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    if exam.is_participant(request.user):
+        return Response({
+            'success': False,
+            'error': _('You have already joined this exam group'),
+            'message': _('You have already joined this exam group')
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Add user as participant
+    exam.add_participant(request.user)
+    
+    serializer = ExamSerializer(exam, context={'request': request})
+    return Response({
+        'success': True,
+        'data': serializer.data,
+        'message': _('Successfully joined the exam study group')
+    })
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def leave_exam(request, exam_id):
+    """退出考试学习小组"""
+    exam = get_object_or_404(Exam, id=exam_id)
+    
+    # Check if user is the creator (creator cannot leave)
+    if request.user == exam.user:
+        return Response({
+            'success': False,
+            'error': _('Exam creator cannot leave the group'),
+            'message': _('Exam creator cannot leave the group')
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Check if user is a participant
+    if not exam.is_participant(request.user):
+        return Response({
+            'success': False,
+            'error': _('You are not a participant of this exam group'),
+            'message': _('You are not a participant of this exam group')
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Remove user from participants
+    exam.remove_participant(request.user)
+    
+    serializer = ExamSerializer(exam, context={'request': request})
+    return Response({
+        'success': True,
+        'data': serializer.data,
+        'message': _('Successfully left the exam study group')
+    })
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -52,15 +123,26 @@ def generate_study_plan(request, exam_id):
     if not AI_SERVICE_AVAILABLE:
         return Response({
             'success': False,
-            'error': 'AI service not available',
-            'message': 'AI服务不可用'
+            'error': _('AI service not available'),
+            'message': _('AI service not available')
         }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
     
-    exam = get_object_or_404(Exam, id=exam_id, user=request.user)
+    exam = get_object_or_404(Exam, id=exam_id)
+    
+    # Check if user has access to this exam
+    if request.user != exam.user and not exam.is_participant(request.user):
+        return Response({
+            'success': False,
+            'error': _('You do not have access to this exam'),
+            'message': _('You do not have access to this exam')
+        }, status=status.HTTP_403_FORBIDDEN)
     
     try:
         # Initialize the AI service
-        ai_service = ExamSuggestionService()
+        if ExamSuggestionService is not None:
+            ai_service = ExamSuggestionService()
+        else:
+            raise Exception(_("AI service not properly initialized"))
         
         # Generate study plan using OpenAI's ChatGPT
         study_plan_data = ai_service.generate_study_plan(exam, language, model)
@@ -70,11 +152,11 @@ def generate_study_plan(request, exam_id):
         return Response({
             'success': True,
             'data': study_plan_data,
-            'message': 'Study plan generated successfully' if language != 'zh' else '学习计划已生成'
+            'message': _('Study plan generated successfully') if language != 'zh' else _('学习计划已生成')
         })
     except Exception as e:
         return Response({
             'success': False,
             'error': str(e),
-            'message': 'Failed to generate study plan' if language != 'zh' else '生成学习计划失败'
+            'message': _('Failed to generate study plan') if language != 'zh' else _('生成学习计划失败')
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

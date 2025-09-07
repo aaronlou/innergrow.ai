@@ -297,6 +297,15 @@ export const en = {
   'exams.unsupportedFileType': 'Unsupported file type',
   'exams.materialAvailable': 'Material',
   'exams.materialReady': 'Material ready',
+  'exams.join': 'Join',
+  'exams.leave': 'Leave',
+  'exams.joined': 'Joined',
+  'exams.participants': 'Participants',
+  'exams.joinSuccess': 'Joined exam group',
+  'exams.leaveSuccess': 'Left exam group',
+  'exams.leaveCreatorForbidden': 'Creator cannot leave',
+  'exams.alreadyJoined': 'Already joined',
+  'exams.notParticipant': 'Not a participant',
 
   // Books Market
   'books.title': '📚 Book Market',

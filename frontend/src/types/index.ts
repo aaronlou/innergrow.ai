@@ -220,10 +220,15 @@ export interface Exam {
   title: string;
   description?: string;
   category?: string;
-  exam_time?: string; // ISO timestamp
+  exam_time?: string; // date-only string YYYY-MM-DD
   material?: string; // file URL
   created_at?: string;
   updated_at?: string;
+  user_id?: string; // creator user id (optional depending on backend serializer)
+  user_name?: string; // creator name if provided
+  participants?: string[]; // participant user ids/names (depending on backend shape)
+  participants_count?: number; // count shortcut if backend returns it
+  is_participant?: boolean; // convenience flag from backend (if provided)
 }
 
 export interface StudyPlanSection {

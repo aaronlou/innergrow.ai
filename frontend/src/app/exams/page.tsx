@@ -64,8 +64,8 @@ export default function ExamsPage() {
       return;
     }
     setCreating(true);
-    const examTimeISO = newExam.exam_time ? new Date(newExam.exam_time + 'T00:00:00').toISOString() : undefined;
-    const payload = { title: newExam.title, description: newExam.description, category: newExam.category, exam_time: examTimeISO, file: newExam.materialFile || undefined } as Partial<Exam> & { file?: File };
+    // exam_time already YYYY-MM-DD (DateField backend)
+    const payload = { title: newExam.title, description: newExam.description, category: newExam.category, exam_time: newExam.exam_time, file: newExam.materialFile || undefined } as Partial<Exam> & { file?: File };
     const res = await examsService.create(payload);
     if (res.success && res.data) {
       setExams(prev => [...prev, res.data!]);
@@ -88,8 +88,7 @@ export default function ExamsPage() {
       return;
     }
     setUpdating(true);
-    const examTimeISO = newExam.exam_time ? new Date(newExam.exam_time + 'T00:00:00').toISOString() : undefined;
-    const payload = { title: newExam.title, description: newExam.description, category: newExam.category, exam_time: examTimeISO, file: newExam.materialFile || undefined } as Partial<Exam> & { file?: File };
+    const payload = { title: newExam.title, description: newExam.description, category: newExam.category, exam_time: newExam.exam_time, file: newExam.materialFile || undefined } as Partial<Exam> & { file?: File };
     const res = await examsService.update(editingExam.id, payload);
     if (res.success && res.data) {
       setExams(prev => prev.map(e => e.id === editingExam.id ? res.data! : e));
@@ -168,6 +167,32 @@ export default function ExamsPage() {
     setPlanOptionsExam(null);
   };
 
+  const handleJoinLeave = async (exam: Exam) => {
+    // Optimistic update
+    setExams(prev => prev.map(e => {
+      if (e.id !== exam.id) return e;
+      const joining = !e.is_participant;
+      return {
+        ...e,
+        is_participant: joining,
+        participants_count: (e.participants_count || 0) + (joining ? 1 : -1),
+      };
+    }));
+    const action = exam.is_participant ? examsService.leaveExam : examsService.joinExam;
+    const res = await action(exam.id);
+    if (res.success && res.data) {
+      setExams(prev => prev.map(e => e.id === exam.id ? res.data! : e));
+      showToast('success', exam.is_participant ? t('exams.leaveSuccess') : t('exams.joinSuccess'));
+    } else {
+      // rollback
+      setExams(prev => prev.map(e => {
+        if (e.id !== exam.id) return e;
+        return { ...e, is_participant: exam.is_participant, participants_count: exam.participants_count };
+      }));
+      showToast('error', res.error || t('common.error'));
+    }
+  };
+
   return (
     <ProtectedRoute>
       <DashboardLayout>
@@ -211,16 +236,20 @@ export default function ExamsPage() {
                       <p className="text-sm text-muted-foreground mb-4">{exam.description}</p>
                       <div className="space-y-2 text-xs text-muted-foreground mb-4">
                         {exam.category && <div>📚 {t('exams.category')}: {exam.category}</div>}
-                        {exam.exam_time && <div>🕒 {t('exams.examTime')}: {(() => { try { return formatDate(new Date(exam.exam_time), { dateStyle: 'medium' }); } catch { return exam.exam_time; } })()}</div>}
+                        {exam.exam_time && <div>🕒 {t('exams.examTime')}: {(() => { try { return formatDate(new Date(exam.exam_time + 'T00:00:00'), { dateStyle: 'medium' }); } catch { return exam.exam_time; } })()}</div>}
                         {exam.material && (
                           <div className="flex items-center gap-1 text-green-600 dark:text-green-400">📎 <a href={exam.material} target="_blank" rel="noreferrer" className="underline hover:no-underline">{t('exams.materialAvailable')}</a></div>
                         )}
+                        <div>👥 {t('exams.participants')}: {exam.participants_count ?? 0}</div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <Button size="sm" className="flex-1" onClick={() => handleGeneratePlan(exam.id)} disabled={planGenerating === exam.id}>{planGenerating === exam.id ? t('common.loading') : t('exams.startPreparation')}</Button>
                         <Button size="sm" variant="outline" className="flex-1">{t('exams.viewRequirements')}</Button>
                         <Button size="sm" variant="outline" onClick={() => openEdit(exam)}>✏️</Button>
                         <Button size="sm" variant="outline" onClick={() => setShowDeleteConfirm(exam)}>🗑️</Button>
+                        <Button size="sm" variant={exam.is_participant ? 'secondary' : 'default'} onClick={() => handleJoinLeave(exam)}>
+                          {exam.is_participant ? t('exams.leave') : t('exams.join')}
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
