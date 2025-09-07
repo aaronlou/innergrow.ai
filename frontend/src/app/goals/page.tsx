@@ -1153,8 +1153,9 @@ function GoalsPageContent() {
                     <label className="text-sm font-medium">{t('goals.create.targetDate')}</label>
                     <DatePicker
                       selected={formState.target_date ? new Date(formState.target_date) : null}
-                      onChange={(date: Date | null) => handleFormChange('target_date', date ? date.toISOString().split('T')[0] : '')}
-                      locale={language === 'zh' ? 'zh-CN' : 'en-US'}
+                      onChange={(date: Date | null) => handleFormChange('target_date', date ? 
+                        new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split('T')[0] : 
+                        '')}
                       dateFormat="yyyy-MM-dd"
                       isClearable
                       showYearDropdown
@@ -1290,8 +1291,9 @@ function GoalsPageContent() {
                   <label className="text-sm font-medium">{t('goals.create.targetDate')}</label>
                   <DatePicker
                     selected={editForm.target_date ? new Date(editForm.target_date) : null}
-                    onChange={(date: Date | null) => setEditForm(prev => ({ ...prev, target_date: date ? date.toISOString().split('T')[0] : '' }))}
-                    locale={language === 'zh' ? 'zh-CN' : 'en-US'}
+                    onChange={(date: Date | null) => setEditForm(prev => ({ ...prev, target_date: date ? 
+                      new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split('T')[0] : 
+                      '' }))}
                     dateFormat="yyyy-MM-dd"
                     isClearable
                     showYearDropdown

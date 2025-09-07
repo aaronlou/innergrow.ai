@@ -356,12 +356,13 @@ export default function ExamsPage() {
                         key={language}
                         selected={newExam.exam_time ? new Date(newExam.exam_time + 'T00:00:00') : null}
                         onChange={(date: Date | null) => {
-                          const dateStr = date ? date.toISOString().split('T')[0] : '';
+                          const dateStr = date ? 
+                            new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split('T')[0] : 
+                            '';
                           setNewExam({ ...newExam, exam_time: dateStr });
                           setValidationErrors(v => ({ ...v, exam_time: undefined }));
                         }}
                         dateFormat="yyyy-MM-dd"
-                        locale={language === 'zh' ? 'zh-CN' : 'en-US'}
                         placeholderText={language === 'zh' ? '选择考试日期' : 'Select exam date'}
                         className={`w-full px-3 py-2 text-sm border rounded-md bg-background ${validationErrors.exam_time ? 'border-red-500 focus-visible:outline-red-500' : 'border-input'}`}
                         calendarClassName="bg-background border border-border shadow-lg"
