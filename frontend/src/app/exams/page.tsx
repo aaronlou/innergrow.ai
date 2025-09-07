@@ -6,6 +6,8 @@ import { DashboardLayout, ProtectedRoute } from '@/components/layout';
 import { useI18n } from '@/contexts';
 import examsService from '@/lib/api/exams';
 import { StudyPlanData, Exam } from '@/types';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 export default function ExamsPage() {
   const { t, formatDate, language } = useI18n();
@@ -350,24 +352,25 @@ export default function ExamsPage() {
                   <div>
                     <label className="block text-sm font-medium mb-1">{t('exams.examTime')}</label>
                     <div className="relative">
-                      <Input
+                      <DatePicker
                         key={language}
-                        type="date"
-                        value={newExam.exam_time}
-                        onChange={(e) => { setNewExam({ ...newExam, exam_time: e.target.value }); setValidationErrors(v => ({ ...v, exam_time: undefined })); }}
-                        lang={language === 'zh' ? 'zh-CN' : 'en-US'}
-                        className={validationErrors.exam_time ? 'border-red-500 focus-visible:outline-red-500' : ''}
+                        selected={newExam.exam_time ? new Date(newExam.exam_time + 'T00:00:00') : null}
+                        onChange={(date: Date | null) => {
+                          const dateStr = date ? date.toISOString().split('T')[0] : '';
+                          setNewExam({ ...newExam, exam_time: dateStr });
+                          setValidationErrors(v => ({ ...v, exam_time: undefined }));
+                        }}
+                        dateFormat="yyyy-MM-dd"
+                        locale={language === 'zh' ? 'zh-CN' : 'en-US'}
+                        placeholderText={language === 'zh' ? '选择考试日期' : 'Select exam date'}
+                        className={`w-full px-3 py-2 text-sm border rounded-md bg-background ${validationErrors.exam_time ? 'border-red-500 focus-visible:outline-red-500' : 'border-input'}`}
+                        calendarClassName="bg-background border border-border shadow-lg"
+                        dayClassName={(_date: Date) => "hover:bg-muted text-sm"}
+                        isClearable
+                        showMonthDropdown
+                        showYearDropdown
+                        dropdownMode="select"
                       />
-                      {newExam.exam_time && (
-                        <button
-                          type="button"
-                          onClick={() => setNewExam({ ...newExam, exam_time: '' })}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-sm"
-                          title={t('common.clear') || 'Clear'}
-                        >
-                          ✕
-                        </button>
-                      )}
                     </div>
                     {validationErrors.exam_time && <div className="mt-1 text-[11px] text-red-500">{validationErrors.exam_time}</div>}
                     {newExam.exam_time && (

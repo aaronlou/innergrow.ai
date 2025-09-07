@@ -14,6 +14,8 @@ import { useI18n, useAuth } from '@/contexts';
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { goalsService, Goal, AISuggestion, GoalCategory, GoalStatus, GoalStatistics } from '@/lib/api/goals';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 // Update the Goal interface to match the API response
 type LocalGoal = Goal; // Alias keeps room for future UI-only additions via intersection
@@ -1147,13 +1149,22 @@ function GoalsPageContent() {
                       <option value="private">{t('goals.visibility.private')}</option>
                     </select>
                   </div>
-                  <Input
-                    label={t('goals.create.targetDate')}
-                    type="date"
-                    value={formState.target_date}
-                    onChange={(e) => handleFormChange('target_date', e.target.value)}
-                    lang={language === 'zh' ? 'zh-CN' : 'en-US'}
-                  />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">{t('goals.create.targetDate')}</label>
+                    <DatePicker
+                      selected={formState.target_date ? new Date(formState.target_date) : null}
+                      onChange={(date: Date | null) => handleFormChange('target_date', date ? date.toISOString().split('T')[0] : '')}
+                      locale={language === 'zh' ? 'zh-CN' : 'en-US'}
+                      dateFormat="yyyy-MM-dd"
+                      isClearable
+                      showYearDropdown
+                      showMonthDropdown
+                      dropdownMode="select"
+                      className="w-full p-2 border border-input rounded-md bg-background text-foreground"
+                      placeholderText={t('goals.create.targetDate')}
+                      dayClassName={(_date: Date) => "hover:bg-primary hover:text-primary-foreground rounded"}
+                    />
+                  </div>
                 </div>
               </div>
             </ModalContent>
@@ -1275,13 +1286,22 @@ function GoalsPageContent() {
                     <option value="private">{t('goals.visibility.private')}</option>
                   </select>
                 </div>
-                <Input
-                  label={t('goals.create.targetDate')}
-                  type="date"
-                  value={editForm.target_date}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, target_date: e.target.value }))}
-                  lang={language === 'zh' ? 'zh-CN' : 'en-US'}
-                />
+                <div>
+                  <label className="text-sm font-medium">{t('goals.create.targetDate')}</label>
+                  <DatePicker
+                    selected={editForm.target_date ? new Date(editForm.target_date) : null}
+                    onChange={(date: Date | null) => setEditForm(prev => ({ ...prev, target_date: date ? date.toISOString().split('T')[0] : '' }))}
+                    locale={language === 'zh' ? 'zh-CN' : 'en-US'}
+                    dateFormat="yyyy-MM-dd"
+                    isClearable
+                    showYearDropdown
+                    showMonthDropdown
+                    dropdownMode="select"
+                    className="w-full mt-1 p-2 border border-input rounded-md bg-background text-foreground"
+                    placeholderText={t('goals.create.targetDate')}
+                    dayClassName={(_date: Date) => "hover:bg-primary hover:text-primary-foreground rounded"}
+                  />
+                </div>
               </div>
             </div>
           </ModalContent>
