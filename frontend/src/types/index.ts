@@ -213,3 +213,31 @@ export interface BookSearchFilter {
   location?: string;
   sortBy?: 'newest' | 'price-low' | 'price-high' | 'condition';
 }
+
+// 考试和学习计划相关类型
+export interface Exam {
+  id: string;
+  title: string;
+  description?: string;
+  category?: string;
+  difficulty?: string;
+  duration?: string;
+  studyTime?: string; // normalized camelCase
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface StudyPlanSection {
+  title: string;
+  content: string;
+  duration?: string;
+}
+
+export interface StudyPlanData {
+  exam_id: string;
+  language: string;
+  model?: string;
+  plan: StudyPlanSection[];
+  summary?: string;
+  total_duration?: string;
+}

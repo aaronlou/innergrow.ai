@@ -280,6 +280,15 @@ export const en = {
   'exams.difficultyBeginner': 'Beginner',
   'exams.difficultyIntermediate': 'Intermediate',
   'exams.difficultyAdvanced': 'Advanced',
+  'exams.generatePlan': 'Generate Study Plan',
+  'exams.generatingPlan': 'Generating...',
+  'exams.planGenerated': 'Study plan generated',
+  'exams.planGenerateFailed': 'Failed to generate study plan',
+  'exams.deleteConfirmTitle': 'Delete Exam',
+  'exams.deleteConfirmMessage': 'Are you sure you want to delete this exam? This action cannot be undone.',
+  'exams.regeneratePlan': 'Regenerate Plan',
+  'exams.regeneratingPlan': 'Regenerating...',
+  'exams.planRegenerated': 'Study plan regenerated',
 
   // Books Market
   'books.title': '📚 Book Market',
