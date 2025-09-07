@@ -110,7 +110,7 @@ run_migrations() {
     
     # 为所有应用创建迁移文件
     log_info "为所有应用创建迁移文件..."
-    python manage.py makemigrations accounts books exams
+    python manage.py makemigrations accounts exams
     
     # 执行迁移
     python manage.py migrate
