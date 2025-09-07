@@ -6,11 +6,9 @@ export interface Exam {
     id: string;
     title: string;
     description?: string;
-    category?: string; // simple string for now
-    difficulty?: string;
-    duration?: string; // human readable
-    study_time?: string; // backend field may be snake_case
-    studyTime?: string; // normalized field for UI
+    category?: string;
+    exam_time?: string;
+    material?: string;
     created_at?: string;
     updated_at?: string;
 }
@@ -55,10 +53,8 @@ export const examsService = {
             title: String(obj.title ?? ''),
             description: (obj.description as string) ?? (obj.desc as string) ?? '',
             category: (obj.category as string) ?? (obj.category_name as string) ?? '',
-            difficulty: (obj.difficulty as string) ?? (obj.level as string) ?? '',
-            duration: (obj.duration as string) ?? '',
-            study_time: (obj.study_time as string) ?? (obj.studyTime as string) ?? (obj.study_time_text as string) ?? '',
-            studyTime: (obj.studyTime as string) ?? (obj.study_time as string) ?? '',
+            exam_time: (obj.exam_time as string) ?? (obj.examTime as string),
+            material: (obj.material as string) ?? undefined,
             created_at: (obj.created_at as string) ?? (obj.createdAt as string),
             updated_at: (obj.updated_at as string) ?? (obj.updatedAt as string),
         };
@@ -75,8 +71,27 @@ export const examsService = {
         return res as ApiResponse<Exam[]>;
     },
 
-    async create(payload: Partial<Exam>): Promise<ApiResponse<Exam>> {
-        const res = await apiRequest<unknown>('/api/exams/', { method: 'POST', body: JSON.stringify(payload) });
+    async create(payload: Partial<Exam> & { file?: File }): Promise<ApiResponse<Exam>> {
+        let body: BodyInit;
+        let headers: Record<string, string> | undefined;
+                if (payload.file) {
+                        const form = new FormData();
+                        if (payload.title) form.append('title', payload.title);
+                        if (payload.description) form.append('description', payload.description);
+                        if (payload.category) form.append('category', payload.category);
+                        if (payload.exam_time) form.append('exam_time', payload.exam_time);
+                        form.append('material', payload.file);
+                        body = form;
+                } else {
+                        const json: Record<string, unknown> = {};
+                        ['title','description','category','exam_time'].forEach(k => {
+                            const v = (payload as Record<string, unknown>)[k];
+                            if (v !== undefined && v !== null && v !== '') json[k] = v;
+                        });
+                        body = JSON.stringify(json);
+                        headers = { 'Content-Type': 'application/json' };
+                }
+        const res = await apiRequest<unknown>('/api/exams/', { method: 'POST', body, headers });
         if (res.success) return { success: true, data: this._normalizeExam(res.data) };
         return res as ApiResponse<Exam>;
     },
@@ -87,8 +102,27 @@ export const examsService = {
         return res as ApiResponse<Exam>;
     },
 
-    async update(id: string, payload: Partial<Exam>): Promise<ApiResponse<Exam>> {
-        const res = await apiRequest<unknown>(`/api/exams/${id}/`, { method: 'PUT', body: JSON.stringify(payload) });
+        async update(id: string, payload: Partial<Exam> & { file?: File }): Promise<ApiResponse<Exam>> {
+                let body: BodyInit;
+                let headers: Record<string, string> | undefined;
+                if (payload.file) {
+                    const form = new FormData();
+                    ['title','description','category','exam_time'].forEach(k => {
+                        const v = (payload as Record<string, unknown>)[k];
+                        if (v !== undefined && v !== null && v !== '') form.append(k, String(v));
+                    });
+                    form.append('material', payload.file);
+                    body = form;
+                } else {
+                    const json: Record<string, unknown> = {};
+                    ['title','description','category','exam_time'].forEach(k => {
+                        const v = (payload as Record<string, unknown>)[k];
+                        if (v !== undefined && v !== null && v !== '') json[k] = v;
+                    });
+                    body = JSON.stringify(json);
+                    headers = { 'Content-Type': 'application/json' };
+                }
+                const res = await apiRequest<unknown>(`/api/exams/${id}/`, { method: 'PUT', body, headers });
         if (res.success) return { success: true, data: this._normalizeExam(res.data) };
         return res as ApiResponse<Exam>;
     },

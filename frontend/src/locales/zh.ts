@@ -268,6 +268,8 @@ export const zh = {
   'exams.examDescription': '描述',
   'exams.examDescriptionPlaceholder': '请输入考试描述',
   'exams.examCategory': '类别',
+  'exams.examTime': '考试时间',
+  'exams.examMaterial': '考试资料',
   'exams.examDifficulty': '难度',
   'exams.examDuration': '时长',
   'exams.examDurationPlaceholder': '例如：2小时30分钟',

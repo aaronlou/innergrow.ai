@@ -22,7 +22,7 @@ class ExamSuggestionService:
         Based on the following exam information, create a study plan.
         
         Exam: {exam.title}
-        Subject: {exam.subject}
+        Category: {exam.category}
         Description: {exam.description}
         
         Please provide a study plan in the following format:

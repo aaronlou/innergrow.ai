@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Button, Badge, Input } from '@/components/ui';
+import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/components/ui';
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
 import { useI18n } from '@/contexts';
 import examsService from '@/lib/api/exams';
@@ -21,10 +21,9 @@ export default function ExamsPage() {
   const [newExam, setNewExam] = useState({
     title: '',
     category: 'Language',
-    difficulty: 'Beginner',
     description: '',
-    duration: '',
-    studyTime: ''
+    exam_time: '',
+    materialFile: null as File | null,
   });
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Exam | null>(null);
@@ -66,10 +65,9 @@ export default function ExamsPage() {
       title: newExam.title,
       description: newExam.description,
       category: newExam.category,
-      difficulty: newExam.difficulty,
-      duration: newExam.duration,
-      study_time: newExam.studyTime,
-    } as Partial<Exam & { study_time?: string }>;
+      exam_time: newExam.exam_time ? new Date(newExam.exam_time).toISOString() : undefined,
+      file: newExam.materialFile || undefined,
+    } as Partial<Exam> & { file?: File };
     const res = await examsService.create(payload);
     if (res.success && res.data) {
       const created = res.data as Exam; // narrow
@@ -78,10 +76,9 @@ export default function ExamsPage() {
       setNewExam({
         title: '',
         category: 'Language',
-        difficulty: 'Beginner',
         description: '',
-        duration: '',
-        studyTime: ''
+        exam_time: '',
+        materialFile: null,
       });
       setShowCreateModal(false);
     } else {
@@ -97,10 +94,9 @@ export default function ExamsPage() {
       title: newExam.title,
       description: newExam.description,
       category: newExam.category,
-      difficulty: newExam.difficulty,
-      duration: newExam.duration,
-      study_time: newExam.studyTime,
-    } as Partial<Exam & { study_time?: string }>;
+      exam_time: newExam.exam_time ? new Date(newExam.exam_time).toISOString() : undefined,
+      file: newExam.materialFile || undefined,
+    } as Partial<Exam> & { file?: File };
     const res = await examsService.update(editingExam.id, payload);
     if (res.success && res.data) {
       setExams(prev => prev.map(e => e.id === editingExam.id ? res.data! : e));
@@ -147,10 +143,9 @@ export default function ExamsPage() {
     setNewExam({
       title: exam.title,
       category: exam.category || 'Language',
-      difficulty: exam.difficulty || 'Beginner',
       description: exam.description || '',
-      duration: exam.duration || '',
-      studyTime: exam.studyTime || ''
+      exam_time: exam.exam_time ? exam.exam_time.slice(0,16) : '',
+      materialFile: null,
     });
     setShowCreateModal(true);
   };
@@ -258,15 +253,14 @@ export default function ExamsPage() {
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <CardTitle className="text-lg">{exam.title}</CardTitle>
-                        {exam.difficulty && <Badge variant="outline">{exam.difficulty}</Badge>}
+                        {/* difficulty removed */}
                       </div>
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm text-muted-foreground mb-4">{exam.description}</p>
                       <div className="space-y-2 text-xs text-muted-foreground mb-4">
-                        {exam.duration && <div>⏱️ {t('exams.duration')}: {exam.duration}</div>}
-                        {exam.studyTime && <div>📅 {t('exams.studyTime')}: {exam.studyTime}</div>}
                         {exam.category && <div>📚 {t('exams.category')}: {exam.category}</div>}
+                        {exam.exam_time && <div>� {t('exams.examTime') || 'Exam Time'}: {exam.exam_time}</div>}
                       </div>
                       <div className="flex gap-2">
                         <Button size="sm" className="flex-1" onClick={() => handleGeneratePlan(exam.id)} disabled={planGenerating === exam.id}>
@@ -413,50 +407,36 @@ export default function ExamsPage() {
                     onChange={(e) => setNewExam({ ...newExam, description: e.target.value })}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">{t('exams.examCategory')}</label>
-                    <select
-                      className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
-                      value={newExam.category}
-                      onChange={(e) => setNewExam({ ...newExam, category: e.target.value })}
-                    >
-                      <option value="Language">{t('exams.categoryLanguage')}</option>
-                      <option value="Technical">{t('exams.categoryTechnical')}</option>
-                      <option value="Business">{t('exams.categoryBusiness')}</option>
-                      <option value="Health">{t('exams.categoryHealth')}</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">{t('exams.examDifficulty')}</label>
-                    <select
-                      className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
-                      value={newExam.difficulty}
-                      onChange={(e) => setNewExam({ ...newExam, difficulty: e.target.value })}
-                    >
-                      <option value="Beginner">{t('exams.difficultyBeginner')}</option>
-                      <option value="Intermediate">{t('exams.difficultyIntermediate')}</option>
-                      <option value="Advanced">{t('exams.difficultyAdvanced')}</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t('exams.examCategory')}</label>
+                  <select
+                    className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
+                    value={newExam.category}
+                    onChange={(e) => setNewExam({ ...newExam, category: e.target.value })}
+                  >
+                    <option value="Language">{t('exams.categoryLanguage')}</option>
+                    <option value="Technical">{t('exams.categoryTechnical')}</option>
+                    <option value="Business">{t('exams.categoryBusiness')}</option>
+                    <option value="Health">{t('exams.categoryHealth')}</option>
+                  </select>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                {/* Removed difficulty, duration, studyTime inputs */}
+                <div className="grid grid-cols-2 gap-4 mt-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">{t('exams.examDuration')}</label>
-                    <Input
-                      type="text"
-                      placeholder={t('exams.examDurationPlaceholder')}
-                      value={newExam.duration}
-                      onChange={(e) => setNewExam({ ...newExam, duration: e.target.value })}
+                    <label className="block text-sm font-medium mb-1">{t('exams.examTime') || 'Exam Time'}</label>
+                    <input
+                      type="datetime-local"
+                      className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
+                      value={newExam.exam_time}
+                      onChange={(e) => setNewExam({ ...newExam, exam_time: e.target.value })}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">{t('exams.examStudyTime')}</label>
-                    <Input
-                      type="text"
-                      placeholder={t('exams.examStudyTimePlaceholder')}
-                      value={newExam.studyTime}
-                      onChange={(e) => setNewExam({ ...newExam, studyTime: e.target.value })}
+                    <label className="block text-sm font-medium mb-1">{t('exams.examMaterial') || 'Material (optional)'}</label>
+                    <input
+                      type="file"
+                      className="w-full text-sm"
+                      onChange={(e) => setNewExam({ ...newExam, materialFile: e.target.files?.[0] || null })}
                     />
                   </div>
                 </div>

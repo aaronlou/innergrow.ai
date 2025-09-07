@@ -289,6 +289,8 @@ export const en = {
   'exams.regeneratePlan': 'Regenerate Plan',
   'exams.regeneratingPlan': 'Regenerating...',
   'exams.planRegenerated': 'Study plan regenerated',
+  'exams.examTime': 'Exam Time',
+  'exams.examMaterial': 'Material (optional)',
 
   // Books Market
   'books.title': '📚 Book Market',

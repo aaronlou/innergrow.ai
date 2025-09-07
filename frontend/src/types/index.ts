@@ -220,9 +220,8 @@ export interface Exam {
   title: string;
   description?: string;
   category?: string;
-  difficulty?: string;
-  duration?: string;
-  studyTime?: string; // normalized camelCase
+  exam_time?: string; // ISO timestamp
+  material?: string; // file URL
   created_at?: string;
   updated_at?: string;
 }
