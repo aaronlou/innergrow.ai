@@ -59,16 +59,28 @@ ALLOWED_HOSTS = [
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='CHANGE-THIS-IN-PRODUCTION')
 
 # 数据库配置（仅使用PostgreSQL）
-if config('DATABASE_URL', default='') and dj_database_url is not None:
+import logging
+logger = logging.getLogger('django')
+
+database_url = config('DATABASE_URL', default='')
+logger.info(f"DATABASE_URL 读取结果: {'已设置' if database_url else '未设置'}")
+if database_url:
+    logger.info(f"DATABASE_URL 前缀: {database_url[:20]}...")  # 只显示前20个字符保护敏感信息
+
+if database_url and dj_database_url is not None:
+    logger.info("使用 DATABASE_URL 配置数据库")
     DATABASES = {
-        'default': dj_database_url.parse(config('DATABASE_URL'))
+        'default': dj_database_url.parse(database_url)
     }
     # PostgreSQL专用配置
     DATABASES['default']['OPTIONS'] = {
         'connect_timeout': 60,
         # 注意：事务隔离级别通过PostgreSQL默认配置即可，无需显式设置
     }
+    logger.info(f"数据库配置 - 主机: {DATABASES['default'].get('HOST', 'N/A')}")
+    logger.info(f"数据库配置 - 数据库名: {DATABASES['default'].get('NAME', 'N/A')}")
 else:
+    logger.info("未读取到DATABASE_URL，使用默认PostgreSQL配置")
     # 默认PostgreSQL配置
     DATABASES = {
         'default': {
@@ -83,6 +95,8 @@ else:
             },
         }
     }
+    logger.info(f"默认配置 - 主机: {DATABASES['default']['HOST']}")
+    logger.info(f"默认配置 - 数据库名: {DATABASES['default']['NAME']}")
 
 # 静态文件设置
 # 确保使用绝对路径

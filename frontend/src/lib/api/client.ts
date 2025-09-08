@@ -81,9 +81,9 @@ export const apiRequest = async <T = unknown>(endpoint: string, options: ApiRequ
     headers,
     retry = 1,
     retryDelayMs = 300,
-  retryBackoff = 2,
+    retryBackoff = 2,
     retryOn = ['network', 'timeout', 500, 502, 503, 504],
-  retryJitter = 'full',
+    retryJitter = 'full',
     throttleKey,
     throttleDedupWindowMs = 0,
     silent,
@@ -109,50 +109,50 @@ export const apiRequest = async <T = unknown>(endpoint: string, options: ApiRequ
 
   if (shouldDebug()) {
     // Minimal debug to avoid leaking full token
-      console.log('[apiRequest]', {
+    console.log('[apiRequest]', {
       endpoint: url.toString(),
       method: rest.method || 'GET',
       hasToken: !!token,
       tokenLen: token?.length,
       timeoutMs,
-        requestId,
+      requestId,
     });
   }
 
   const attemptFetch = async (attempt: number): Promise<ApiResponse<T>> => {
     if (shouldDebug()) {
-  console.log('[apiRequest attempt]', { endpoint: url.toString(), attempt, requestId });
+      console.log('[apiRequest attempt]', { endpoint: url.toString(), attempt, requestId });
     }
     try {
       const response = await fetch(url.toString(), { ...rest, headers: mergedHeaders, signal });
-    if (rawResponse) {
-      // Caller handles response directly
-      return { success: response.ok, data: response as unknown as T, error: response.ok ? undefined : `${response.status}` } as ApiResponse<T>;
-    }
-
-    const payload = await parsePayload(response);
-
-    if (!response.ok) {
-      const errorMsg = (payload && (payload.error || payload.detail || payload.message)) || `${response.status} ${response.statusText}`;
-      
-      // Add more detailed logging for debugging
-      if (shouldDebug()) {
-        console.log('[apiRequest error]', {
-          url: url.toString(),
-          status: response.status,
-          statusText: response.statusText,
-          payload,
-          errorMsg,
-          requestId
-        });
+      if (rawResponse) {
+        // Caller handles response directly
+        return { success: response.ok, data: response as unknown as T, error: response.ok ? undefined : `${response.status}` } as ApiResponse<T>;
       }
-      
-      if (response.status === 401 && typeof window !== 'undefined') {
-        try {
-          localStorage.removeItem('auth_token');
-          window.dispatchEvent(new CustomEvent('app:unauthorized'));
-        } catch { /* ignore */ }
-      }
+
+      const payload = await parsePayload(response);
+
+      if (!response.ok) {
+        const errorMsg = (payload && (payload.error || payload.detail || payload.message)) || `${response.status} ${response.statusText}`;
+
+        // Add more detailed logging for debugging
+        if (shouldDebug()) {
+          console.log('[apiRequest error]', {
+            url: url.toString(),
+            status: response.status,
+            statusText: response.statusText,
+            payload,
+            errorMsg,
+            requestId
+          });
+        }
+
+        if (response.status === 401 && typeof window !== 'undefined') {
+          try {
+            localStorage.removeItem('auth_token');
+            window.dispatchEvent(new CustomEvent('app:unauthorized'));
+          } catch { /* ignore */ }
+        }
         const result = { success: false, error: String(errorMsg) } as ApiResponse<T>;
         // decide retry
         if (attempt < retry && retryOn.some(r => r === response.status)) {
@@ -168,30 +168,30 @@ export const apiRequest = async <T = unknown>(endpoint: string, options: ApiRequ
         }
         if (!silent) emitApiError({ endpoint: url.toString(), method: rest.method || 'GET', error: String(errorMsg), status: response.status });
         return result;
-    }
+      }
 
-    if (payload && typeof payload === 'object' && 'success' in payload) {
+      if (payload && typeof payload === 'object' && 'success' in payload) {
+        if (shouldDebug()) {
+          console.log('[apiRequest success with success field]', {
+            url: url.toString(),
+            payload,
+            requestId
+          });
+        }
+        return payload as ApiResponse<T>;
+      }
+
       if (shouldDebug()) {
-        console.log('[apiRequest success with success field]', {
+        console.log('[apiRequest success raw payload]', {
           url: url.toString(),
+          payloadType: typeof payload,
+          isArray: Array.isArray(payload),
           payload,
           requestId
         });
       }
-      return payload as ApiResponse<T>;
-    }
 
-    if (shouldDebug()) {
-      console.log('[apiRequest success raw payload]', {
-        url: url.toString(),
-        payloadType: typeof payload,
-        isArray: Array.isArray(payload),
-        payload,
-        requestId
-      });
-    }
-
-    return { success: true, data: payload as T } as ApiResponse<T>;
+      return { success: true, data: payload as T } as ApiResponse<T>;
     } catch (err: unknown) {
       let isTimeout = false;
       let message = 'Network error';
@@ -225,10 +225,10 @@ export const apiRequest = async <T = unknown>(endpoint: string, options: ApiRequ
   let finalPromise: Promise<ApiResponse<T>> = exec.finally(() => cleanup());
 
   if (throttleKey) {
-  const existing = inflight.get(throttleKey);
+    const existing = inflight.get(throttleKey);
     const now = Date.now();
     if (existing && (throttleDedupWindowMs <= 0 || now - existing.ts < throttleDedupWindowMs)) {
-  return existing.promise as Promise<ApiResponse<T>>;
+      return existing.promise as Promise<ApiResponse<T>>;
     }
     inflight.set(throttleKey, { promise: finalPromise, ts: now });
     // Clean up after settle
