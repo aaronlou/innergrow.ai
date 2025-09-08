@@ -90,13 +90,13 @@ urlpatterns = [
     # Django Admin (生产环境重要：确保此路径有效)
     path('admin/', admin.site.urls),
     
-    # API根端点
-    path('api/', api_root, name='api_root'),
-    
-    # API路由
+    # API路由 (必须在api_root之前)
     path('api/accounts/', include('accounts.urls')),
     path('api/exams/', include('exams.urls')),
     path('api/goals/', include('goals.urls')),
+    
+    # API根端点 (放在最后，避免捕获其他API路由)
+    path('api/', api_root, name='api_root'),
 ]
 
 # 开发环境下的媒体文件服务
