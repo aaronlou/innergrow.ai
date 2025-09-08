@@ -208,24 +208,53 @@ export default function ExamsPage() {
     try {
       const res = await discussionsService.getRoom(examId);
       if (res.success && res.data) {
-        setCurrentRoom(res.data);
-        setDiscussionRooms(prev => ({ ...prev, [examId]: res.data! }));
-        setActiveTab('discussions');
-        await loadRoomPosts(res.data.id);
-        
-        // Update exam discussion room membership status
-        setExams(prev => prev.map(exam => 
-          exam.id === examId 
-            ? { 
-                ...exam, 
-                is_discussion_member: res.data!.is_member,
-                discussion_members_count: res.data!.members_count,
-                discussion_posts_count: res.data!.posts_count
-              }
-            : exam
-        ));
+        // 如果用户还不是成员，需要加入讨论室
+        if (!res.data.is_member) {
+          console.log('User is not a member, joining room...');
+          const joinRes = await discussionsService.joinRoom(examId);
+          if (joinRes.success && joinRes.data) {
+            setCurrentRoom(joinRes.data);
+            setDiscussionRooms(prev => ({ ...prev, [examId]: joinRes.data! }));
+            setActiveTab('discussions');
+            await loadRoomPosts(joinRes.data.id);
+            
+            // Update exam discussion room membership status
+            setExams(prev => prev.map(exam => 
+              exam.id === examId 
+                ? { 
+                    ...exam, 
+                    is_discussion_member: joinRes.data!.is_member,
+                    discussion_members_count: joinRes.data!.members_count,
+                    discussion_posts_count: joinRes.data!.posts_count
+                  }
+                : exam
+            ));
+          } else {
+            showToast('error', joinRes.error || t('common.error'));
+          }
+        } else {
+          // 用户已经是成员，直接进入讨论室
+          console.log('User is already a member, entering room...');
+          setCurrentRoom(res.data);
+          setDiscussionRooms(prev => ({ ...prev, [examId]: res.data! }));
+          setActiveTab('discussions');
+          await loadRoomPosts(res.data.id);
+          
+          // Update exam discussion room membership status
+          setExams(prev => prev.map(exam => 
+            exam.id === examId 
+              ? { 
+                  ...exam, 
+                  is_discussion_member: res.data!.is_member,
+                  discussion_members_count: res.data!.members_count,
+                  discussion_posts_count: res.data!.posts_count
+                }
+              : exam
+          ));
+        }
       } else {
-        // Room doesn't exist, might need to create or join first
+        // Room doesn't exist, create and join
+        console.log('Room does not exist, creating and joining...');
         const joinRes = await discussionsService.joinRoom(examId);
         if (joinRes.success && joinRes.data) {
           setCurrentRoom(joinRes.data);
@@ -244,10 +273,13 @@ export default function ExamsPage() {
                 }
               : exam
           ));
+        } else {
+          showToast('error', joinRes.error || t('common.error'));
         }
       }
       showToast('success', t('discussions.joinedRoom'));
     } catch (error) {
+      console.error('Error joining discussion:', error);
       showToast('error', t('common.error'));
     }
     setPlanGenerating(null);
