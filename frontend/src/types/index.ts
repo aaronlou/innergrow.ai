@@ -214,7 +214,7 @@ export interface BookSearchFilter {
   sortBy?: 'newest' | 'price-low' | 'price-high' | 'condition';
 }
 
-// 考试和学习计划相关类型
+// 考试和讨论室相关类型
 export interface Exam {
   id: string;
   title: string;
@@ -229,19 +229,78 @@ export interface Exam {
   participants?: string[]; // participant user ids/names (depending on backend shape)
   participants_count?: number; // count shortcut if backend returns it
   is_participant?: boolean; // convenience flag from backend (if provided)
+  discussion_room?: DiscussionRoom; // associated discussion room
 }
 
-export interface StudyPlanSection {
+// 讨论室系统 - 替代 StudyPlan
+export interface DiscussionRoom {
+  id: string;
+  exam_id: string;
+  title: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+  posts_count: number;
+  members_count: number;
+  is_member: boolean;
+}
+
+export interface Post {
+  id: string;
+  room_id: string;
+  author_id: string;
+  author_name: string;
+  author_avatar?: string;
   title: string;
   content: string;
-  duration?: string;
+  post_type: PostType;
+  tags: string[];
+  upvotes: number;
+  downvotes: number;
+  user_vote?: 'up' | 'down' | null;
+  comments_count: number;
+  created_at: string;
+  updated_at: string;
+  is_pinned?: boolean;
+  attachments?: PostAttachment[];
 }
 
-export interface StudyPlanData {
-  exam_id: string;
-  language: string;
-  model?: string;
-  plan: StudyPlanSection[];
-  summary?: string;
-  total_duration?: string;
+export type PostType = 'question' | 'resource' | 'experience' | 'note' | 'discussion';
+
+export interface PostAttachment {
+  id: string;
+  type: 'image' | 'file' | 'link';
+  url: string;
+  name: string;
+  size?: number;
+}
+
+export interface Comment {
+  id: string;
+  post_id: string;
+  author_id: string;
+  author_name: string;
+  author_avatar?: string;
+  content: string;
+  upvotes: number;
+  downvotes: number;
+  user_vote?: 'up' | 'down' | null;
+  parent_id?: string; // for nested comments
+  replies?: Comment[];
+  created_at: string;
+  updated_at: string;
+  is_deleted?: boolean;
+}
+
+export interface CreatePostData {
+  title: string;
+  content: string;
+  post_type: PostType;
+  tags?: string[];
+  attachments?: File[];
+}
+
+export interface CreateCommentData {
+  content: string;
+  parent_id?: string;
 }

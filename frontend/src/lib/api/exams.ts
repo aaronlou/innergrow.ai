@@ -13,21 +13,6 @@ export interface Exam {
     updated_at?: string;
 }
 
-export interface StudyPlanSection {
-    title: string;
-    content: string;
-    duration?: string;
-}
-
-export interface StudyPlanData {
-    exam_id: string;
-    language: string;
-    model?: string;
-    plan: StudyPlanSection[];
-    summary?: string;
-    total_duration?: string;
-}
-
 interface RawExam {
     id?: unknown;
     title?: unknown;
@@ -186,108 +171,6 @@ export const examsService = {
     async delete(id: string): Promise<ApiResponse<null>> {
         const res = await apiRequest<null>(`/api/exams/${id}/`, { method: 'DELETE' });
         return res as ApiResponse<null>;
-    },
-
-    async generateStudyPlan(examId: string, opts?: { language?: string; model?: string; timeoutMs?: number }): Promise<ApiResponse<StudyPlanData>> {
-        const getCurrentLanguage = (): string => {
-            if (typeof window !== 'undefined') return localStorage.getItem('language') || 'en';
-            return 'en';
-        };
-        const body = {
-            language: opts?.language ?? getCurrentLanguage(),
-            ...(opts?.model ? { model: opts.model } : {}),
-        };
-        const res = await apiRequest<unknown>(`/api/exams/${examId}/study-plan/`, { method: 'POST', body: JSON.stringify(body), timeoutMs: opts?.timeoutMs });
-        if (res.success) {
-            const raw = (res as ApiResponse<unknown>).data;
-            console.log('[examsService.generateStudyPlan] Raw API response data:', raw);
-            if (raw && typeof raw === 'object') {
-                const obj = raw as Record<string, unknown>;
-                const arr = Array.isArray(obj.plan) ? obj.plan : [];
-                const planSections = arr.filter(section => section && typeof section === 'object').map(section => {
-                    const s = section as Record<string, unknown>;
-                    return {
-                        title: String(s.title ?? ''),
-                        content: String(s.content ?? ''),
-                        duration: s.duration ? String(s.duration) : undefined,
-                    };
-                });
-                const planData: StudyPlanData = {
-                    exam_id: String(obj.exam_id ?? examId),
-                    language: String(obj.language ?? body.language),
-                    model: obj.model ? String(obj.model) : undefined,
-                    plan: planSections,
-                    summary: obj.summary ? String(obj.summary) : (obj.overview ? String(obj.overview) : undefined),
-                    total_duration: obj.total_duration ? String(obj.total_duration) : (obj.totalDuration ? String(obj.totalDuration) : undefined),
-                };
-                return { success: true, data: planData };
-            }
-            return { success: true, data: { exam_id: examId, language: body.language, plan: [] } };
-        }
-        return res as ApiResponse<StudyPlanData>;
-    },
-
-    // Get saved study plan for an exam
-    async getStudyPlan(examId: string): Promise<ApiResponse<StudyPlanData>> {
-        const res = await apiRequest<unknown>(`/api/exams/${examId}/study-plan/`, { method: 'GET' });
-        if (res.success) {
-            const raw = (res as ApiResponse<unknown>).data;
-            if (raw && typeof raw === 'object') {
-                const obj = raw as Record<string, unknown>;
-                const arr = Array.isArray(obj.plan) ? obj.plan : [];
-                const planSections = arr.filter(section => section && typeof section === 'object').map(section => {
-                    const s = section as Record<string, unknown>;
-                    return {
-                        title: String(s.title ?? ''),
-                        content: String(s.content ?? ''),
-                        duration: s.duration ? String(s.duration) : undefined,
-                    };
-                });
-                const planData: StudyPlanData = {
-                    exam_id: String(obj.exam_id ?? examId),
-                    language: String(obj.language ?? 'en'),
-                    model: obj.model ? String(obj.model) : undefined,
-                    plan: planSections,
-                    summary: obj.summary ? String(obj.summary) : (obj.overview ? String(obj.overview) : undefined),
-                    total_duration: obj.total_duration ? String(obj.total_duration) : (obj.totalDuration ? String(obj.totalDuration) : undefined),
-                };
-                return { success: true, data: planData };
-            }
-        }
-        return res as ApiResponse<StudyPlanData>;
-    },
-
-    // Get all user's study plans
-    async getUserStudyPlans(): Promise<ApiResponse<StudyPlanData[]>> {
-        const res = await apiRequest<unknown>('/api/study-plans/', { method: 'GET' });
-        if (res.success) {
-            const normalizedList = this._normalizeList<unknown>(res.data);
-            const plans = normalizedList.map(item => {
-                if (item && typeof item === 'object') {
-                    const obj = item as Record<string, unknown>;
-                    const arr = Array.isArray(obj.plan) ? obj.plan : [];
-                    const planSections = arr.filter(section => section && typeof section === 'object').map(section => {
-                        const s = section as Record<string, unknown>;
-                        return {
-                            title: String(s.title ?? ''),
-                            content: String(s.content ?? ''),
-                            duration: s.duration ? String(s.duration) : undefined,
-                        };
-                    });
-                    return {
-                        exam_id: String(obj.exam_id ?? ''),
-                        language: String(obj.language ?? 'en'),
-                        model: obj.model ? String(obj.model) : undefined,
-                        plan: planSections,
-                        summary: obj.summary ? String(obj.summary) : undefined,
-                        total_duration: obj.total_duration ? String(obj.total_duration) : undefined,
-                    } as StudyPlanData;
-                }
-                return { exam_id: '', language: 'en', plan: [] } as StudyPlanData;
-            });
-            return { success: true, data: plans };
-        }
-        return res as ApiResponse<StudyPlanData[]>;
     },
 
     async joinExam(id: string): Promise<ApiResponse<import('@/types').Exam>> {
