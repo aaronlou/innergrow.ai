@@ -82,11 +82,11 @@ export default function ExamsPage() {
   }, []);
 
   // Fetch saved discussion rooms
-  const fetchDiscussionRooms = useCallback(async () => {
+  const fetchDiscussionRooms = useCallback(async (examsList: Exam[]) => {
     try {
       const roomsMap: Record<string, DiscussionRoom> = {};
       // For each exam, try to get its discussion room
-      for (const exam of exams) {
+      for (const exam of examsList) {
         const res = await discussionsService.getRoom(exam.id);
         if (res.success && res.data) {
           roomsMap[exam.id] = res.data;
@@ -112,7 +112,7 @@ export default function ExamsPage() {
     } catch (err) {
       console.log('Failed to load discussion rooms:', err);
     }
-  }, [exams]);
+  }, []);
 
   useEffect(() => {
     fetchExams();
@@ -120,9 +120,9 @@ export default function ExamsPage() {
 
   useEffect(() => {
     if (exams.length > 0) {
-      fetchDiscussionRooms();
+      fetchDiscussionRooms(exams);
     }
-  }, [exams, fetchDiscussionRooms]);
+  }, [exams.length, fetchDiscussionRooms]);
 
   const filteredExams = exams.filter(exam => exam.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
