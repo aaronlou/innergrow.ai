@@ -7,6 +7,7 @@ import { PostCard, CreatePostForm } from '@/components/features';
 import { useI18n, useAuth } from '@/contexts';
 import examsService from '@/lib/api/exams';
 import discussionsService from '@/lib/api/discussions';
+import waitlistService from '@/lib/api/waitlist';
 import { DiscussionRoom, Post, CreatePostData, Exam, PostType } from '@/types';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -134,9 +135,26 @@ export default function ExamsPage() {
     } catch (err) {
       console.log('Failed to load discussion rooms:', err);
     }
-  }, [currentRoom]);  useEffect(() => {
+  }, [currentRoom]);
+
+  // Fetch user's waitlist status
+  const fetchWaitlistStatus = useCallback(async () => {
+    try {
+      const res = await waitlistService.getMyWaitlists();
+      if (res.success && res.data) {
+        const joinedFeatures = new Set(res.data.map(entry => entry.feature_name));
+        setWaitlistFeatures(joinedFeatures);
+        console.log('Loaded waitlist status:', joinedFeatures);
+      }
+    } catch (error) {
+      console.log('Failed to load waitlist status:', error);
+    }
+  }, []);
+
+  useEffect(() => {
     fetchExams();
-  }, [fetchExams]);
+    fetchWaitlistStatus();
+  }, [fetchExams, fetchWaitlistStatus]);
 
   useEffect(() => {
     if (exams.length > 0) {
@@ -354,9 +372,38 @@ export default function ExamsPage() {
   // 移除 handleJoinLeave 函数 - 后端已废弃考试参与者概念
   // 现在只有讨论室成员关系，通过 handleJoinDiscussion 处理
 
-  const handleJoinWaitlist = (feature: string) => {
-    setWaitlistFeatures(prev => new Set([...prev, feature]));
-    showToast('success', t('exams.waitlistSuccess'));
+  const handleJoinWaitlist = async (feature: string) => {
+    try {
+      const res = await waitlistService.joinWaitlist(feature);
+      if (res.success && res.data) {
+        setWaitlistFeatures(prev => new Set([...prev, feature]));
+        showToast('success', t('exams.waitlistSuccess'));
+      } else {
+        showToast('error', res.error || t('common.error'));
+      }
+    } catch (error) {
+      console.error('Failed to join waitlist:', error);
+      showToast('error', t('common.error'));
+    }
+  };
+
+  const handleLeaveWaitlist = async (feature: string) => {
+    try {
+      const res = await waitlistService.leaveWaitlist(feature);
+      if (res.success) {
+        setWaitlistFeatures(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(feature);
+          return newSet;
+        });
+        showToast('success', t('exams.waitlistLeft') || 'Left waitlist successfully');
+      } else {
+        showToast('error', res.error || t('common.error'));
+      }
+    } catch (error) {
+      console.error('Failed to leave waitlist:', error);
+      showToast('error', t('common.error'));
+    }
   };
 
   return (
@@ -566,10 +613,9 @@ export default function ExamsPage() {
                     <Button
                       className="w-full"
                       variant={waitlistFeatures.has('mockExams') ? 'secondary' : 'default'}
-                      disabled={waitlistFeatures.has('mockExams')}
-                      onClick={() => handleJoinWaitlist('mockExams')}
+                      onClick={() => waitlistFeatures.has('mockExams') ? handleLeaveWaitlist('mockExams') : handleJoinWaitlist('mockExams')}
                     >
-                      {waitlistFeatures.has('mockExams') ? '✓ ' + t('exams.joinWaitlist') : t('exams.joinWaitlist')}
+                      {waitlistFeatures.has('mockExams') ? '✓ ' + (t('exams.waitlistJoined') || 'Joined Waitlist') : t('exams.joinWaitlist')}
                     </Button>
                   </CardContent>
                 </Card>
@@ -583,10 +629,9 @@ export default function ExamsPage() {
                     <Button
                       className="w-full"
                       variant={waitlistFeatures.has('flashcards') ? 'secondary' : 'default'}
-                      disabled={waitlistFeatures.has('flashcards')}
-                      onClick={() => handleJoinWaitlist('flashcards')}
+                      onClick={() => waitlistFeatures.has('flashcards') ? handleLeaveWaitlist('flashcards') : handleJoinWaitlist('flashcards')}
                     >
-                      {waitlistFeatures.has('flashcards') ? '✓ ' + t('exams.joinWaitlist') : t('exams.joinWaitlist')}
+                      {waitlistFeatures.has('flashcards') ? '✓ ' + (t('exams.waitlistJoined') || 'Joined Waitlist') : t('exams.joinWaitlist')}
                     </Button>
                   </CardContent>
                 </Card>
@@ -600,10 +645,9 @@ export default function ExamsPage() {
                     <Button
                       className="w-full"
                       variant={waitlistFeatures.has('quickQuizzes') ? 'secondary' : 'default'}
-                      disabled={waitlistFeatures.has('quickQuizzes')}
-                      onClick={() => handleJoinWaitlist('quickQuizzes')}
+                      onClick={() => waitlistFeatures.has('quickQuizzes') ? handleLeaveWaitlist('quickQuizzes') : handleJoinWaitlist('quickQuizzes')}
                     >
-                      {waitlistFeatures.has('quickQuizzes') ? '✓ ' + t('exams.joinWaitlist') : t('exams.joinWaitlist')}
+                      {waitlistFeatures.has('quickQuizzes') ? '✓ ' + (t('exams.waitlistJoined') || 'Joined Waitlist') : t('exams.joinWaitlist')}
                     </Button>
                   </CardContent>
                 </Card>

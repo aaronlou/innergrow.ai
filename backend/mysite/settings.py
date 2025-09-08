@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'goals',
     'exams',
     'discussions',  # Add discussions app
+    'waitlist',  # Add waitlist app
     'ai_services',  # Add this line
 ]
 

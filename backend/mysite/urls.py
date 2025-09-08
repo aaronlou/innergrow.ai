@@ -95,6 +95,7 @@ urlpatterns = [
     path('api/exams/', include('exams.urls')),
     path('api/goals/', include('goals.urls')),
     path('api/discussion-rooms/', include('discussions.urls')),
+    path('api/waitlist/', include('waitlist.urls')),
     
     # API根端点 (放在最后，避免捕获其他API路由)
     path('api/', api_root, name='api_root'),
