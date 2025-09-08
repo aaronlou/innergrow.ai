@@ -145,14 +145,28 @@ export default function ExamsPage() {
       console.log('Waitlist API response:', res);
       if (res.success && res.data) {
         console.log('Waitlist entries:', res.data);
-        const joinedFeatures = new Set(res.data.map(entry => entry.feature_name));
-        setWaitlistFeatures(joinedFeatures);
-        console.log('Loaded waitlist status:', joinedFeatures);
+        
+        // 处理分页响应格式：数据在 res.data.results 中
+        const waitlistEntries = res.data.results;
+        console.log('Extracted waitlist entries:', waitlistEntries);
+        console.log('Type of entries:', typeof waitlistEntries, 'Is array:', Array.isArray(waitlistEntries));
+        
+        // 确保 waitlistEntries 是数组
+        if (Array.isArray(waitlistEntries)) {
+          const joinedFeatures = new Set(waitlistEntries.map(entry => entry.feature_name));
+          setWaitlistFeatures(joinedFeatures);
+          console.log('Loaded waitlist status:', joinedFeatures);
+        } else {
+          console.log('waitlistEntries is not an array:', waitlistEntries);
+          setWaitlistFeatures(new Set());
+        }
       } else {
         console.log('Waitlist API failed:', res.error);
+        setWaitlistFeatures(new Set());
       }
     } catch (error) {
       console.log('Failed to load waitlist status:', error);
+      setWaitlistFeatures(new Set());
     }
   }, []);
 

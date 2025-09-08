@@ -33,6 +33,13 @@ export interface WaitlistStatus {
   total_count: number;
 }
 
+export interface PaginatedWaitlistResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: WaitlistEntry[];
+}
+
 export const waitlistService = {
   /**
    * Get all available waitlist features
@@ -44,8 +51,8 @@ export const waitlistService = {
   /**
    * Get current user's waitlist entries
    */
-  async getMyWaitlists(): Promise<ApiResponse<WaitlistEntry[]>> {
-    return apiRequest<WaitlistEntry[]>('/api/waitlist/my-waitlists/');
+  async getMyWaitlists(): Promise<ApiResponse<PaginatedWaitlistResponse>> {
+    return apiRequest<PaginatedWaitlistResponse>('/api/waitlist/my-waitlists/');
   },
 
   /**
