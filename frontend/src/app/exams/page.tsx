@@ -33,6 +33,7 @@ export default function ExamsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Exam | null>(null);
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [waitlistFeatures, setWaitlistFeatures] = useState<Set<string>>(new Set());
 
   // Toast-like feedback via simple transient state
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -71,7 +72,30 @@ export default function ExamsPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchExams(); }, [fetchExams]);
+  // Fetch saved study plans
+  const fetchStudyPlans = useCallback(async () => {
+    try {
+      const res = await examsService.getUserStudyPlans();
+      if (res.success && res.data) {
+        const plansMap: Record<string, StudyPlanData> = {};
+        res.data.forEach(plan => {
+          if (plan.exam_id) {
+            plansMap[plan.exam_id] = plan;
+          }
+        });
+        setStudyPlans(plansMap);
+        console.log('Loaded saved study plans:', plansMap);
+      }
+    } catch (err) {
+      console.log('Failed to load study plans:', err);
+      // Don't show error toast for this as it's not critical
+    }
+  }, []);
+
+  useEffect(() => { 
+    fetchExams();
+    fetchStudyPlans(); // Load saved study plans on component mount
+  }, [fetchExams, fetchStudyPlans]);
 
   const filteredExams = exams.filter(exam => exam.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -217,6 +241,11 @@ export default function ExamsPage() {
     }
   };
 
+  const handleJoinWaitlist = (feature: string) => {
+    setWaitlistFeatures(prev => new Set([...prev, feature]));
+    showToast('success', t('exams.waitlistSuccess'));
+  };
+
   return (
     <ProtectedRoute>
       <DashboardLayout>
@@ -276,7 +305,7 @@ export default function ExamsPage() {
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Button size="sm" className="flex-1" onClick={() => handleGeneratePlan(exam.id)} disabled={planGenerating === exam.id}>{planGenerating === exam.id ? t('common.loading') : t('exams.startPreparation')}</Button>
-                        <Button size="sm" variant="outline" className="flex-1">{t('exams.viewRequirements')}</Button>
+                        {/* <Button size="sm" variant="outline" className="flex-1">{t('exams.viewRequirements')}</Button> */}
                         {/* Only show edit/delete buttons for exam owner */}
                         {user && exam.user_id === user.id && (
                           <>
@@ -343,17 +372,56 @@ export default function ExamsPage() {
             <div className="space-y-6">
               <h3 className="text-lg font-semibold mb-4">{t('exams.practiceTools')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                <Card className="hover:shadow-md transition-shadow cursor-pointer relative">
+                  <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">
+                    {t('exams.inDevelopment')}
+                  </div>
                   <CardHeader><CardTitle className="flex items-center gap-2"><span className="text-2xl">📝</span>{t('exams.mockExams')}</CardTitle></CardHeader>
-                  <CardContent><p className="text-sm text-muted-foreground mb-4">{t('exams.mockExamsDesc')}</p><Button className="w-full">{t('exams.startMockExam')}</Button></CardContent>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">{t('exams.mockExamsDesc')}</p>
+                    <Button 
+                      className="w-full" 
+                      variant={waitlistFeatures.has('mockExams') ? 'secondary' : 'default'}
+                      disabled={waitlistFeatures.has('mockExams')}
+                      onClick={() => handleJoinWaitlist('mockExams')}
+                    >
+                      {waitlistFeatures.has('mockExams') ? '✓ ' + t('exams.joinWaitlist') : t('exams.joinWaitlist')}
+                    </Button>
+                  </CardContent>
                 </Card>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                <Card className="hover:shadow-md transition-shadow cursor-pointer relative">
+                  <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">
+                    {t('exams.inDevelopment')}
+                  </div>
                   <CardHeader><CardTitle className="flex items-center gap-2"><span className="text-2xl">🃏</span>{t('exams.flashcards')}</CardTitle></CardHeader>
-                  <CardContent><p className="text-sm text-muted-foreground mb-4">{t('exams.flashcardsDesc')}</p><Button className="w-full">{t('exams.studyFlashcards')}</Button></CardContent>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">{t('exams.flashcardsDesc')}</p>
+                    <Button 
+                      className="w-full" 
+                      variant={waitlistFeatures.has('flashcards') ? 'secondary' : 'default'}
+                      disabled={waitlistFeatures.has('flashcards')}
+                      onClick={() => handleJoinWaitlist('flashcards')}
+                    >
+                      {waitlistFeatures.has('flashcards') ? '✓ ' + t('exams.joinWaitlist') : t('exams.joinWaitlist')}
+                    </Button>
+                  </CardContent>
                 </Card>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                <Card className="hover:shadow-md transition-shadow cursor-pointer relative">
+                  <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">
+                    {t('exams.inDevelopment')}
+                  </div>
                   <CardHeader><CardTitle className="flex items-center gap-2"><span className="text-2xl">⚡</span>{t('exams.quickQuizzes')}</CardTitle></CardHeader>
-                  <CardContent><p className="text-sm text-muted-foreground mb-4">{t('exams.quickQuizzesDesc')}</p><Button className="w-full">{t('exams.takeQuiz')}</Button></CardContent>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">{t('exams.quickQuizzesDesc')}</p>
+                    <Button 
+                      className="w-full" 
+                      variant={waitlistFeatures.has('quickQuizzes') ? 'secondary' : 'default'}
+                      disabled={waitlistFeatures.has('quickQuizzes')}
+                      onClick={() => handleJoinWaitlist('quickQuizzes')}
+                    >
+                      {waitlistFeatures.has('quickQuizzes') ? '✓ ' + t('exams.joinWaitlist') : t('exams.joinWaitlist')}
+                    </Button>
+                  </CardContent>
                 </Card>
               </div>
             </div>
