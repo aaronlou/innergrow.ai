@@ -151,6 +151,23 @@ def logout_view(request):
 
 
 @api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def verify_token_view(request):
+    """
+    验证token有效性API
+    """
+    user_serializer = UserSerializer(request.user)
+    return Response({
+        'success': True,
+        'data': {
+            'user': user_serializer.data,
+            'token_valid': True
+        },
+        'message': 'Token有效'
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
 def user_profile_view(request):
     """
     获取当前用户信息API

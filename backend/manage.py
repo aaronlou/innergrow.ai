@@ -6,7 +6,15 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
+    # 根据环境自动选择配置
+    env = os.environ.get('DJANGO_ENV', 'production')  # 默认生产环境
+    if env == 'development':
+        settings_module = 'mysite.settings'
+    else:
+        settings_module = 'mysite.production_settings'
+    
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', settings_module)
+    print(f"使用配置模块: {settings_module}")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
