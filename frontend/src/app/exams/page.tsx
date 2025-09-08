@@ -87,7 +87,7 @@ export default function ExamsPage() {
     try {
       const roomsMap: Record<string, DiscussionRoom> = {};
       let memberRoom: DiscussionRoom | null = null;
-      
+
       // For each exam, try to get its discussion room
       for (const exam of examsList) {
         const res = await discussionsService.getRoom(exam.id);
@@ -100,7 +100,7 @@ export default function ExamsPage() {
         }
       }
       setDiscussionRooms(roomsMap);
-      
+
       // Update exams with discussion room membership status
       setExams(prev => prev.map(exam => {
         const room = roomsMap[exam.id];
@@ -114,7 +114,7 @@ export default function ExamsPage() {
         }
         return exam;
       }));
-      
+
       // If user is a member of any discussion room, auto-enter it
       if (memberRoom && !currentRoom) {
         console.log('Auto-entering discussion room for member:', memberRoom.title);
@@ -130,7 +130,7 @@ export default function ExamsPage() {
           console.error('Failed to load posts:', error);
         }
       }
-      
+
       console.log('Loaded discussion rooms:', roomsMap);
     } catch (err) {
       console.log('Failed to load discussion rooms:', err);
@@ -140,11 +140,16 @@ export default function ExamsPage() {
   // Fetch user's waitlist status
   const fetchWaitlistStatus = useCallback(async () => {
     try {
+      console.log('Fetching waitlist status...');
       const res = await waitlistService.getMyWaitlists();
+      console.log('Waitlist API response:', res);
       if (res.success && res.data) {
+        console.log('Waitlist entries:', res.data);
         const joinedFeatures = new Set(res.data.map(entry => entry.feature_name));
         setWaitlistFeatures(joinedFeatures);
         console.log('Loaded waitlist status:', joinedFeatures);
+      } else {
+        console.log('Waitlist API failed:', res.error);
       }
     } catch (error) {
       console.log('Failed to load waitlist status:', error);
@@ -153,8 +158,11 @@ export default function ExamsPage() {
 
   useEffect(() => {
     fetchExams();
+  }, [fetchExams]);
+
+  useEffect(() => {
     fetchWaitlistStatus();
-  }, [fetchExams, fetchWaitlistStatus]);
+  }, [fetchWaitlistStatus]);
 
   useEffect(() => {
     if (exams.length > 0) {
@@ -374,10 +382,14 @@ export default function ExamsPage() {
 
   const handleJoinWaitlist = async (feature: string) => {
     try {
+      console.log('Joining waitlist for feature:', feature);
       const res = await waitlistService.joinWaitlist(feature);
+      console.log('Join waitlist response:', res);
       if (res.success && res.data) {
         setWaitlistFeatures(prev => new Set([...prev, feature]));
         showToast('success', t('exams.waitlistSuccess'));
+        // 重新获取等候列表状态以确保同步
+        await fetchWaitlistStatus();
       } else {
         showToast('error', res.error || t('common.error'));
       }
@@ -397,6 +409,8 @@ export default function ExamsPage() {
           return newSet;
         });
         showToast('success', t('exams.waitlistLeft') || 'Left waitlist successfully');
+        // 重新获取等候列表状态以确保同步
+        await fetchWaitlistStatus();
       } else {
         showToast('error', res.error || t('common.error'));
       }
