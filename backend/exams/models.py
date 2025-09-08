@@ -33,7 +33,10 @@ class Exam(models.Model):
 
 	def has_discussion_room(self):
 		"""Check if this exam has a discussion room"""
-		return self.discussion_room is not None
+		try:
+			return self.discussion_room is not None
+		except:
+			return False
 
 	def get_or_create_discussion_room(self):
 		"""Get or create discussion room for this exam"""
