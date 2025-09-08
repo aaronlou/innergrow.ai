@@ -49,23 +49,32 @@ class Exam(models.Model):
 
 	def is_discussion_member(self, user):
 		"""Check if user is a member of this exam's discussion room"""
-		room = self.discussion_room
-		if room:
-			return room.is_member(user)
-		return False
+		try:
+			room = self.discussion_room
+			if room:
+				return room.is_member(user)
+			return False
+		except:
+			return False
 
 	@property
 	def discussion_members_count(self):
 		"""Get discussion room members count"""
-		room = self.discussion_room
-		if room:
-			return room.members_count
-		return 0
+		try:
+			room = self.discussion_room
+			if room:
+				return room.members_count
+			return 0
+		except:
+			return 0
 
 	@property
 	def discussion_posts_count(self):
 		"""Get discussion room posts count"""
-		room = self.discussion_room
-		if room:
-			return room.posts_count
-		return 0
+		try:
+			room = self.discussion_room
+			if room:
+				return room.posts.count()  # Use posts.count() instead of posts_count
+			return 0
+		except:
+			return 0
