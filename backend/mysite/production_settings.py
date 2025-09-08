@@ -53,6 +53,7 @@ ALLOWED_HOSTS = [
     'www.innergrow.ai',
     'localhost',  # 保留用于本地测试
     '127.0.0.1',
+    'testserver',  # 用于测试
 ]
 
 # 安全密钥（生产环境必须修改）
