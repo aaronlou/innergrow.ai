@@ -262,6 +262,8 @@ export const zh = {
   'exams.comingSoon': '即将推出',
   'exams.inDevelopment': '开发中',
   'exams.joinWaitlist': '加入等候列表',
+  'exams.waitlistJoined': '已加入等候列表',
+  'exams.waitlistLeft': '已退出等候列表',
   'exams.waitlistSuccess': '已加入等候列表！功能准备就绪时我们会通知您。',
   
   // 讨论室

@@ -262,6 +262,8 @@ export const en = {
   'exams.comingSoon': 'Coming Soon',
   'exams.inDevelopment': 'In Development',
   'exams.joinWaitlist': 'Join Waitlist',
+  'exams.waitlistJoined': 'Joined Waitlist',
+  'exams.waitlistLeft': 'Left Waitlist',
   'exams.waitlistSuccess': 'Added to waitlist! We\'ll notify you when this feature is ready.',
   
   // Discussion Room
