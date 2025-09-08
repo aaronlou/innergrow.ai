@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'accounts',
     'goals',
     'exams',
+    'discussions',  # Add discussions app
     'ai_services',  # Add this line
 ]
 

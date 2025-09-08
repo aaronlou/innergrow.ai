@@ -1,6 +1,10 @@
 # InnerGrow.ai 生产环境配置
 # 导入基础设置
 from .settings import *
+
+# 确保 discussions 应用在 INSTALLED_APPS 中
+if 'discussions' not in INSTALLED_APPS:
+    INSTALLED_APPS = INSTALLED_APPS + ['discussions']
 import os
 from pathlib import Path
 

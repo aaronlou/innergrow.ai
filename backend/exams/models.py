@@ -11,7 +11,6 @@ class Exam(models.Model):
 	material = models.FileField(upload_to='exam_materials/', blank=True, null=True, verbose_name=_('Study Materials'))
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
-	participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='joined_exams', blank=True, verbose_name=_('Participants'))
 
 	class Meta:
 		ordering = ['-created_at']
@@ -21,15 +20,52 @@ class Exam(models.Model):
 	def __str__(self):
 		return str(self.title)
 
-	def is_participant(self, user):
-		"""Check if a user is a participant of this exam"""
-		return user in list(self.participants.all())  # type: ignore
 
-	def add_participant(self, user):
-		"""Add a user as a participant of this exam"""
-		if user != self.user:  # Creator is automatically a participant
-			self.participants.add(user)  # type: ignore
+	# Discussion room related methods
+	@property
+	def discussion_room(self):
+		"""Get the discussion room for this exam"""
+		try:
+			from discussions.models import DiscussionRoom
+			return DiscussionRoom.objects.get(exam=self)
+		except:
+			return None
 
-	def remove_participant(self, user):
-		"""Remove a user from participants of this exam"""
-		self.participants.remove(user)  # type: ignore
+	def has_discussion_room(self):
+		"""Check if this exam has a discussion room"""
+		return self.discussion_room is not None
+
+	def get_or_create_discussion_room(self):
+		"""Get or create discussion room for this exam"""
+		from discussions.models import DiscussionRoom
+		room, created = DiscussionRoom.objects.get_or_create(
+			exam=self,
+			defaults={
+				'title': f"{self.title} - Discussion Room",
+				'description': f"Discussion room for {self.title} exam"
+			}
+		)
+		return room, created
+
+	def is_discussion_member(self, user):
+		"""Check if user is a member of this exam's discussion room"""
+		room = self.discussion_room
+		if room:
+			return room.is_member(user)
+		return False
+
+	@property
+	def discussion_members_count(self):
+		"""Get discussion room members count"""
+		room = self.discussion_room
+		if room:
+			return room.members_count
+		return 0
+
+	@property
+	def discussion_posts_count(self):
+		"""Get discussion room posts count"""
+		room = self.discussion_room
+		if room:
+			return room.posts_count
+		return 0

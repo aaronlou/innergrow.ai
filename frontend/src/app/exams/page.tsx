@@ -362,9 +362,9 @@ export default function ExamsPage() {
                             <Button size="sm" variant="outline" onClick={() => setShowDeleteConfirm(exam)}>🗑️</Button>
                           </>
                         )}
-                        <Button size="sm" variant={exam.is_participant ? 'secondary' : 'default'} onClick={() => handleJoinLeave(exam)}>
+                        {/* <Button size="sm" variant={exam.is_participant ? 'secondary' : 'default'} onClick={() => handleJoinLeave(exam)}>
                           {exam.is_participant ? t('exams.leave') : t('exams.join')}
-                        </Button>
+                        </Button> */}
                       </div>
                     </CardContent>
                   </Card>
