@@ -85,11 +85,17 @@ export default function ExamsPage() {
   const fetchDiscussionRooms = useCallback(async (examsList: Exam[]) => {
     try {
       const roomsMap: Record<string, DiscussionRoom> = {};
+      let memberRoom: DiscussionRoom | null = null;
+      
       // For each exam, try to get its discussion room
       for (const exam of examsList) {
         const res = await discussionsService.getRoom(exam.id);
         if (res.success && res.data) {
           roomsMap[exam.id] = res.data;
+          // If user is a member of this room, remember it for auto-enter
+          if (res.data.is_member && !memberRoom) {
+            memberRoom = res.data;
+          }
         }
       }
       setDiscussionRooms(roomsMap);
@@ -108,13 +114,27 @@ export default function ExamsPage() {
         return exam;
       }));
       
+      // If user is a member of any discussion room, auto-enter it
+      if (memberRoom && !currentRoom) {
+        console.log('Auto-entering discussion room for member:', memberRoom.title);
+        setCurrentRoom(memberRoom);
+        setActiveTab('discussions');
+        // Load posts separately to avoid dependency issues
+        try {
+          const postsRes = await discussionsService.getPosts(memberRoom.id, { sort: 'hot' });
+          if (postsRes.success && postsRes.data) {
+            setCurrentRoomPosts(postsRes.data);
+          }
+        } catch (error) {
+          console.error('Failed to load posts:', error);
+        }
+      }
+      
       console.log('Loaded discussion rooms:', roomsMap);
     } catch (err) {
       console.log('Failed to load discussion rooms:', err);
     }
-  }, []);
-
-  useEffect(() => {
+  }, [currentRoom]);  useEffect(() => {
     fetchExams();
   }, [fetchExams]);
 
@@ -232,16 +252,16 @@ export default function ExamsPage() {
             setDiscussionRooms(prev => ({ ...prev, [examId]: joinRes.data! }));
             setActiveTab('discussions');
             await loadRoomPosts(joinRes.data.id);
-            
+
             // Update exam discussion room membership status
-            setExams(prev => prev.map(exam => 
-              exam.id === examId 
-                ? { 
-                    ...exam, 
-                    is_discussion_member: joinRes.data!.is_member,
-                    discussion_members_count: joinRes.data!.members_count,
-                    discussion_posts_count: joinRes.data!.posts_count
-                  }
+            setExams(prev => prev.map(exam =>
+              exam.id === examId
+                ? {
+                  ...exam,
+                  is_discussion_member: joinRes.data!.is_member,
+                  discussion_members_count: joinRes.data!.members_count,
+                  discussion_posts_count: joinRes.data!.posts_count
+                }
                 : exam
             ));
           } else {
@@ -254,16 +274,16 @@ export default function ExamsPage() {
           setDiscussionRooms(prev => ({ ...prev, [examId]: res.data! }));
           setActiveTab('discussions');
           await loadRoomPosts(res.data.id);
-          
+
           // Update exam discussion room membership status
-          setExams(prev => prev.map(exam => 
-            exam.id === examId 
-              ? { 
-                  ...exam, 
-                  is_discussion_member: res.data!.is_member,
-                  discussion_members_count: res.data!.members_count,
-                  discussion_posts_count: res.data!.posts_count
-                }
+          setExams(prev => prev.map(exam =>
+            exam.id === examId
+              ? {
+                ...exam,
+                is_discussion_member: res.data!.is_member,
+                discussion_members_count: res.data!.members_count,
+                discussion_posts_count: res.data!.posts_count
+              }
               : exam
           ));
         }
@@ -276,16 +296,16 @@ export default function ExamsPage() {
           setDiscussionRooms(prev => ({ ...prev, [examId]: joinRes.data! }));
           setActiveTab('discussions');
           await loadRoomPosts(joinRes.data.id);
-          
+
           // Update exam discussion room membership status
-          setExams(prev => prev.map(exam => 
-            exam.id === examId 
-              ? { 
-                  ...exam, 
-                  is_discussion_member: joinRes.data!.is_member,
-                  discussion_members_count: joinRes.data!.members_count,
-                  discussion_posts_count: joinRes.data!.posts_count
-                }
+          setExams(prev => prev.map(exam =>
+            exam.id === examId
+              ? {
+                ...exam,
+                is_discussion_member: joinRes.data!.is_member,
+                discussion_members_count: joinRes.data!.members_count,
+                discussion_posts_count: joinRes.data!.posts_count
+              }
               : exam
           ));
         } else {
