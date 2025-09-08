@@ -93,6 +93,21 @@ export default function ExamsPage() {
         }
       }
       setDiscussionRooms(roomsMap);
+      
+      // Update exams with discussion room membership status
+      setExams(prev => prev.map(exam => {
+        const room = roomsMap[exam.id];
+        if (room) {
+          return {
+            ...exam,
+            is_discussion_member: room.is_member,
+            discussion_members_count: room.members_count,
+            discussion_posts_count: room.posts_count
+          };
+        }
+        return exam;
+      }));
+      
       console.log('Loaded discussion rooms:', roomsMap);
     } catch (err) {
       console.log('Failed to load discussion rooms:', err);
