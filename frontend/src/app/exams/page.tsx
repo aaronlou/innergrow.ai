@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/components/ui';
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
-import { useI18n } from '@/contexts';
+import { useI18n, useAuth } from '@/contexts';
 import examsService from '@/lib/api/exams';
 import { StudyPlanData, Exam } from '@/types';
 import DatePicker from 'react-datepicker';
@@ -11,6 +11,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 
 export default function ExamsPage() {
   const { t, formatDate, language } = useI18n();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'discover' | 'plans' | 'practice'>('discover');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -197,8 +198,12 @@ export default function ExamsPage() {
         participants_count: (e.participants_count || 0) + (joining ? 1 : -1),
       };
     }));
-    const action = exam.is_participant ? examsService.leaveExam : examsService.joinExam;
-    const res = await action(exam.id);
+    
+    // Call the methods on the service object to preserve 'this' context
+    const res = exam.is_participant 
+      ? await examsService.leaveExam(exam.id)
+      : await examsService.joinExam(exam.id);
+      
     if (res.success && res.data) {
       setExams(prev => prev.map(e => e.id === exam.id ? res.data! : e));
       showToast('success', exam.is_participant ? t('exams.leaveSuccess') : t('exams.joinSuccess'));
@@ -260,12 +265,25 @@ export default function ExamsPage() {
                           <div className="flex items-center gap-1 text-green-600 dark:text-green-400">📎 <a href={exam.material} target="_blank" rel="noreferrer" className="underline hover:no-underline">{t('exams.materialAvailable')}</a></div>
                         )}
                         <div>👥 {t('exams.participants')}: {exam.participants_count ?? 0}</div>
+                        {exam.user_name && (
+                          <div className="flex items-center gap-1">
+                            👤 {t('exams.createdBy') || 'Created by'}: {exam.user_name}
+                            {user && exam.user_id === user.id && (
+                              <span className="text-primary text-[10px] ml-1">({t('exams.you') || 'You'})</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Button size="sm" className="flex-1" onClick={() => handleGeneratePlan(exam.id)} disabled={planGenerating === exam.id}>{planGenerating === exam.id ? t('common.loading') : t('exams.startPreparation')}</Button>
                         <Button size="sm" variant="outline" className="flex-1">{t('exams.viewRequirements')}</Button>
-                        <Button size="sm" variant="outline" onClick={() => openEdit(exam)}>✏️</Button>
-                        <Button size="sm" variant="outline" onClick={() => setShowDeleteConfirm(exam)}>🗑️</Button>
+                        {/* Only show edit/delete buttons for exam owner */}
+                        {user && exam.user_id === user.id && (
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => openEdit(exam)}>✏️</Button>
+                            <Button size="sm" variant="outline" onClick={() => setShowDeleteConfirm(exam)}>🗑️</Button>
+                          </>
+                        )}
                         <Button size="sm" variant={exam.is_participant ? 'secondary' : 'default'} onClick={() => handleJoinLeave(exam)}>
                           {exam.is_participant ? t('exams.leave') : t('exams.join')}
                         </Button>
@@ -383,7 +401,7 @@ export default function ExamsPage() {
                         placeholderText={language === 'zh' ? '选择考试日期' : 'Select exam date'}
                         className={`w-full px-3 py-2 text-sm border rounded-md bg-background ${validationErrors.exam_time ? 'border-red-500 focus-visible:outline-red-500' : 'border-input'}`}
                         calendarClassName="bg-background border border-border shadow-lg"
-                        dayClassName={(_date: Date) => "hover:bg-muted text-sm"}
+                        dayClassName={() => "hover:bg-muted text-sm"}
                         isClearable
                         showMonthDropdown
                         showYearDropdown

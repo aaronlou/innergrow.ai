@@ -306,6 +306,8 @@ export const zh = {
   'exams.leaveCreatorForbidden': '创建者不能退出',
   'exams.alreadyJoined': '已加入',
   'exams.notParticipant': '尚未加入',
+  'exams.createdBy': '创建者',
+  'exams.you': '你',
 
   // 二手书市场
   'books.title': '📚 二手书市场',

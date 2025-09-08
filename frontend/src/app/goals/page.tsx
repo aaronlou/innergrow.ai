@@ -1163,7 +1163,7 @@ function GoalsPageContent() {
                       dropdownMode="select"
                       className="w-full p-2 border border-input rounded-md bg-background text-foreground"
                       placeholderText={t('goals.create.targetDate')}
-                      dayClassName={(_date: Date) => "hover:bg-primary hover:text-primary-foreground rounded"}
+                      dayClassName={() => "hover:bg-primary hover:text-primary-foreground rounded"}
                     />
                   </div>
                 </div>
@@ -1301,7 +1301,7 @@ function GoalsPageContent() {
                     dropdownMode="select"
                     className="w-full mt-1 p-2 border border-input rounded-md bg-background text-foreground"
                     placeholderText={t('goals.create.targetDate')}
-                    dayClassName={(_date: Date) => "hover:bg-primary hover:text-primary-foreground rounded"}
+                    dayClassName={() => "hover:bg-primary hover:text-primary-foreground rounded"}
                   />
                 </div>
               </div>

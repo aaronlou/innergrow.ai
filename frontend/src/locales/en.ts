@@ -306,6 +306,8 @@ export const en = {
   'exams.leaveCreatorForbidden': 'Creator cannot leave',
   'exams.alreadyJoined': 'Already joined',
   'exams.notParticipant': 'Not a participant',
+  'exams.createdBy': 'Created by',
+  'exams.you': 'You',
 
   // Books Market
   'books.title': '📚 Book Market',
