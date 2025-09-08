@@ -226,10 +226,16 @@ export interface Exam {
   updated_at?: string;
   user_id?: string; // creator user id (optional depending on backend serializer)
   user_name?: string; // creator name if provided
-  participants?: string[]; // participant user ids/names (depending on backend shape)
-  participants_count?: number; // count shortcut if backend returns it
-  is_participant?: boolean; // convenience flag from backend (if provided)
-  discussion_room?: DiscussionRoom; // associated discussion room
+  // 移除废弃的 participants 相关字段
+  // participants?: string[]; // DEPRECATED - 后端已废弃
+  // participants_count?: number; // DEPRECATED - 使用 discussion_members_count
+  // is_participant?: boolean; // DEPRECATED - 使用 discussion room membership
+  
+  // 讨论室相关字段 (从后端获取)
+  discussion_members_count?: number; // 讨论室成员数量
+  discussion_posts_count?: number; // 讨论室帖子数量
+  is_discussion_member?: boolean; // 是否为讨论室成员
+  discussion_room?: DiscussionRoom; // 关联的讨论室
 }
 
 // 讨论室系统 - 替代 StudyPlan

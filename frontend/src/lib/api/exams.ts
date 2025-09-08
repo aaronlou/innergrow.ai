@@ -30,9 +30,15 @@ interface RawExam {
     updatedAt?: unknown;
     user?: unknown;
     user_id?: unknown;
-    participants?: unknown;
-    participants_count?: unknown;
-    is_participant?: unknown;
+    // 移除废弃的 participants 相关字段
+    // participants?: unknown;
+    // participants_count?: unknown;
+    // is_participant?: unknown;
+    
+    // 新增讨论室相关字段
+    discussion_members_count?: unknown;
+    discussion_posts_count?: unknown;
+    is_discussion_member?: unknown;
 }
 
 interface RawUserLike { id?: unknown; pk?: unknown; name?: unknown; username?: unknown; email?: unknown; }
@@ -75,18 +81,12 @@ export const examsService = {
         } else if (obj.user_id) {
             exam.user_id = String(obj.user_id);
         }
-        if (Array.isArray(obj.participants)) {
-            exam.participants = (obj.participants as unknown[]).map(p => {
-                if (p && typeof p === 'object') {
-                    const pu = p as RawUserLike;
-                    return String(pu.id ?? pu.username ?? pu.email ?? '');
-                }
-                return String(p);
-            });
-            exam.participants_count = exam.participants.length;
-        }
-        if (obj.participants_count !== undefined) exam.participants_count = Number(obj.participants_count);
-        if (obj.is_participant !== undefined) exam.is_participant = Boolean(obj.is_participant);
+        
+        // 新的讨论室相关字段
+        if (obj.discussion_members_count !== undefined) exam.discussion_members_count = Number(obj.discussion_members_count);
+        if (obj.discussion_posts_count !== undefined) exam.discussion_posts_count = Number(obj.discussion_posts_count);
+        if (obj.is_discussion_member !== undefined) exam.is_discussion_member = Boolean(obj.is_discussion_member);
+        
         return exam;
     },
 
@@ -173,17 +173,8 @@ export const examsService = {
         return res as ApiResponse<null>;
     },
 
-    async joinExam(id: string): Promise<ApiResponse<import('@/types').Exam>> {
-        const res = await apiRequest<unknown>(`/api/exams/${id}/join/`, { method: 'POST' });
-        if (res.success) return { success: true, data: this._normalizeExam(res.data) };
-        return res as ApiResponse<import('@/types').Exam>;
-    },
-
-    async leaveExam(id: string): Promise<ApiResponse<import('@/types').Exam>> {
-        const res = await apiRequest<unknown>(`/api/exams/${id}/leave/`, { method: 'POST' });
-        if (res.success) return { success: true, data: this._normalizeExam(res.data) };
-        return res as ApiResponse<import('@/types').Exam>;
-    },
+    // 移除废弃的 joinExam 和 leaveExam 方法
+    // 现在只有讨论室成员关系，通过 discussionsService 处理
 };
 
 export default examsService;

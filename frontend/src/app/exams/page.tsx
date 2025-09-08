@@ -14,7 +14,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 export default function ExamsPage() {
   const { user } = useAuth();
   const { t, language, formatDate } = useI18n();
-  
+
   const [activeTab, setActiveTab] = useState<'discover' | 'discussions' | 'practice'>('discover');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -54,7 +54,7 @@ export default function ExamsPage() {
   const fetchExams = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     // Debug authentication status
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
     console.log('[fetchExams] Auth debug:', {
@@ -63,11 +63,11 @@ export default function ExamsPage() {
       tokenPreview: token ? `${token.substring(0, 10)}...` : null,
       isAuthenticated: true // This should match the auth context
     });
-    
+
     const res = await examsService.list();
-    console.log('Fetched exams:', { 
-      success: res.success, 
-      error: res.error, 
+    console.log('Fetched exams:', {
+      success: res.success,
+      error: res.error,
       dataCount: res.data?.length || 0,
       rawData: res.data,
       fullResponse: res
@@ -99,7 +99,7 @@ export default function ExamsPage() {
     }
   }, [exams]);
 
-  useEffect(() => { 
+  useEffect(() => {
     fetchExams();
   }, [fetchExams]);
 
@@ -177,7 +177,7 @@ export default function ExamsPage() {
 
   const handleCreatePost = async (postData: CreatePostData) => {
     if (!currentRoom) return;
-    
+
     try {
       const res = await discussionsService.createPost(currentRoom.id, postData);
       if (res.success && res.data) {
@@ -194,7 +194,7 @@ export default function ExamsPage() {
     try {
       const res = await discussionsService.votePost(postId, voteType);
       if (res.success && res.data) {
-        setCurrentRoomPosts(prev => 
+        setCurrentRoomPosts(prev =>
           prev.map(post => post.id === postId ? res.data! : post)
         );
       }
@@ -212,6 +212,18 @@ export default function ExamsPage() {
         setDiscussionRooms(prev => ({ ...prev, [examId]: res.data! }));
         setActiveTab('discussions');
         await loadRoomPosts(res.data.id);
+        
+        // Update exam discussion room membership status
+        setExams(prev => prev.map(exam => 
+          exam.id === examId 
+            ? { 
+                ...exam, 
+                is_discussion_member: res.data!.is_member,
+                discussion_members_count: res.data!.members_count,
+                discussion_posts_count: res.data!.posts_count
+              }
+            : exam
+        ));
       } else {
         // Room doesn't exist, might need to create or join first
         const joinRes = await discussionsService.joinRoom(examId);
@@ -220,6 +232,18 @@ export default function ExamsPage() {
           setDiscussionRooms(prev => ({ ...prev, [examId]: joinRes.data! }));
           setActiveTab('discussions');
           await loadRoomPosts(joinRes.data.id);
+          
+          // Update exam discussion room membership status
+          setExams(prev => prev.map(exam => 
+            exam.id === examId 
+              ? { 
+                  ...exam, 
+                  is_discussion_member: joinRes.data!.is_member,
+                  discussion_members_count: joinRes.data!.members_count,
+                  discussion_posts_count: joinRes.data!.posts_count
+                }
+              : exam
+          ));
         }
       }
       showToast('success', t('discussions.joinedRoom'));
@@ -260,35 +284,8 @@ export default function ExamsPage() {
     setShowCreateModal(true);
   };
 
-  const handleJoinLeave = async (exam: Exam) => {
-    // Optimistic update
-    setExams(prev => prev.map(e => {
-      if (e.id !== exam.id) return e;
-      const joining = !e.is_participant;
-      return {
-        ...e,
-        is_participant: joining,
-        participants_count: (e.participants_count || 0) + (joining ? 1 : -1),
-      };
-    }));
-    
-    // Call the methods on the service object to preserve 'this' context
-    const res = exam.is_participant 
-      ? await examsService.leaveExam(exam.id)
-      : await examsService.joinExam(exam.id);
-      
-    if (res.success && res.data) {
-      setExams(prev => prev.map(e => e.id === exam.id ? res.data! : e));
-      showToast('success', exam.is_participant ? t('exams.leaveSuccess') : t('exams.joinSuccess'));
-    } else {
-      // rollback
-      setExams(prev => prev.map(e => {
-        if (e.id !== exam.id) return e;
-        return { ...e, is_participant: exam.is_participant, participants_count: exam.participants_count };
-      }));
-      showToast('error', res.error || t('common.error'));
-    }
-  };
+  // 移除 handleJoinLeave 函数 - 后端已废弃考试参与者概念
+  // 现在只有讨论室成员关系，通过 handleJoinDiscussion 处理
 
   const handleJoinWaitlist = (feature: string) => {
     setWaitlistFeatures(prev => new Set([...prev, feature]));
@@ -342,7 +339,7 @@ export default function ExamsPage() {
                         {exam.material && (
                           <div className="flex items-center gap-1 text-green-600 dark:text-green-400">📎 <a href={exam.material} target="_blank" rel="noreferrer" className="underline hover:no-underline">{t('exams.materialAvailable')}</a></div>
                         )}
-                        <div>👥 {t('exams.participants')}: {exam.participants_count ?? 0}</div>
+                        <div>👥 {t('discussions.members')}: {exam.discussion_members_count ?? 0}</div>
                         {exam.user_name && (
                           <div className="flex items-center gap-1">
                             👤 {t('exams.createdBy') || 'Created by'}: {exam.user_name}
@@ -362,9 +359,6 @@ export default function ExamsPage() {
                             <Button size="sm" variant="outline" onClick={() => setShowDeleteConfirm(exam)}>🗑️</Button>
                           </>
                         )}
-                        {/* <Button size="sm" variant={exam.is_participant ? 'secondary' : 'default'} onClick={() => handleJoinLeave(exam)}>
-                          {exam.is_participant ? t('exams.leave') : t('exams.join')}
-                        </Button> */}
                       </div>
                     </CardContent>
                   </Card>
@@ -502,8 +496,8 @@ export default function ExamsPage() {
                   <CardHeader><CardTitle className="flex items-center gap-2"><span className="text-2xl">📝</span>{t('exams.mockExams')}</CardTitle></CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground mb-4">{t('exams.mockExamsDesc')}</p>
-                    <Button 
-                      className="w-full" 
+                    <Button
+                      className="w-full"
                       variant={waitlistFeatures.has('mockExams') ? 'secondary' : 'default'}
                       disabled={waitlistFeatures.has('mockExams')}
                       onClick={() => handleJoinWaitlist('mockExams')}
@@ -519,8 +513,8 @@ export default function ExamsPage() {
                   <CardHeader><CardTitle className="flex items-center gap-2"><span className="text-2xl">🃏</span>{t('exams.flashcards')}</CardTitle></CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground mb-4">{t('exams.flashcardsDesc')}</p>
-                    <Button 
-                      className="w-full" 
+                    <Button
+                      className="w-full"
                       variant={waitlistFeatures.has('flashcards') ? 'secondary' : 'default'}
                       disabled={waitlistFeatures.has('flashcards')}
                       onClick={() => handleJoinWaitlist('flashcards')}
@@ -536,8 +530,8 @@ export default function ExamsPage() {
                   <CardHeader><CardTitle className="flex items-center gap-2"><span className="text-2xl">⚡</span>{t('exams.quickQuizzes')}</CardTitle></CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground mb-4">{t('exams.quickQuizzesDesc')}</p>
-                    <Button 
-                      className="w-full" 
+                    <Button
+                      className="w-full"
                       variant={waitlistFeatures.has('quickQuizzes') ? 'secondary' : 'default'}
                       disabled={waitlistFeatures.has('quickQuizzes')}
                       onClick={() => handleJoinWaitlist('quickQuizzes')}
