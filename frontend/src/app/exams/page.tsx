@@ -145,12 +145,12 @@ export default function ExamsPage() {
       console.log('Waitlist API response:', res);
       if (res.success && res.data) {
         console.log('Waitlist entries:', res.data);
-        
+
         // 处理分页响应格式：数据在 res.data.results 中
         const waitlistEntries = res.data.results;
         console.log('Extracted waitlist entries:', waitlistEntries);
         console.log('Type of entries:', typeof waitlistEntries, 'Is array:', Array.isArray(waitlistEntries));
-        
+
         // 确保 waitlistEntries 是数组
         if (Array.isArray(waitlistEntries)) {
           const joinedFeatures = new Set(waitlistEntries.map(entry => entry.feature_name));
