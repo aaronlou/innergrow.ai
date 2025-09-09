@@ -697,72 +697,10 @@ export default function ExamsPage() {
           {/* Knowledge Graph Tab */}
           {activeTab === 'knowledge' && (
             <div className="space-y-4">
-              {/* 考试选择器 */}
-              <div className="bg-muted/30 p-4 rounded-lg">
-                <h3 className="font-medium mb-3">{t('knowledgeGraph.selectExam')}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {exams.map(exam => (
-                    <div
-                      key={exam.id}
-                      className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                        selectedExamForGraph?.id === exam.id
-                          ? 'border-primary bg-primary/10'
-                          : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                      }`}
-                      onClick={() => setSelectedExamForGraph(exam)}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-sm">{exam.title}</h4>
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                            {exam.description}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className={`px-2 py-1 rounded text-xs ${
-                              exam.category === 'Language' ? 'bg-emerald-100 text-emerald-700' :
-                              exam.category === 'Technical' ? 'bg-amber-100 text-amber-700' :
-                              exam.category === 'Business' ? 'bg-violet-100 text-violet-700' :
-                              exam.category === 'Health' ? 'bg-blue-100 text-blue-700' :
-                              'bg-gray-100 text-gray-700'
-                            }`}>
-                              {exam.category}
-                            </span>
-                          </div>
-                        </div>
-                        {selectedExamForGraph?.id === exam.id && (
-                          <div className="text-primary">
-                            ✓
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {exams.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <div className="text-2xl mb-2">📚</div>
-                    <p className="text-sm">{t('knowledgeGraph.noExamsAvailable')}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* 知识图谱组件 */}
               <KnowledgeGraph
                 selectedExam={selectedExamForGraph}
-                examIds={exams.map(exam => exam.id)}
-                selectedTopics={[]}
-                onNodeSelect={(node) => {
-                  console.log('Selected node:', node);
-                  // 可以在这里添加节点选择后的逻辑，比如显示详细信息或导航到相关考试
-                }}
-                onNodeDoubleClick={(node) => {
-                  console.log('Double clicked node:', node);
-                  // 可以在这里添加双击后的逻辑，比如进入相关的学习模块
-                  if (node.examId) {
-                    // 如果节点关联了考试，可以导航到该考试的讨论区
-                    handleJoinDiscussion(node.examId);
-                  }
-                }}
+                availableExams={exams}
+                onExamChange={setSelectedExamForGraph}
               />
             </div>
           )}
