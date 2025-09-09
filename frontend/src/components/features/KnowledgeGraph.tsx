@@ -27,7 +27,16 @@ interface GraphData {
   edges: GraphEdge[];
 }
 
+// 考试类型（简化版）
+interface Exam {
+  id: string;
+  title: string;
+  category?: string;
+  description?: string;
+}
+
 interface KnowledgeGraphProps {
+  selectedExam?: Exam | null; // 当前选中的考试
   examIds?: string[];
   selectedTopics?: string[];
   onNodeSelect?: (node: GraphNode) => void;
@@ -35,6 +44,7 @@ interface KnowledgeGraphProps {
 }
 
 export const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
+  selectedExam,
   examIds = [],
   selectedTopics = [],
   onNodeSelect,
@@ -53,42 +63,126 @@ export const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
   const [chatInput, setChatInput] = useState('');
   const [isAiThinking, setIsAiThinking] = useState(false);
 
-  // 模拟知识图谱数据生成
-  const generateMockGraphData = useCallback((): GraphData => {
-    // 模拟节点数据
-    const mockNodes: GraphNode[] = [
-      { id: '1', label: 'Basic Grammar', category: 'Language', level: 1, description: 'Fundamental grammar concepts', masteryStatus: 'mastered' },
-      { id: '2', label: 'Vocabulary Building', category: 'Language', level: 1, description: 'Core vocabulary development', masteryStatus: 'mastered' },
-      { id: '3', label: 'Reading Comprehension', category: 'Language', level: 2, description: 'Understanding written texts', masteryStatus: 'learning' },
-      { id: '4', label: 'Writing Skills', category: 'Language', level: 2, description: 'Effective writing techniques', masteryStatus: 'learning' },
-      { id: '5', label: 'Advanced Grammar', category: 'Language', level: 3, description: 'Complex grammatical structures', masteryStatus: 'not-started' },
-      { id: '6', label: 'Programming Basics', category: 'Technical', level: 1, description: 'Introduction to programming', masteryStatus: 'mastered' },
-      { id: '7', label: 'Data Structures', category: 'Technical', level: 2, description: 'Organizing and storing data', masteryStatus: 'learning' },
-      { id: '8', label: 'Algorithms', category: 'Technical', level: 3, description: 'Problem-solving methods', masteryStatus: 'not-started' },
-      { id: '9', label: 'Web Development', category: 'Technical', level: 2, description: 'Building web applications', masteryStatus: 'learning' },
-      { id: '10', label: 'Database Design', category: 'Technical', level: 2, description: 'Designing efficient databases', masteryStatus: 'not-started' },
-      { id: '11', label: 'Business Strategy', category: 'Business', level: 2, description: 'Strategic business planning', masteryStatus: 'not-started' },
-      { id: '12', label: 'Marketing Fundamentals', category: 'Business', level: 1, description: 'Basic marketing concepts', masteryStatus: 'learning' },
-      { id: '13', label: 'Financial Analysis', category: 'Business', level: 3, description: 'Analyzing financial data', masteryStatus: 'not-started' },
-    ];
+  // 根据考试生成相应的知识图谱数据
+  const generateExamSpecificGraphData = useCallback((exam: Exam | null): GraphData => {
+    if (!exam) {
+      return { nodes: [], edges: [] };
+    }
 
-    // 模拟边数据
-    const mockEdges: GraphEdge[] = [
-      { source: '1', target: '3', relationship: 'prerequisite', strength: 0.9 },
-      { source: '2', target: '3', relationship: 'prerequisite', strength: 0.8 },
-      { source: '1', target: '4', relationship: 'prerequisite', strength: 0.7 },
-      { source: '3', target: '5', relationship: 'builds_on', strength: 0.8 },
-      { source: '4', target: '5', relationship: 'builds_on', strength: 0.6 },
-      { source: '6', target: '7', relationship: 'prerequisite', strength: 0.9 },
-      { source: '7', target: '8', relationship: 'builds_on', strength: 0.8 },
-      { source: '6', target: '9', relationship: 'prerequisite', strength: 0.7 },
-      { source: '7', target: '10', relationship: 'related', strength: 0.6 },
-      { source: '12', target: '11', relationship: 'prerequisite', strength: 0.8 },
-      { source: '11', target: '13', relationship: 'builds_on', strength: 0.7 },
-      { source: '9', target: '10', relationship: 'complement', strength: 0.5 },
-    ];
+    // 根据考试类别生成不同的知识图谱
+    switch (exam.category || 'General') {
+      case 'Language':
+        return {
+          nodes: [
+            { id: '1', label: 'Basic Grammar', category: 'Language', level: 1, description: 'Fundamental grammar concepts for ' + exam.title, examId: exam.id, masteryStatus: 'mastered' },
+            { id: '2', label: 'Vocabulary Building', category: 'Language', level: 1, description: 'Core vocabulary for ' + exam.title, examId: exam.id, masteryStatus: 'mastered' },
+            { id: '3', label: 'Reading Comprehension', category: 'Language', level: 2, description: 'Reading skills for ' + exam.title, examId: exam.id, masteryStatus: 'learning' },
+            { id: '4', label: 'Writing Skills', category: 'Language', level: 2, description: 'Writing techniques for ' + exam.title, examId: exam.id, masteryStatus: 'learning' },
+            { id: '5', label: 'Advanced Grammar', category: 'Language', level: 3, description: 'Complex structures for ' + exam.title, examId: exam.id, masteryStatus: 'not-started' },
+            { id: '6', label: 'Listening Comprehension', category: 'Language', level: 2, description: 'Listening skills for ' + exam.title, examId: exam.id, masteryStatus: 'learning' },
+            { id: '7', label: 'Speaking Skills', category: 'Language', level: 3, description: 'Oral communication for ' + exam.title, examId: exam.id, masteryStatus: 'not-started' },
+          ],
+          edges: [
+            { source: '1', target: '3', relationship: 'prerequisite', strength: 0.9 },
+            { source: '2', target: '3', relationship: 'prerequisite', strength: 0.8 },
+            { source: '1', target: '4', relationship: 'prerequisite', strength: 0.7 },
+            { source: '3', target: '5', relationship: 'builds_on', strength: 0.8 },
+            { source: '4', target: '5', relationship: 'builds_on', strength: 0.6 },
+            { source: '2', target: '6', relationship: 'prerequisite', strength: 0.7 },
+            { source: '1', target: '7', relationship: 'prerequisite', strength: 0.8 },
+            { source: '4', target: '7', relationship: 'related', strength: 0.6 },
+          ]
+        };
 
-    return { nodes: mockNodes, edges: mockEdges };
+      case 'Technical':
+        return {
+          nodes: [
+            { id: '1', label: 'Programming Basics', category: 'Technical', level: 1, description: 'Foundation programming for ' + exam.title, examId: exam.id, masteryStatus: 'mastered' },
+            { id: '2', label: 'Data Structures', category: 'Technical', level: 2, description: 'Data organization for ' + exam.title, examId: exam.id, masteryStatus: 'learning' },
+            { id: '3', label: 'Algorithms', category: 'Technical', level: 3, description: 'Problem-solving methods for ' + exam.title, examId: exam.id, masteryStatus: 'not-started' },
+            { id: '4', label: 'Web Development', category: 'Technical', level: 2, description: 'Web technologies for ' + exam.title, examId: exam.id, masteryStatus: 'learning' },
+            { id: '5', label: 'Database Design', category: 'Technical', level: 2, description: 'Database concepts for ' + exam.title, examId: exam.id, masteryStatus: 'not-started' },
+            { id: '6', label: 'Software Engineering', category: 'Technical', level: 3, description: 'Development practices for ' + exam.title, examId: exam.id, masteryStatus: 'not-started' },
+            { id: '7', label: 'System Design', category: 'Technical', level: 3, description: 'Architecture design for ' + exam.title, examId: exam.id, masteryStatus: 'not-started' },
+          ],
+          edges: [
+            { source: '1', target: '2', relationship: 'prerequisite', strength: 0.9 },
+            { source: '2', target: '3', relationship: 'builds_on', strength: 0.8 },
+            { source: '1', target: '4', relationship: 'prerequisite', strength: 0.7 },
+            { source: '2', target: '5', relationship: 'related', strength: 0.6 },
+            { source: '1', target: '6', relationship: 'prerequisite', strength: 0.8 },
+            { source: '3', target: '6', relationship: 'builds_on', strength: 0.7 },
+            { source: '5', target: '7', relationship: 'complement', strength: 0.6 },
+            { source: '6', target: '7', relationship: 'builds_on', strength: 0.8 },
+          ]
+        };
+
+      case 'Business':
+        return {
+          nodes: [
+            { id: '1', label: 'Marketing Fundamentals', category: 'Business', level: 1, description: 'Basic marketing for ' + exam.title, examId: exam.id, masteryStatus: 'learning' },
+            { id: '2', label: 'Business Strategy', category: 'Business', level: 2, description: 'Strategic planning for ' + exam.title, examId: exam.id, masteryStatus: 'not-started' },
+            { id: '3', label: 'Financial Analysis', category: 'Business', level: 3, description: 'Financial evaluation for ' + exam.title, examId: exam.id, masteryStatus: 'not-started' },
+            { id: '4', label: 'Operations Management', category: 'Business', level: 2, description: 'Process optimization for ' + exam.title, examId: exam.id, masteryStatus: 'not-started' },
+            { id: '5', label: 'Leadership', category: 'Business', level: 3, description: 'Management skills for ' + exam.title, examId: exam.id, masteryStatus: 'not-started' },
+            { id: '6', label: 'Project Management', category: 'Business', level: 2, description: 'Project coordination for ' + exam.title, examId: exam.id, masteryStatus: 'learning' },
+          ],
+          edges: [
+            { source: '1', target: '2', relationship: 'prerequisite', strength: 0.8 },
+            { source: '2', target: '3', relationship: 'builds_on', strength: 0.7 },
+            { source: '2', target: '4', relationship: 'related', strength: 0.6 },
+            { source: '4', target: '5', relationship: 'builds_on', strength: 0.8 },
+            { source: '1', target: '6', relationship: 'related', strength: 0.5 },
+            { source: '6', target: '5', relationship: 'complement', strength: 0.7 },
+          ]
+        };
+
+      case 'Health':
+        return {
+          nodes: [
+            { id: '1', label: 'Anatomy Basics', category: 'Health', level: 1, description: 'Basic human anatomy for ' + exam.title, examId: exam.id, masteryStatus: 'mastered' },
+            { id: '2', label: 'Physiology', category: 'Health', level: 2, description: 'Body functions for ' + exam.title, examId: exam.id, masteryStatus: 'learning' },
+            { id: '3', label: 'Pathology', category: 'Health', level: 3, description: 'Disease processes for ' + exam.title, examId: exam.id, masteryStatus: 'not-started' },
+            { id: '4', label: 'Pharmacology', category: 'Health', level: 3, description: 'Drug mechanisms for ' + exam.title, examId: exam.id, masteryStatus: 'not-started' },
+            { id: '5', label: 'Medical Ethics', category: 'Health', level: 2, description: 'Ethical principles for ' + exam.title, examId: exam.id, masteryStatus: 'learning' },
+            { id: '6', label: 'Clinical Skills', category: 'Health', level: 3, description: 'Practical procedures for ' + exam.title, examId: exam.id, masteryStatus: 'not-started' },
+          ],
+          edges: [
+            { source: '1', target: '2', relationship: 'prerequisite', strength: 0.9 },
+            { source: '2', target: '3', relationship: 'builds_on', strength: 0.8 },
+            { source: '2', target: '4', relationship: 'related', strength: 0.7 },
+            { source: '3', target: '6', relationship: 'builds_on', strength: 0.8 },
+            { source: '4', target: '6', relationship: 'complement', strength: 0.6 },
+            { source: '5', target: '6', relationship: 'complement', strength: 0.7 },
+          ]
+        };
+
+      default:
+        // 通用知识图谱
+        return {
+          nodes: [
+            { id: '1', label: 'Foundation Knowledge', category: 'General', level: 1, description: 'Basic concepts for ' + exam.title, examId: exam.id, masteryStatus: 'learning' },
+            { id: '2', label: 'Intermediate Concepts', category: 'General', level: 2, description: 'Intermediate topics for ' + exam.title, examId: exam.id, masteryStatus: 'not-started' },
+            { id: '3', label: 'Advanced Topics', category: 'General', level: 3, description: 'Advanced subjects for ' + exam.title, examId: exam.id, masteryStatus: 'not-started' },
+          ],
+          edges: [
+            { source: '1', target: '2', relationship: 'prerequisite', strength: 0.8 },
+            { source: '2', target: '3', relationship: 'builds_on', strength: 0.8 },
+          ]
+        };
+    }
+  }, []);
+
+  // 获取模拟的掌握状态数据（基于examId）
+  const getUserMasteryStatus = useCallback((examId: string) => {
+    // 这里可以从后端API获取用户的学习进度
+    // 现在返回模拟数据
+    const mockProgress = {
+      masteredNodes: ['1', '2'],
+      learningNodes: ['3', '4', '6'],
+      notStartedNodes: ['5', '7', '8']
+    };
+    return mockProgress;
   }, []);
 
   // 过滤图谱数据
@@ -372,8 +466,11 @@ export const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
 
   // 初始化数据
   useEffect(() => {
-    setGraphData(generateMockGraphData());
-  }, [generateMockGraphData]);
+    setGraphData(generateExamSpecificGraphData(selectedExam || null));
+    // 重置选中的节点
+    setSelectedNode(null);
+    setChatMessages([]);
+  }, [generateExamSpecificGraphData, selectedExam]);
 
   // 重新渲染图谱
   useEffect(() => {
@@ -389,69 +486,99 @@ export const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
     <div className="flex h-[calc(100vh-12rem)] bg-background">
       {/* 主图谱区域 */}
       <div className={`flex-1 flex flex-col transition-all duration-300 ${isRightPanelCollapsed ? 'mr-0' : 'mr-4'}`}>
-        {/* 控制面板 */}
-        <div className="bg-muted/30 p-4 rounded-lg mb-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* 搜索 */}
-            <div>
-              <label className="block text-sm font-medium mb-1">{t('knowledgeGraph.search')}</label>
-              <input
-                type="text"
-                placeholder={t('knowledgeGraph.searchPlaceholder')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
-              />
-            </div>
-            
-            {/* 知识层级过滤 */}
-            <div>
-              <label className="block text-sm font-medium mb-1">{t('knowledgeGraph.level')}</label>
-              <select
-                value={filterLevel}
-                onChange={(e) => setFilterLevel(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
-              >
-                <option value="all">{t('knowledgeGraph.allLevels')}</option>
-                <option value={1}>{t('knowledgeGraph.basic')}</option>
-                <option value={2}>{t('knowledgeGraph.intermediate')}</option>
-                <option value={3}>{t('knowledgeGraph.advanced')}</option>
-              </select>
-            </div>
-            
-            {/* 类别过滤 */}
-            <div>
-              <label className="block text-sm font-medium mb-1">{t('knowledgeGraph.category')}</label>
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
-              >
-                <option value="all">{t('knowledgeGraph.allCategories')}</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-            </div>
-            
-            {/* 图谱统计 */}
-            <div>
-              <label className="block text-sm font-medium mb-1">{t('knowledgeGraph.statistics')}</label>
-              <div className="text-sm text-muted-foreground">
-                {filteredGraphData.nodes.length} {t('knowledgeGraph.nodes')} • {filteredGraphData.edges.length} {t('knowledgeGraph.connections')}
+        {/* 考试选择和控制面板 */}
+        <div className="bg-muted/30 p-4 rounded-lg mb-4 space-y-4">
+          {/* 考试信息显示 */}
+          {selectedExam ? (
+            <div className="bg-background p-3 rounded border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-lg">{selectedExam.title}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedExam.category} • {t('knowledgeGraph.examSpecificGraph')}
+                  </p>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {filteredGraphData.nodes.length} {t('knowledgeGraph.nodes')} • {filteredGraphData.edges.length} {t('knowledgeGraph.connections')}
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-background p-4 rounded border text-center">
+              <div className="text-muted-foreground">
+                <div className="text-2xl mb-2">📚</div>
+                <p className="text-sm">{t('knowledgeGraph.selectExamFirst')}</p>
+                <p className="text-xs mt-1">{t('knowledgeGraph.selectExamHint')}</p>
+              </div>
+            </div>
+          )}
+
+          {/* 控制面板 - 只在有选中考试时显示 */}
+          {selectedExam && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* 搜索 */}
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('knowledgeGraph.search')}</label>
+                <input
+                  type="text"
+                  placeholder={t('knowledgeGraph.searchPlaceholder')}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
+                />
+              </div>
+              
+              {/* 知识层级过滤 */}
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('knowledgeGraph.level')}</label>
+                <select
+                  value={filterLevel}
+                  onChange={(e) => setFilterLevel(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
+                >
+                  <option value="all">{t('knowledgeGraph.allLevels')}</option>
+                  <option value={1}>{t('knowledgeGraph.basic')}</option>
+                  <option value={2}>{t('knowledgeGraph.intermediate')}</option>
+                  <option value={3}>{t('knowledgeGraph.advanced')}</option>
+                </select>
+              </div>
+              
+              {/* 类别过滤 */}
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('knowledgeGraph.category')}</label>
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
+                >
+                  <option value="all">{t('knowledgeGraph.allCategories')}</option>
+                  {categories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* SVG 图谱区域 */}
         <div className="flex-1 border border-border rounded-lg bg-background p-4">
-          <svg
-            ref={svgRef}
-            width="100%"
-            height="100%"
-            className="border border-border/50 rounded"
-          />
+          {selectedExam ? (
+            <svg
+              ref={svgRef}
+              width="100%"
+              height="100%"
+              className="border border-border/50 rounded"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              <div className="text-center">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-lg font-medium mb-2">{t('knowledgeGraph.noExamSelected')}</h3>
+                <p className="text-sm">{t('knowledgeGraph.selectExamToViewGraph')}</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 底部进度/操作栏 */}

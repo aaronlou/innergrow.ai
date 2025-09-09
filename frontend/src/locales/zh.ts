@@ -637,6 +637,13 @@ export const zh = {
   'knowledgeGraph.exploreRelationships': '探索概念间的关系',
   'knowledgeGraph.learningPath': '学习路径',
   'knowledgeGraph.recommendedNext': '推荐下一步学习',
+  'knowledgeGraph.selectExam': '选择考试',
+  'knowledgeGraph.selectExamFirst': '请先选择一个考试',
+  'knowledgeGraph.selectExamHint': '选择考试后将显示该考试的专属知识图谱',
+  'knowledgeGraph.examSpecificGraph': '专属知识图谱',
+  'knowledgeGraph.noExamSelected': '未选择考试',
+  'knowledgeGraph.selectExamToViewGraph': '请先选择一个考试来查看知识图谱',
+  'knowledgeGraph.noExamsAvailable': '暂无可用考试',
 
   // 语言切换
   'language.title': '语言',

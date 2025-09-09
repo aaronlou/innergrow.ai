@@ -639,6 +639,13 @@ export const en = {
   'knowledgeGraph.exploreRelationships': 'Explore relationships between concepts',
   'knowledgeGraph.learningPath': 'Learning Path',
   'knowledgeGraph.recommendedNext': 'Recommended Next Steps',
+  'knowledgeGraph.selectExam': 'Select Exam',
+  'knowledgeGraph.selectExamFirst': 'Please select an exam first',
+  'knowledgeGraph.selectExamHint': 'Select an exam to view its dedicated knowledge graph',
+  'knowledgeGraph.examSpecificGraph': 'Exam-specific Knowledge Graph',
+  'knowledgeGraph.noExamSelected': 'No Exam Selected',
+  'knowledgeGraph.selectExamToViewGraph': 'Please select an exam to view the knowledge graph',
+  'knowledgeGraph.noExamsAvailable': 'No exams available',
 
   // Language Switcher
   'language.title': 'Language',
