@@ -271,6 +271,7 @@ export const zh = {
   'discussions.members': '成员',
   'discussions.posts': '帖子',
   'discussions.joinRoom': '加入讨论',
+  'discussions.enterRoom': '进入讨论',
   'discussions.leaveRoom': '退出讨论',
   'discussions.createPost': '发布帖子',
   'discussions.sortBy': '排序方式',

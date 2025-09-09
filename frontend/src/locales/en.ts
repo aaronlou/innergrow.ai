@@ -271,6 +271,7 @@ export const en = {
   'discussions.members': 'members',
   'discussions.posts': 'posts',
   'discussions.joinRoom': 'Join Discussion',
+  'discussions.enterRoom': 'Enter Discussion',
   'discussions.leaveRoom': 'Leave Discussion',
   'discussions.createPost': 'Create Post',
   'discussions.sortBy': 'Sort by',

@@ -179,10 +179,10 @@ export default function ExamsPage() {
   }, [fetchWaitlistStatus]);
 
   useEffect(() => {
-    if (exams.length > 0) {
+    if (exams.length > 0 && user) {
       fetchDiscussionRooms(exams);
     }
-  }, [exams.length, fetchDiscussionRooms]);
+  }, [exams.length, user?.id, fetchDiscussionRooms]);
 
   const filteredExams = exams.filter(exam => exam.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -442,10 +442,10 @@ export default function ExamsPage() {
             <div className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-md text-sm shadow ${toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>{toast.message}</div>
           )}
           {/* Header */}
-          <div className="mb-8">
+          {/* <div className="mb-8">
             <h1 className="text-2xl font-bold mb-2">{t('exams.title')}</h1>
             <p className="text-muted-foreground">{t('exams.subtitle')}</p>
-          </div>
+          </div> */}
 
           {/* Tab Navigation */}
           <div className="flex space-x-1 mb-8 bg-muted p-1 rounded-lg w-fit">
@@ -492,7 +492,20 @@ export default function ExamsPage() {
                         )}
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <Button size="sm" className="flex-1" onClick={() => handleJoinDiscussion(exam.id)} disabled={planGenerating === exam.id}>{planGenerating === exam.id ? t('common.loading') : t('exams.startPreparation')}</Button>
+                        <Button 
+                          size="sm" 
+                          className="flex-1" 
+                          onClick={() => handleJoinDiscussion(exam.id)} 
+                          disabled={planGenerating === exam.id}
+                          variant={exam.is_discussion_member ? "secondary" : "default"}
+                        >
+                          {planGenerating === exam.id 
+                            ? t('common.loading') 
+                            : exam.is_discussion_member 
+                              ? t('discussions.enterRoom')
+                              : t('discussions.joinRoom')
+                          }
+                        </Button>
                         {/* <Button size="sm" variant="outline" className="flex-1">{t('exams.viewRequirements')}</Button> */}
                         {/* Only show edit/delete buttons for exam owner */}
                         {user && exam.user_id === user.id && (
@@ -603,11 +616,7 @@ export default function ExamsPage() {
                       <div className="text-4xl mb-4">📝</div>
                       <h3 className="text-lg font-semibold mb-2">{t('discussions.noPostsYet')}</h3>
                       <p className="text-muted-foreground mb-4">{t('discussions.beFirst')}</p>
-                      {currentRoom.is_member && (
-                        <Button onClick={() => setShowCreatePost(true)}>
-                          {t('discussions.createPost')}
-                        </Button>
-                      )}
+
                     </div>
                   ) : (
                     <div className="space-y-4">

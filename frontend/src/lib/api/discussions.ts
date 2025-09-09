@@ -36,7 +36,7 @@ export const discussionsService = {
     if (params?.page) searchParams.set('page', params.page.toString());
     
     const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
-    const res = await apiRequest<unknown>(`/api/discussion-rooms/${roomId}/posts/${qs}`, { method: 'GET' });
+    const res = await apiRequest<unknown>(`/api/discussion-rooms/${roomId}/posts${qs}`, { method: 'GET' });
     
     if (res.success) {
       const posts = this._normalizeList<unknown>(res.data).map(item => this._normalizePost(item));
