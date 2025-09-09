@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
+    'storages',  # Add django-storages
     'accounts',
     'goals',
     'exams',
@@ -230,6 +231,31 @@ CORS_EXPOSE_HEADERS = [
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Google Cloud Storage configuration
+USE_GCS = os.environ.get('USE_GCS', 'False').lower() == 'true'
+
+if USE_GCS:
+    # Google Cloud Storage settings
+    GS_BUCKET_NAME = os.environ.get('GS_BUCKET_NAME', 'innergrow-media')
+    GS_PROJECT_ID = os.environ.get('GS_PROJECT_ID', 'your-project-id')
+    
+    # Preferred: Use attached service account (no credentials file needed)
+    # Only use GOOGLE_APPLICATION_CREDENTIALS if not on Google Cloud
+    GS_CREDENTIALS = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+    
+    # Use GCS for media files
+    DEFAULT_FILE_STORAGE = 'mysite.storage_backends.GoogleCloudMediaFileStorage'
+    
+    # Media files will be served from GCS
+    MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
+    
+    # Optional: Use GCS for static files in production
+    # STATICFILES_STORAGE = 'mysite.storage_backends.GoogleCloudStaticFileStorage'
+    # STATIC_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/static/'
+else:
+    # Local development settings
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 # OpenAI API 配置
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')

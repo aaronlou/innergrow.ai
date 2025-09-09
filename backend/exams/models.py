@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from .validators import validate_exam_material
 
 class Exam(models.Model):
 	user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='exams')
@@ -8,7 +9,14 @@ class Exam(models.Model):
 	description = models.TextField(verbose_name=_('Exam Description'))
 	category = models.CharField(max_length=100, verbose_name=_('Exam Category'), default=_('Language'))
 	exam_time = models.DateField(verbose_name=_('Exam Date'))
-	material = models.FileField(upload_to='exam_materials/', blank=True, null=True, verbose_name=_('Study Materials'))
+	material = models.FileField(
+		upload_to='exam_materials/', 
+		blank=True, 
+		null=True, 
+		verbose_name=_('Study Materials'),
+		validators=[validate_exam_material],
+		help_text=_('Upload PDF, DOC, or DOCX files (max 10MB)')
+	)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
 

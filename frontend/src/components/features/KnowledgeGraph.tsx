@@ -58,7 +58,6 @@ export default function KnowledgeGraph({
   const [filterLevel, setFilterLevel] = React.useState<number | 'all'>('all');
   const [filterCategory, setFilterCategory] = React.useState<string>('all');
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = React.useState(false);
-  const [showExamSelector, setShowExamSelector] = React.useState(!selectedExam);
   
   // AI 聊天状态
   const [chatMessages, setChatMessages] = React.useState<ChatMessage[]>([]);
@@ -398,7 +397,6 @@ export default function KnowledgeGraph({
   // 处理考试选择
   const handleExamSelect = (exam: Exam) => {
     onExamChange?.(exam);
-    setShowExamSelector(false);
   };
 
   // 如果没有选中考试且有可用考试，显示考试选择器

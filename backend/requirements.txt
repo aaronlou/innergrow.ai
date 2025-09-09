@@ -30,3 +30,7 @@ requests==2.31.0  # API测试
 
 # AI/ML libraries
 openai==1.59.6
+
+# Google Cloud Storage
+google-cloud-storage==2.10.0
+django-storages==1.14.2
