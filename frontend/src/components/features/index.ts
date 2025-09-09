@@ -3,3 +3,4 @@ export { ChatInput } from './ChatInput';
 export { ChatMessageComponent as ChatMessage } from './ChatMessage';
 export { PostCard } from './PostCard';
 export { CreatePostForm } from './CreatePostForm';
+export { KnowledgeGraph } from './KnowledgeGraph';

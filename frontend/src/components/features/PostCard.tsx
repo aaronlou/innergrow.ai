@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, Button } from '@/components/ui';
 import { useI18n } from '@/contexts';
 import { Post, Comment } from '@/types';
 import { discussionsService } from '@/lib/api/discussions';
@@ -17,7 +16,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   onCommentAdded,
   showComments = false 
 }) => {
-  const { t, formatDate } = useI18n();
+  const { t } = useI18n();
   const [comments, setComments] = useState<Comment[]>([]);
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [commentContent, setCommentContent] = useState('');
@@ -62,17 +61,19 @@ export const PostCard: React.FC<PostCardProps> = ({
     setSubmittingComment(true);
     try {
       const res = await discussionsService.createComment(post.id, {
-        content: commentContent.trim()
+        content: commentContent.trim(),
       });
       
       if (res.success && res.data) {
         setComments(prev => [...prev, res.data!]);
         setCommentContent('');
         setShowCommentForm(false);
-        if (onCommentAdded) onCommentAdded();
+        if (onCommentAdded) {
+          onCommentAdded();
+        }
       }
     } catch (error) {
-      console.error('Failed to create comment:', error);
+      console.error('Failed to submit comment:', error);
     } finally {
       setSubmittingComment(false);
     }
@@ -89,150 +90,211 @@ export const PostCard: React.FC<PostCardProps> = ({
     return colors[type as keyof typeof colors] || colors.discussion;
   };
 
+  const getPostTypeLabel = (type: string) => {
+    return t(`discussions.postType${type.charAt(0).toUpperCase() + type.slice(1)}`) || type;
+  };
+
+  const getTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 30) return `${diffInDays}d ago`;
+    
+    const diffInMonths = Math.floor(diffInDays / 30);
+    return `${diffInMonths}mo ago`;
+  };
+
+  const netVotes = (post.upvotes || 0) - (post.downvotes || 0);
+
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPostTypeColor(post.post_type)}`}>
-                {t(`discussions.postType${post.post_type.charAt(0).toUpperCase() + post.post_type.slice(1)}`)}
-              </span>
-              {post.is_pinned && (
-                <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                  📌 {t('discussions.pinned')}
-                </span>
-              )}
-            </div>
-            <h3 className="text-lg font-semibold mb-1">{post.title}</h3>
-            <div className="text-sm text-muted-foreground mb-2">
-              {t('discussions.by')} {post.author_name} • {formatDate(new Date(post.created_at), { dateStyle: 'medium', timeStyle: 'short' })}
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="prose prose-sm max-w-none mb-4">
-          <p className="whitespace-pre-wrap">{post.content}</p>
-        </div>
-
-        {post.tags && post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-4">
-            {post.tags.map((tag, index) => (
-              <span 
-                key={index}
-                className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {post.attachments && post.attachments.length > 0 && (
-          <div className="mb-4">
-            <div className="text-sm font-medium mb-2">{t('discussions.attachments')}:</div>
-            <div className="space-y-1">
-              {post.attachments.map((attachment) => (
-                <a
-                  key={attachment.id}
-                  href={attachment.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
-                >
-                  <span>📎</span>
-                  <span>{attachment.name}</span>
-                  {attachment.size && (
-                    <span className="text-muted-foreground">
-                      ({(attachment.size / 1024 / 1024).toFixed(2)} MB)
-                    </span>
-                  )}
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="flex items-center gap-4 pt-2 border-t border-border">
-          <div className="flex items-center gap-1">
-            <Button
-              size="sm"
-              variant={post.user_vote === 'up' ? 'default' : 'outline'}
-              onClick={() => handleVote('up')}
-              className="h-8 px-2"
-            >
-              👍 {post.upvotes}
-            </Button>
-            <Button
-              size="sm"
-              variant={post.user_vote === 'down' ? 'default' : 'outline'}
-              onClick={() => handleVote('down')}
-              className="h-8 px-2"
-            >
-              👎 {post.downvotes}
-            </Button>
-          </div>
-
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              if (showComments) {
-                loadComments();
-              }
-              setShowCommentForm(!showCommentForm);
-            }}
-            className="h-8"
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+      <div className="flex">
+        {/* Left sidebar - Voting */}
+        <div className="flex flex-col items-center py-2 px-2 bg-gray-50 dark:bg-gray-900 rounded-l-lg">
+          <button
+            onClick={() => handleVote('up')}
+            className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
+              post.user_vote === 'up' 
+                ? 'text-orange-500' 
+                : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
+            }`}
           >
-            💬 {post.comments_count} {t('discussions.replies')}
-          </Button>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 3l6 7H4l6-7z"/>
+            </svg>
+          </button>
+          
+          <div className={`text-xs font-bold my-1 ${
+            netVotes > 0 
+              ? 'text-orange-500' 
+              : netVotes < 0 
+                ? 'text-blue-500' 
+                : 'text-gray-500'
+          }`}>
+            {netVotes > 0 ? '+' : ''}{netVotes}
+          </div>
+          
+          <button
+            onClick={() => handleVote('down')}
+            className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
+              post.user_vote === 'down' 
+                ? 'text-blue-500' 
+                : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
+            }`}
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 17l-6-7h12l-6 7z"/>
+            </svg>
+          </button>
         </div>
 
-        {showCommentForm && (
-          <div className="mt-4 p-3 bg-muted rounded-lg">
-            <textarea
-              value={commentContent}
-              onChange={(e) => setCommentContent(e.target.value)}
-              placeholder={t('discussions.writeComment')}
-              className="w-full p-2 text-sm border border-border rounded resize-none bg-background"
-              rows={3}
-            />
-            <div className="flex justify-end gap-2 mt-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setShowCommentForm(false);
-                  setCommentContent('');
-                }}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleSubmitComment}
-                disabled={!commentContent.trim() || submittingComment}
-              >
-                {submittingComment ? t('common.loading') : t('discussions.reply')}
-              </Button>
+        {/* Main content */}
+        <div className="flex-1 p-3">
+          {/* Post header */}
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
+            <div className="flex items-center gap-1">
+              <div className="w-5 h-5 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-[10px]">
+                {post.author_name?.charAt(0)?.toUpperCase() || 'U'}
+              </div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">u/{post.author_name}</span>
             </div>
-          </div>
-        )}
-
-        {showComments && comments.length > 0 && (
-          <div className="mt-4 space-y-3">
-            {loadingComments ? (
-              <div className="text-sm text-muted-foreground">{t('common.loading')}</div>
-            ) : (
-              comments.map((comment) => (
-                <CommentItem key={comment.id} comment={comment} />
-              ))
+            <span>•</span>
+            <span>{getTimeAgo(new Date(post.created_at))}</span>
+            {post.is_pinned && (
+              <>
+                <span>•</span>
+                <span className="text-green-600 dark:text-green-400 font-medium">📌 Pinned</span>
+              </>
             )}
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {/* Post type badge */}
+          <div className="flex items-center gap-2 mb-2">
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getPostTypeColor(post.post_type)}`}>
+              {getPostTypeLabel(post.post_type)}
+            </span>
+          </div>
+
+          {/* Post title */}
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 leading-tight hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">
+            {post.title}
+          </h3>
+
+          {/* Post content preview */}
+          <div className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+            <p className="line-clamp-3">{post.content}</p>
+          </div>
+
+          {/* Tags */}
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-3">
+              {post.tags.map((tag, index) => (
+                <span 
+                  key={index}
+                  className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Attachments */}
+          {post.attachments && post.attachments.length > 0 && (
+            <div className="mb-3">
+              <div className="text-xs font-medium mb-1 text-gray-600 dark:text-gray-400">Attachments:</div>
+              <div className="space-y-1">
+                {post.attachments.map((attachment) => (
+                  <a
+                    key={attachment.id}
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                  >
+                    <span>📎</span>
+                    <span>{attachment.name}</span>
+                    {attachment.size && (
+                      <span className="text-gray-500">
+                        ({(attachment.size / 1024 / 1024).toFixed(2)} MB)
+                      </span>
+                    )}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Bottom actions bar */}
+          <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+            <button
+              onClick={() => {
+                if (showComments) {
+                  loadComments();
+                }
+                setShowCommentForm(!showCommentForm);
+              }}
+              className="flex items-center gap-1 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+              </svg>
+              <span>{post.comments_count} {t('discussions.comments') || 'Comments'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Comments section */}
+      {showCommentForm && (
+        <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-3">
+          <textarea
+            value={commentContent}
+            onChange={(e) => setCommentContent(e.target.value)}
+            placeholder={t('discussions.writeComment') || 'Write a comment...'}
+            className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            rows={3}
+          />
+          <div className="flex justify-end gap-2 mt-2">
+            <button
+              onClick={() => setShowCommentForm(false)}
+              className="px-3 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            >
+              {t('common.cancel') || 'Cancel'}
+            </button>
+            <button
+              onClick={handleSubmitComment}
+              disabled={!commentContent.trim() || submittingComment}
+              className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submittingComment ? (t('common.submitting') || 'Submitting...') : (t('discussions.comment') || 'Comment')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Comments list */}
+      {showComments && comments.length > 0 && (
+        <div className="border-t border-gray-200 dark:border-gray-700">
+          {loadingComments ? (
+            <div className="p-4 text-center text-sm text-gray-500">
+              {t('common.loading') || 'Loading...'}
+            </div>
+          ) : (
+            comments.map((comment) => (
+              <CommentItem key={comment.id} comment={comment} />
+            ))
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -242,7 +304,7 @@ interface CommentItemProps {
 }
 
 const CommentItem: React.FC<CommentItemProps> = ({ comment, level = 0 }) => {
-  const { t, formatDate } = useI18n();
+  const { t } = useI18n();
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [submittingReply, setSubmittingReply] = useState(false);
@@ -266,104 +328,125 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, level = 0 }) => {
     try {
       const res = await discussionsService.createComment(comment.post_id, {
         content: replyContent.trim(),
-        parent_id: comment.id
+        parent_id: comment.id,
       });
       
-      if (res.success) {
+      if (res.success && res.data) {
         setReplyContent('');
         setShowReplyForm(false);
-        // Should trigger a refresh of the comment tree
+        // Refresh comments or update parent
       }
     } catch (error) {
-      console.error('Failed to create reply:', error);
+      console.error('Failed to submit reply:', error);
     } finally {
       setSubmittingReply(false);
     }
   };
 
+  const getTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 30) return `${diffInDays}d ago`;
+    
+    const diffInMonths = Math.floor(diffInDays / 30);
+    return `${diffInMonths}mo ago`;
+  };
+
   if (comment.is_deleted) {
     return (
-      <div className={`pl-${Math.min(level * 4, 16)} text-sm text-muted-foreground italic`}>
+      <div className="p-3 text-sm text-gray-500 italic">
         [Comment deleted]
       </div>
     );
   }
 
+  const netVotes = (comment.upvotes || 0) - (comment.downvotes || 0);
+
   return (
-    <div className={`${level > 0 ? `ml-${Math.min(level * 4, 16)}` : ''} border-l-2 border-muted pl-3`}>
-      <div className="flex items-start gap-2">
-        <div className="flex-1">
-          <div className="text-sm text-muted-foreground mb-1">
-            {comment.author_name} • {formatDate(new Date(comment.created_at), { dateStyle: 'medium', timeStyle: 'short' })}
+    <div className={`border-b border-gray-200 dark:border-gray-700 last:border-b-0 ${level > 0 ? 'ml-6' : ''}`}>
+      <div className="p-3">
+        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
+          <div className="w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-[8px]">
+            {comment.author_name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
-          <div className="text-sm mb-2 whitespace-pre-wrap">{comment.content}</div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => handleVote('up')}
-              className="h-6 px-1 text-xs"
-            >
-              👍 {comment.upvotes}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => handleVote('down')}
-              className="h-6 px-1 text-xs"
-            >
-              👎 {comment.downvotes}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setShowReplyForm(!showReplyForm)}
-              className="h-6 px-1 text-xs"
-            >
-              {t('discussions.reply')}
-            </Button>
-          </div>
-
-          {showReplyForm && (
-            <div className="mt-2 p-2 bg-muted rounded">
-              <textarea
-                value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
-                placeholder={t('discussions.writeReply')}
-                className="w-full p-2 text-sm border border-border rounded resize-none bg-background"
-                rows={2}
-              />
-              <div className="flex justify-end gap-2 mt-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setShowReplyForm(false);
-                    setReplyContent('');
-                  }}
-                >
-                  {t('common.cancel')}
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleSubmitReply}
-                  disabled={!replyContent.trim() || submittingReply}
-                >
-                  {submittingReply ? t('common.loading') : t('discussions.reply')}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {comment.replies && comment.replies.length > 0 && (
-            <div className="mt-3 space-y-2">
-              {comment.replies.map((reply) => (
-                <CommentItem key={reply.id} comment={reply} level={level + 1} />
-              ))}
-            </div>
-          )}
+          <span className="font-medium text-gray-700 dark:text-gray-300">u/{comment.author_name}</span>
+          <span>•</span>
+          <span>{getTimeAgo(new Date(comment.created_at))}</span>
         </div>
+
+        <div className="text-sm text-gray-900 dark:text-gray-100 mb-2">
+          {comment.content}
+        </div>
+
+        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => handleVote('up')}
+              className={`p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 ${
+                comment.user_vote === 'up' ? 'text-orange-500' : 'hover:text-gray-600 dark:hover:text-gray-300'
+              }`}
+            >
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 3l6 7H4l6-7z"/>
+              </svg>
+            </button>
+            <span className={`font-medium ${netVotes > 0 ? 'text-orange-500' : netVotes < 0 ? 'text-blue-500' : ''}`}>
+              {netVotes}
+            </span>
+            <button
+              onClick={() => handleVote('down')}
+              className={`p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 ${
+                comment.user_vote === 'down' ? 'text-blue-500' : 'hover:text-gray-600 dark:hover:text-gray-300'
+              }`}
+            >
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 17l-6-7h12l-6 7z"/>
+              </svg>
+            </button>
+          </div>
+
+          <button
+            onClick={() => setShowReplyForm(!showReplyForm)}
+            className="hover:text-gray-700 dark:hover:text-gray-300"
+          >
+            {t('discussions.reply') || 'Reply'}
+          </button>
+        </div>
+
+        {showReplyForm && (
+          <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-900 rounded">
+            <textarea
+              value={replyContent}
+              onChange={(e) => setReplyContent(e.target.value)}
+              placeholder={t('discussions.writeReply') || 'Write a reply...'}
+              className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded resize-none bg-white dark:bg-gray-800"
+              rows={2}
+            />
+            <div className="flex justify-end gap-2 mt-2">
+              <button
+                onClick={() => setShowReplyForm(false)}
+                className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              >
+                {t('common.cancel') || 'Cancel'}
+              </button>
+              <button
+                onClick={handleSubmitReply}
+                disabled={!replyContent.trim() || submittingReply}
+                className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+              >
+                {submittingReply ? (t('common.submitting') || 'Submitting...') : (t('discussions.reply') || 'Reply')}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

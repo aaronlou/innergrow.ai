@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/components/ui';
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
-import { PostCard, CreatePostForm } from '@/components/features';
+import { PostCard, CreatePostForm, KnowledgeGraph } from '@/components/features';
 import { useI18n, useAuth } from '@/contexts';
 import examsService from '@/lib/api/exams';
 import discussionsService from '@/lib/api/discussions';
@@ -16,7 +16,7 @@ export default function ExamsPage() {
   const { user } = useAuth();
   const { t, language, formatDate } = useI18n();
 
-  const [activeTab, setActiveTab] = useState<'discover' | 'discussions' | 'practice'>('discover');
+  const [activeTab, setActiveTab] = useState<'discover' | 'discussions' | 'practice' | 'knowledge'>('discover');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -452,6 +452,7 @@ export default function ExamsPage() {
             <button onClick={() => setActiveTab('discover')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'discover' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{t('exams.discoverTab')}</button>
             <button onClick={() => setActiveTab('discussions')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'discussions' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{t('exams.discussionsTab')}</button>
             <button onClick={() => setActiveTab('practice')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'practice' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{t('exams.practiceTab')}</button>
+            <button onClick={() => setActiveTab('knowledge')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'knowledge' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{t('knowledgeGraph.title')}</button>
           </div>
 
           {/* Loading/Error States */}
@@ -689,6 +690,33 @@ export default function ExamsPage() {
                   </CardContent>
                 </Card>
               </div>
+            </div>
+          )}
+
+          {/* Knowledge Graph Tab */}
+          {activeTab === 'knowledge' && (
+            <div className="space-y-6">
+              <div className="text-center mb-6">
+                <h3 className="text-2xl font-bold mb-2">{t('knowledgeGraph.title')}</h3>
+                <p className="text-muted-foreground">{t('knowledgeGraph.subtitle')}</p>
+              </div>
+              
+              <KnowledgeGraph
+                examIds={exams.map(exam => exam.id)}
+                selectedTopics={[]}
+                onNodeSelect={(node) => {
+                  console.log('Selected node:', node);
+                  // 可以在这里添加节点选择后的逻辑，比如显示详细信息或导航到相关考试
+                }}
+                onNodeDoubleClick={(node) => {
+                  console.log('Double clicked node:', node);
+                  // 可以在这里添加双击后的逻辑，比如进入相关的学习模块
+                  if (node.examId) {
+                    // 如果节点关联了考试，可以导航到该考试的讨论区
+                    handleJoinDiscussion(node.examId);
+                  }
+                }}
+              />
             </div>
           )}
         </div>
