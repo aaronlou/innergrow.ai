@@ -4,3 +4,4 @@ export { ChatMessageComponent as ChatMessage } from './ChatMessage';
 export { PostCard } from './PostCard';
 export { CreatePostForm } from './CreatePostForm';
 export { default as KnowledgeGraph } from './KnowledgeGraph';
+export { default as MaterialUpload } from './MaterialUpload';

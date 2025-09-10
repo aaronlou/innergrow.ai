@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/components/ui';
 import { DashboardLayout, ProtectedRoute } from '@/components/layout';
-import { PostCard, CreatePostForm, KnowledgeGraph } from '@/components/features';
+import { PostCard, CreatePostForm, KnowledgeGraph, MaterialUpload } from '@/components/features';
 import { useI18n, useAuth } from '@/contexts';
 import examsService from '@/lib/api/exams';
 import discussionsService from '@/lib/api/discussions';
@@ -16,7 +16,7 @@ export default function ExamsPage() {
   const { user } = useAuth();
   const { t, language, formatDate } = useI18n();
 
-  const [activeTab, setActiveTab] = useState<'discover' | 'discussions' | 'practice' | 'knowledge'>('discover');
+  const [activeTab, setActiveTab] = useState<'discover' | 'discussions' | 'practice' | 'knowledge' | 'materials'>('discover');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -453,6 +453,7 @@ export default function ExamsPage() {
             <button onClick={() => setActiveTab('discover')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'discover' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{t('exams.discoverTab')}</button>
             <button onClick={() => setActiveTab('discussions')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'discussions' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{t('exams.discussionsTab')}</button>
             <button onClick={() => setActiveTab('knowledge')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'knowledge' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{t('knowledgeGraph.title')}</button>
+            <button onClick={() => setActiveTab('materials')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'materials' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>学习资料</button>
             <button onClick={() => setActiveTab('practice')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'practice' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{t('exams.practiceTab')}</button>
           </div>
 
@@ -702,6 +703,13 @@ export default function ExamsPage() {
                 availableExams={exams}
                 onExamChange={setSelectedExamForGraph}
               />
+            </div>
+          )}
+
+          {/* Materials Upload Tab */}
+          {activeTab === 'materials' && (
+            <div className="space-y-4">
+              <MaterialUpload />
             </div>
           )}
         </div>
